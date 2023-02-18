@@ -31,3 +31,10 @@ yarn-error.log*
 
 # turbo
 .turbo
+
+# cdk
+.cdk.staging
+cdk.out
+
+# build
+dist/
