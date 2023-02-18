@@ -4,7 +4,8 @@
     "scripts": {
         "build": "tsc",
         "watch": "tsc -w",
-        "cdk": "node dist/bin/cdk.js"
+        "cdk": "node dist/bin/cdk.js",
+        "lint": "eslint \"**/*.ts*\""
     },
     "devDependencies": {
         "@types/node": "10.17.27",
@@ -12,7 +13,8 @@
         "ts-node": "^10.9.1",
         "typescript": "~3.9.7",
         "eslint-config-custom": "*",
-        "tsconfig": "*"
+        "tsconfig": "*",
+        "eslint": "7.32.0"
     },
     "dependencies": {
         "aws-cdk-lib": "2.50.0",
