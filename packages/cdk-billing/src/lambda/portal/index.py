@@ -16,8 +16,7 @@ def lambda_handler(event, context):
 
     secret_name = os.getenv("SECRET_NAME")
     user_billing_table = os.getenv("USER_BILLING_TABLE")
-    stripe_product_id = os.getenv("STRIPE_PRODUCT_ID")
-    stripe_price_ids = json.loads(os.getenv("STRIPE_PRICE_IDS"))
+    usage_plans_table = os.getenv("USAGE_PLANS_TABLE")
     home_url = os.getenv("HOME_URL")
 
     username = event["requestContext"]["identity"]["user"] # **** Would be good to verify this with a real API endpoint
@@ -36,6 +35,20 @@ def lambda_handler(event, context):
 
     item = response["Item"]
     customer_id = item["customerId"]["S"]
+
+    # Retrieve all usage plans
+    response = dynamodb_client.scan(TableName=usage_plans_table)
+    items = response["Items"]
+
+    while "LastEvaluatedKey" in response:
+        response = dynamodb_client.scan(
+            TableName=usage_plans_table,
+            ExclusiveStartKey=response["LastEvaluatedKey"]
+        )
+        items.extend(response["Items"])
+
+    stripe_product_id = items[0]["stripeProductId"]["S"]
+    stripe_price_ids = [item["stripePriceId"]["S"] for item in items]
 
     # Check if the customer already has a subscription
     customer = stripe.Customer.retrieve(customer_id, expand=["subscriptions"])

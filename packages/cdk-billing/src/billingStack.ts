@@ -8,8 +8,6 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 
 interface IStackProps extends cdk.NestedStackProps {
     userPool: cognito.UserPool;
-    stripeProductId: string;
-    stripePriceIds: string[];
     homeUrl: string;
 }
 
@@ -23,6 +21,7 @@ export class BillingStack extends cdk.NestedStack {
         // Create billing setup function for new accounts
         const userBillingTable = new dynamodb.Table(this, "userBillingTable", {
             partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+            pointInTimeRecovery: true,
         });
 
         const setupFn = new lambda.Function(this, "setupFn", {
@@ -47,6 +46,11 @@ export class BillingStack extends cdk.NestedStack {
         props.userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, setupFn);
 
         // Create account portal function
+        const usagePlansTable = new dynamodb.Table(this, "usagePlansTable", {
+            partitionKey: { name: "planId", type: dynamodb.AttributeType.STRING },
+            pointInTimeRecovery: true,
+        });
+
         const portalFn = new lambda.Function(this, "portalFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
             code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "portal"), {
@@ -59,8 +63,7 @@ export class BillingStack extends cdk.NestedStack {
             environment: {
                 SECRET_NAME: stripeSecrets.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
-                STRIPE_PRODUCT_ID: props.stripeProductId,
-                STRIPE_PRICE_IDS: JSON.stringify(props.stripePriceIds),
+                USAGE_PLANS_TABLE: usagePlansTable.tableName,
                 HOME_URL: props.homeUrl,
             },
             timeout: cdk.Duration.seconds(30),
@@ -68,6 +71,7 @@ export class BillingStack extends cdk.NestedStack {
 
         stripeSecrets.grantRead(portalFn);
         userBillingTable.grantReadData(portalFn);
+        usagePlansTable.grantReadData(portalFn);
 
         // Create account status function
         const statusFn = new lambda.Function(this, "statusFn", {
@@ -82,12 +86,12 @@ export class BillingStack extends cdk.NestedStack {
             environment: {
                 SECRET_NAME: stripeSecrets.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
-                STRIPE_PRODUCT_ID: props.stripeProductId,
+                USAGE_PLANS_TABLE: usagePlansTable.tableName,
             },
             timeout: cdk.Duration.seconds(30),
         });
 
-        stripeSecrets.grantRead(portalFn);
-        userBillingTable.grantReadData(portalFn);
+        stripeSecrets.grantRead(statusFn);
+        userBillingTable.grantReadData(statusFn);
     }
 }
