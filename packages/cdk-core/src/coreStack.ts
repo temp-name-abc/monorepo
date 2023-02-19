@@ -18,7 +18,7 @@ export class CoreStack extends cdk.NestedStack {
         // Create secrets storage
         this.secrets = new secretsmanager.Secret(this, "secrets");
 
-        // Create authentication
+        // Create authentication setup
         this.userPool = new cognito.UserPool(this, "userPool", {
             selfSignUpEnabled: true,
             autoVerify: { email: true },
@@ -40,7 +40,12 @@ export class CoreStack extends cdk.NestedStack {
         });
 
         this.userPool.addClient("userPoolClient", {
-            supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.GOOGLE], // **** See what happens when Cognito is not explicitly stated
+            supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.COGNITO, cognito.UserPoolClientIdentityProvider.GOOGLE],
+        });
+
+        // Create authentication groups and register users on setup
+        const standardGroup = new cognito.CfnUserPoolGroup(this, "standardGroup", {
+            userPoolId: this.userPool.userPoolProviderName,
         });
 
         // this.userPool.addTrigger()
