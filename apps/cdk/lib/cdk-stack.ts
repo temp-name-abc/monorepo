@@ -1,6 +1,7 @@
 import * as cdk from "aws-cdk-lib";
 import { CoreStack } from "cdk-core";
 import { Construct } from "constructs";
+import { BillingStack } from "cdk-billing";
 import { cdkEnv } from "types";
 import dotenv from "dotenv";
 
@@ -15,9 +16,13 @@ export class CdkStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
-        new CoreStack(this, "coreStack", {
+        const coreStack = new CoreStack(this, "coreStack", {
             googleClientId: env.googleClientId,
             googleClientSecret: env.googleClientSecret,
+        });
+
+        new BillingStack(this, "billingStack", {
+            userPool: coreStack.userPool,
         });
     }
 }
