@@ -125,7 +125,7 @@ export class BillingStack extends cdk.NestedStack {
         partnerRegisterFn.addToRolePolicy(
             new iam.PolicyStatement({
                 effect: iam.Effect.ALLOW,
-                actions: ["cognito-idp:AdminListGroupsForUser"],
+                actions: ["cognito-idp:AdminListGroupsForUser", "cognito-idp:AdminGetUser"],
                 resources: ["*"],
             })
         );

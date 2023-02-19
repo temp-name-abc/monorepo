@@ -20,15 +20,18 @@ def lambda_handler(event, context):
     partner_table = os.getenv("PARTNER_TABLE")
     admin_group_name = os.getenv("ADMIN_GROUP_NAME")
 
-    username = event["requestContext"]["identity"]["user"] # **** Would be good to verify this with a real API endpoint
+    body = json.loads(event["body"])
+    partner_username = body["username"]
 
-    # Only admin users can register
-    response = client.admin_list_groups_for_user(
+    caller_username = event["requestContext"]["identity"]["user"] # **** Would be good to verify this with a real API endpoint
+
+    # Only admins can register users
+    groups_response = client.admin_list_groups_for_user(
         UserPoolId=user_pool_id,
-        Username=username
+        Username=caller_username
     )
 
-    groups = [group['GroupName'] for group in response['Groups']]
+    groups = [group["GroupName"] for group in groups_response["Groups"]]
 
     if admin_group_name not in groups:
         return {
@@ -45,4 +48,32 @@ def lambda_handler(event, context):
 
     stripe.api_key = secret["STRIPE_KEY_SECRET"]
 
-    # Create a new partner account if it doesn't exist
+    # Load the users email
+    user_respone = client.admin_get_user(
+        UserPoolId=user_pool_id,
+        Username=partner_username
+    )
+
+    for attribute in user_respone["UserAttributes"]:
+        if attribute["Name"] == "email":
+            partner_email = attribute["Value"]
+            break
+
+    # Create a new partner account and store if it doesn't exist
+    account = stripe.Account.create(
+        type="express",
+        email=partner_email
+    )
+
+    account_id = account["id"]
+
+    dynamodb_client.put_item(
+        TableName=partner_table,
+        Item={
+            "partnerId": {"S": partner_username},
+            "stripeAccountId": {"S": account_id}
+        },
+        ConditionExpression="attribute_not_exists(partnerId)"
+    )
+
+    logger.info(f"Created and stored account '{account_id}' for user '{partner_username}' with email '{partner_email}'")

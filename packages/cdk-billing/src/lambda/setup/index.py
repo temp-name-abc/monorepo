@@ -26,19 +26,20 @@ def lambda_handler(event, context):
 
     stripe.api_key = secret["STRIPE_KEY_SECRET"]
 
-    # Create a new account for the user and store it
-    res = stripe.Customer.create(
+    # Create a new account for the user and store if it doesn't exist
+    response = stripe.Customer.create(
         email=user_email
     )
 
-    customer_id = res["id"]
+    customer_id = response["id"]
 
     dynamodb_client.put_item(
         TableName=user_billing_table,
         Item={
             "userId": {"S": username},
             "customerId": {"S": customer_id}
-        }
+        },
+        ConditionExpression="attribute_not_exists(userId)"
     )
 
     logger.info(f"Created and stored customer '{customer_id}' for user '{username}' with email '{user_email}'")

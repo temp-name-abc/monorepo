@@ -28,24 +28,24 @@ def lambda_handler(event, context):
     stripe.api_key = secret["STRIPE_KEY_SECRET"]
 
     # Retrieve customer account
-    response = dynamodb_client.get_item(
+    customer_response = dynamodb_client.get_item(
         TableName=user_billing_table,
         Key={"userId": {"S": username}}
     )
 
-    item = response["Item"]
+    item = customer_response["Item"]
     customer_id = item["customerId"]["S"]
 
     # Retrieve all usage plans
-    response = dynamodb_client.scan(TableName=usage_plans_table)
-    items = response["Items"]
+    plans_response = dynamodb_client.scan(TableName=usage_plans_table)
+    items = plans_response["Items"]
 
-    while "LastEvaluatedKey" in response:
-        response = dynamodb_client.scan(
+    while "LastEvaluatedKey" in plans_response:
+        plans_response = dynamodb_client.scan(
             TableName=usage_plans_table,
-            ExclusiveStartKey=response["LastEvaluatedKey"]
+            ExclusiveStartKey=plans_response["LastEvaluatedKey"]
         )
-        items.extend(response["Items"])
+        items.extend(plans_response["Items"])
 
     stripe_product_id = items[0]["stripeProductId"]["S"]
     stripe_price_ids = [item["stripePriceId"]["S"] for item in items]
