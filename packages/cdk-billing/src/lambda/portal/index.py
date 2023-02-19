@@ -16,7 +16,7 @@ def lambda_handler(event, context):
 
     secret_name = os.getenv("SECRET_NAME")
     user_billing_table = os.getenv("USER_BILLING_TABLE")
-    usage_plans_table = os.getenv("USAGE_PLANS_TABLE")
+    products_table = os.getenv("PRODUCTS_TABLE")
     home_url = os.getenv("HOME_URL")
 
     username = event["requestContext"]["identity"]["user"] # **** Would be good to verify this with a real API endpoint
@@ -36,16 +36,16 @@ def lambda_handler(event, context):
     item = customer_response["Item"]
     customer_id = item["customerId"]["S"]
 
-    # Retrieve all usage plans
-    plans_response = dynamodb_client.scan(TableName=usage_plans_table)
-    items = plans_response["Items"]
+    # Retrieve all products
+    products_response = dynamodb_client.scan(TableName=products_table)
+    items = products_response["Items"]
 
-    while "LastEvaluatedKey" in plans_response:
-        plans_response = dynamodb_client.scan(
-            TableName=usage_plans_table,
-            ExclusiveStartKey=plans_response["LastEvaluatedKey"]
+    while "LastEvaluatedKey" in products_response:
+        products_response = dynamodb_client.scan(
+            TableName=products_table,
+            ExclusiveStartKey=products_response["LastEvaluatedKey"]
         )
-        items.extend(plans_response["Items"])
+        items.extend(products_response["Items"])
 
     stripe_product_id = items[0]["stripeProductId"]["S"]
     stripe_price_ids = [item["stripePriceId"]["S"] for item in items]

@@ -70,7 +70,7 @@ def lambda_handler(event, context):
     dynamodb_client.put_item(
         TableName=partner_table,
         Item={
-            "partnerId": {"S": partner_username},
+            "userId": {"S": partner_username},
             "stripeAccountId": {"S": account_id}
         },
         ConditionExpression="attribute_not_exists(partnerId)"

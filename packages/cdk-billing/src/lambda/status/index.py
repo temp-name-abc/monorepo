@@ -16,7 +16,7 @@ def lambda_handler(event, context):
 
     secret_name = os.getenv("SECRET_NAME")
     user_billing_table = os.getenv("USER_BILLING_TABLE")
-    usage_plans_table = os.getenv("USAGE_PLANS_TABLE")
+    products_table = os.getenv("PRODUCTS_TABLE")
 
     username = event["requestContext"]["identity"]["user"] # **** Would be good to verify this with a real API endpoint
 
@@ -36,7 +36,7 @@ def lambda_handler(event, context):
     customer_id = item["customerId"]["S"]
 
     # Retrieve the product id
-    response = dynamodb_client.scan(TableName=usage_plans_table, Limit=1)
+    response = dynamodb_client.scan(TableName=products_table, Limit=1)
     items = response["Items"]
 
     stripe_product_id = items[0]["stripeProductId"]["S"]

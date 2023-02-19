@@ -48,8 +48,8 @@ export class BillingStack extends cdk.NestedStack {
         props.userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, setupFn);
 
         // Create account portal function
-        const usagePlansTable = new dynamodb.Table(this, "usagePlansTable", {
-            partitionKey: { name: "planId", type: dynamodb.AttributeType.STRING },
+        const productsTable = new dynamodb.Table(this, "productsTable", {
+            partitionKey: { name: "productId", type: dynamodb.AttributeType.STRING },
             sortKey: { name: "priceId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
         });
@@ -66,7 +66,7 @@ export class BillingStack extends cdk.NestedStack {
             environment: {
                 SECRET_NAME: stripeSecrets.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
-                USAGE_PLANS_TABLE: usagePlansTable.tableName,
+                PRODUCTS_TABLE: productsTable.tableName,
                 HOME_URL: props.homeUrl,
             },
             timeout: cdk.Duration.seconds(30),
@@ -74,7 +74,7 @@ export class BillingStack extends cdk.NestedStack {
 
         stripeSecrets.grantRead(portalFn);
         userBillingTable.grantReadData(portalFn);
-        usagePlansTable.grantReadData(portalFn);
+        productsTable.grantReadData(portalFn);
 
         // Create account status function
         const statusFn = new lambda.Function(this, "statusFn", {
@@ -89,18 +89,18 @@ export class BillingStack extends cdk.NestedStack {
             environment: {
                 SECRET_NAME: stripeSecrets.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
-                USAGE_PLANS_TABLE: usagePlansTable.tableName,
+                USAGE_PLANS_TABLE: productsTable.tableName,
             },
             timeout: cdk.Duration.seconds(30),
         });
 
         stripeSecrets.grantRead(statusFn);
         userBillingTable.grantReadData(statusFn);
-        usagePlansTable.grantReadData(statusFn);
+        productsTable.grantReadData(statusFn);
 
         // Store partner account details
         const partnerTable = new dynamodb.Table(this, "partnerTable", {
-            partitionKey: { name: "partnerId", type: dynamodb.AttributeType.STRING },
+            partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
         });
 
