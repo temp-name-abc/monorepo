@@ -8,9 +8,9 @@ logger.setLevel(logging.INFO)
 cognito = boto3.client("cognito-idp")
 
 def lambda_handler(event, context):
-    user_pool_id = os.getenv("USER_POOL_ID")
     group_name = os.getenv("GROUP_NAME")
 
+    user_pool_id = event["userPoolId"]
     username = event["userName"]
 
     # Add user to the group

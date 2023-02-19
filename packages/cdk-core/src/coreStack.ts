@@ -4,6 +4,7 @@ import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as path from "path";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 interface IStackProps extends cdk.NestedStackProps {
     googleClientId: string;
@@ -32,6 +33,10 @@ export class CoreStack extends cdk.NestedStack {
                 userPool: this.userPool,
                 clientId: props.googleClientId,
                 clientSecret: props.googleClientSecret,
+                scopes: ["email"],
+                attributeMapping: {
+                    email: cognito.ProviderAttribute.GOOGLE_EMAIL,
+                },
             })
         );
 
@@ -55,15 +60,21 @@ export class CoreStack extends cdk.NestedStack {
 
         const fn = new lambda.Function(this, "signupGroupFunction", {
             runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "index.py")),
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda")),
             handler: "index.lambda_handler",
             environment: {
-                USER_POOL_ID: this.userPool.userPoolId,
                 GROUP_NAME: standardGroupName,
             },
         });
-        this.userPool.grant(fn, "cognito-idp:AdminAddUserToGroup");
 
         this.userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, fn);
+
+        fn.addToRolePolicy(
+            new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: ["cognito-idp:AdminAddUserToGroup"],
+                resources: ["*"],
+            })
+        );
     }
 }
