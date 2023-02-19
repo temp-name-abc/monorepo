@@ -2,6 +2,8 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as cognito from "aws-cdk-lib/aws-cognito";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as path from "path";
 
 interface IStackProps extends cdk.NestedStackProps {
     googleClientId: string;
@@ -9,14 +11,14 @@ interface IStackProps extends cdk.NestedStackProps {
 }
 
 export class CoreStack extends cdk.NestedStack {
-    public readonly secrets: secretsmanager.Secret;
+    public readonly stripeSecrets: secretsmanager.Secret;
     public readonly userPool: cognito.UserPool;
 
     constructor(scope: Construct, id: string, props: IStackProps) {
         super(scope, id, props);
 
         // Create secrets storage
-        this.secrets = new secretsmanager.Secret(this, "secrets");
+        this.stripeSecrets = new secretsmanager.Secret(this, "stripeSecrets");
 
         // Create authentication setup
         this.userPool = new cognito.UserPool(this, "userPool", {
@@ -44,10 +46,24 @@ export class CoreStack extends cdk.NestedStack {
         });
 
         // Create authentication groups and register users on setup
-        const standardGroup = new cognito.CfnUserPoolGroup(this, "standardGroup", {
-            userPoolId: this.userPool.userPoolProviderName,
+        const standardGroupName = "standardGroup";
+
+        new cognito.CfnUserPoolGroup(this, "standardGroup", {
+            userPoolId: this.userPool.userPoolId,
+            groupName: standardGroupName,
         });
 
-        // this.userPool.addTrigger()
+        const fn = new lambda.Function(this, "signupGroupFunction", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "index.py")),
+            handler: "index.lambda_handler",
+            environment: {
+                USER_POOL_ID: this.userPool.userPoolId,
+                GROUP_NAME: standardGroupName,
+            },
+        });
+        this.userPool.grant(fn, "cognito-idp:AdminAddUserToGroup");
+
+        this.userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, fn);
     }
 }
