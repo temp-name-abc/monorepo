@@ -76,7 +76,7 @@ export class BillingStack extends cdk.NestedStack {
         // Create account status function
         const statusFn = new lambda.Function(this, "statusFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "portal"), {
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "status"), {
                 bundling: {
                     image: lambda.Runtime.PYTHON_3_8.bundlingImage,
                     command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
@@ -93,5 +93,6 @@ export class BillingStack extends cdk.NestedStack {
 
         stripeSecrets.grantRead(statusFn);
         userBillingTable.grantReadData(statusFn);
+        usagePlansTable.grantReadData(statusFn);
     }
 }

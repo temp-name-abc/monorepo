@@ -51,8 +51,10 @@ def lambda_handler(event, context):
             active = True
             break
 
+    logger.info(f"Retrieved status active = '{active}' for user '{username}'")
+
     return {
-        "statusCode": 302,
+        "statusCode": 200,
         "headers": {
             "Access-Control-Allow-Origin": "*",
         },
