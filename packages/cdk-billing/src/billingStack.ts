@@ -10,6 +10,7 @@ interface IStackProps extends cdk.NestedStackProps {
     userPool: cognito.UserPool;
     stripeProductId: string;
     stripePriceIds: string[];
+    homeUrl: string;
 }
 
 export class BillingStack extends cdk.NestedStack {
@@ -40,7 +41,6 @@ export class BillingStack extends cdk.NestedStack {
         });
 
         userBillingTable.grantWriteData(setupFn);
-
         stripeSecrets.grantRead(setupFn);
 
         props.userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, setupFn);
@@ -60,9 +60,12 @@ export class BillingStack extends cdk.NestedStack {
                 USER_BILLING_TABLE: userBillingTable.tableName,
                 STRIPE_PRODUCT_ID: props.stripeProductId,
                 STRIPE_PRICE_IDS: JSON.stringify(props.stripePriceIds),
+                HOME_URL: props.homeUrl,
             },
+            timeout: cdk.Duration.seconds(30),
         });
 
-        userBillingTable.grantReadData(setupFn);
+        stripeSecrets.grantRead(portalFn);
+        userBillingTable.grantReadData(portalFn);
     }
 }

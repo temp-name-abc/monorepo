@@ -3,6 +3,7 @@ import { z } from "zod";
 export const cdkEnv = z.object({
     googleClientId: z.string(),
     googleClientSecret: z.string(),
+    homeUrl: z.string(),
     stripeProductId: z.string(),
     stripePriceIds: z.array(z.string()),
 });

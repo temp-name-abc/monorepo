@@ -1,12 +1,11 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as cognito from "aws-cdk-lib/aws-cognito";
-import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as iam from "aws-cdk-lib/aws-iam";
 
 interface IStackProps extends cdk.NestedStackProps {
     googleClientId: string;
     googleClientSecret: string;
+    homeUrl: string;
 }
 
 export class CoreStack extends cdk.NestedStack {
@@ -42,6 +41,9 @@ export class CoreStack extends cdk.NestedStack {
 
         this.userPool.addClient("userPoolClient", {
             supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.COGNITO, cognito.UserPoolClientIdentityProvider.GOOGLE],
+            oAuth: {
+                callbackUrls: [props.homeUrl],
+            },
         });
     }
 }
