@@ -4,21 +4,22 @@
     "scripts": {
         "build": "tsc",
         "watch": "tsc -w",
-        "cdk": "node dist/bin/cdk.js",
+        "cdk": "cdk deploy",
         "lint": "eslint \"**/*.ts*\""
     },
     "devDependencies": {
         "@types/node": "10.17.27",
         "aws-cdk": "2.50.0",
-        "ts-node": "^10.9.1",
-        "typescript": "~3.9.7",
+        "eslint": "7.32.0",
         "eslint-config-custom": "*",
+        "ts-node": "^10.9.1",
         "tsconfig": "*",
-        "eslint": "7.32.0"
+        "typescript": "~3.9.7"
     },
     "dependencies": {
         "aws-cdk-lib": "2.50.0",
         "constructs": "^10.0.0",
-        "source-map-support": "^0.5.21"
+        "source-map-support": "^0.5.21",
+        "cdk-core": "*"
     }
 }

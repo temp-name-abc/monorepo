@@ -13,7 +13,7 @@
             "cache": false
         },
         "cdk": {
-            "dependsOn": ["build"],
+            "dependsOn": ["^cdk"],
             "outputs": ["cdk.out/**"]
         }
     }
