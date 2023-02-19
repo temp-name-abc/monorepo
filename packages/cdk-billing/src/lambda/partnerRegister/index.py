@@ -16,13 +16,13 @@ def lambda_handler(event, context):
     logger.info(f"Register new partner for '{event}'")
 
     secret_name = os.getenv("SECRET_NAME")
-    user_pool_id = os.getenv("USER_POOL_ID")
     partner_table = os.getenv("PARTNER_TABLE")
     admin_group_name = os.getenv("ADMIN_GROUP_NAME")
 
     body = json.loads(event["body"])
     partner_username = body["username"]
 
+    user_pool_id = event["requestContext"]["authorizer"]["userPoolId"]
     caller_username = event["requestContext"]["identity"]["user"] # **** Would be good to verify this with a real API endpoint
 
     # Only admins can register users
