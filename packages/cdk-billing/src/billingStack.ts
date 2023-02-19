@@ -8,6 +8,8 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 
 interface IStackProps extends cdk.NestedStackProps {
     userPool: cognito.UserPool;
+    stripeProductId: string;
+    stripePriceIds: string[];
 }
 
 export class BillingStack extends cdk.NestedStack {
@@ -42,5 +44,25 @@ export class BillingStack extends cdk.NestedStack {
         stripeSecrets.grantRead(setupFn);
 
         props.userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, setupFn);
+
+        // Create account portal function
+        const portalFn = new lambda.Function(this, "portalFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "portal"), {
+                bundling: {
+                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+                },
+            }),
+            handler: "index.lambda_handler",
+            environment: {
+                SECRET_NAME: stripeSecrets.secretName,
+                USER_BILLING_TABLE: userBillingTable.tableName,
+                STRIPE_PRODUCT_ID: props.stripeProductId,
+                STRIPE_PRICE_IDS: JSON.stringify(props.stripePriceIds),
+            },
+        });
+
+        userBillingTable.grantReadData(setupFn);
     }
 }

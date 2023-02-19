@@ -10,6 +10,8 @@ dotenv.config({ path: "./.env.local" });
 const env = cdkEnv.parse({
     googleClientId: process.env.GOOGLE_CLIENT_ID,
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    stripeProductId: process.env.STRIPE_PRODUCT_ID,
+    stripePriceIds: JSON.parse(process.env.STRIPE_PRICE_IDS as string),
 });
 
 export class CdkStack extends cdk.Stack {
@@ -23,6 +25,8 @@ export class CdkStack extends cdk.Stack {
 
         new BillingStack(this, "billingStack", {
             userPool: coreStack.userPool,
+            stripeProductId: env.stripeProductId,
+            stripePriceIds: env.stripePriceIds,
         });
     }
 }
