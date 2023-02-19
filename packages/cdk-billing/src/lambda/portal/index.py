@@ -39,12 +39,13 @@ def lambda_handler(event, context):
 
     # Check if the customer already has a subscription
     customer = stripe.Customer.retrieve(customer_id, expand=["subscriptions"])
-    subscriptions = customer["subscriptions"]["data"]
+    subscription_items = customer["subscriptions"]["data"]
 
     active = False
-    for subscription in subscriptions:
-        if subscription["items"]["data"][0]["price"]["product"] == stripe_product_id:
+    for subscription_item in subscription_items:
+        if subscription_item["items"]["data"][0]["price"]["product"] == stripe_product_id:
             active = True
+            break
 
     # Route to a checkout
     if not active:
