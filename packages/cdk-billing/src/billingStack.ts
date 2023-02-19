@@ -89,7 +89,7 @@ export class BillingStack extends cdk.NestedStack {
             environment: {
                 SECRET_NAME: stripeSecrets.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
-                USAGE_PLANS_TABLE: productsTable.tableName,
+                PRODUCTS_TABLE: productsTable.tableName,
             },
             timeout: cdk.Duration.seconds(30),
         });
@@ -104,32 +104,32 @@ export class BillingStack extends cdk.NestedStack {
             pointInTimeRecovery: true,
         });
 
-        const partnerRegisterFn = new lambda.Function(this, "partnerRegisterFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "partnerRegisterFn"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
-            handler: "index.lambda_handler",
-            environment: {
-                SECRET_NAME: stripeSecrets.secretName,
-                USER_POOL_ID: props.userPool.userPoolId,
-                PARTNER_TABLE: partnerTable.tableName,
-                ADMIN_GROUP_NAME: props.adminGroupName,
-            },
-            timeout: cdk.Duration.seconds(30),
-        });
+        // const partnerRegisterFn = new lambda.Function(this, "partnerRegisterFn", {
+        //     runtime: lambda.Runtime.PYTHON_3_8,
+        //     code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "partnerRegister"), {
+        //         bundling: {
+        //             image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+        //             command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+        //         },
+        //     }),
+        //     handler: "index.lambda_handler",
+        //     environment: {
+        //         SECRET_NAME: stripeSecrets.secretName,
+        //         USER_POOL_ID: props.userPool.userPoolId,
+        //         PARTNER_TABLE: partnerTable.tableName,
+        //         ADMIN_GROUP_NAME: props.adminGroupName,
+        //     },
+        //     timeout: cdk.Duration.seconds(30),
+        // });
 
-        partnerRegisterFn.addToRolePolicy(
-            new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: ["cognito-idp:AdminListGroupsForUser", "cognito-idp:AdminGetUser"],
-                resources: ["*"],
-            })
-        );
-        stripeSecrets.grantRead(partnerRegisterFn);
-        partnerTable.grantReadData(partnerRegisterFn);
+        // partnerRegisterFn.addToRolePolicy(
+        //     new iam.PolicyStatement({
+        //         effect: iam.Effect.ALLOW,
+        //         actions: ["cognito-idp:AdminListGroupsForUser", "cognito-idp:AdminGetUser"],
+        //         resources: ["*"],
+        //     })
+        // );
+        // stripeSecrets.grantRead(partnerRegisterFn);
+        // partnerTable.grantReadData(partnerRegisterFn);
     }
 }
