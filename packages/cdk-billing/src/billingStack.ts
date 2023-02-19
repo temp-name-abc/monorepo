@@ -48,6 +48,7 @@ export class BillingStack extends cdk.NestedStack {
         // Create account portal function
         const usagePlansTable = new dynamodb.Table(this, "usagePlansTable", {
             partitionKey: { name: "planId", type: dynamodb.AttributeType.STRING },
+            sortKey: { name: "priceId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
         });
 
