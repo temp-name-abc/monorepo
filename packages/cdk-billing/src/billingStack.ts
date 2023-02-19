@@ -5,10 +5,12 @@ import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as path from "path";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 interface IStackProps extends cdk.NestedStackProps {
     userPool: cognito.UserPool;
     homeUrl: string;
+    adminGroupName: string;
 }
 
 export class BillingStack extends cdk.NestedStack {
@@ -95,5 +97,39 @@ export class BillingStack extends cdk.NestedStack {
         stripeSecrets.grantRead(statusFn);
         userBillingTable.grantReadData(statusFn);
         usagePlansTable.grantReadData(statusFn);
+
+        // Store partner account details
+        const partnerTable = new dynamodb.Table(this, "partnerTable", {
+            partitionKey: { name: "partnerId", type: dynamodb.AttributeType.STRING },
+            pointInTimeRecovery: true,
+        });
+
+        const partnerRegisterFn = new lambda.Function(this, "partnerRegisterFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "partnerRegisterFn"), {
+                bundling: {
+                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+                },
+            }),
+            handler: "index.lambda_handler",
+            environment: {
+                SECRET_NAME: stripeSecrets.secretName,
+                USER_POOL_ID: props.userPool.userPoolId,
+                PARTNER_TABLE: partnerTable.tableName,
+                ADMIN_GROUP_NAME: props.adminGroupName,
+            },
+            timeout: cdk.Duration.seconds(30),
+        });
+
+        partnerRegisterFn.addToRolePolicy(
+            new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: ["cognito-idp:AdminListGroupsForUser"],
+                resources: ["*"],
+            })
+        );
+        stripeSecrets.grantRead(partnerRegisterFn);
+        partnerTable.grantReadData(partnerRegisterFn);
     }
 }

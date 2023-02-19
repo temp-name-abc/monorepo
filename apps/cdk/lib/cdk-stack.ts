@@ -26,6 +26,7 @@ export class CdkStack extends cdk.Stack {
         new BillingStack(this, "billingStack", {
             userPool: coreStack.userPool,
             homeUrl: env.homeUrl,
+            adminGroupName: coreStack.adminGroupName,
         });
     }
 }

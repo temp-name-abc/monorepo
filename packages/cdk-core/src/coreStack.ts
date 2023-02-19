@@ -10,7 +10,7 @@ interface IStackProps extends cdk.NestedStackProps {
 
 export class CoreStack extends cdk.NestedStack {
     public readonly userPool: cognito.UserPool;
-    public readonly ADMIN_GROUP_NAME: string = "adminGroup";
+    public readonly adminGroupName: string = "adminGroup";
 
     constructor(scope: Construct, id: string, props: IStackProps) {
         super(scope, id, props);
@@ -50,7 +50,7 @@ export class CoreStack extends cdk.NestedStack {
         // Create groups
         new cognito.CfnUserPoolGroup(this, "adminGroup", {
             userPoolId: this.userPool.userPoolId,
-            groupName: this.ADMIN_GROUP_NAME,
+            groupName: this.adminGroupName,
         });
     }
 }
