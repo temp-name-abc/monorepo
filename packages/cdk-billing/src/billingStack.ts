@@ -38,6 +38,7 @@ export class BillingStack extends cdk.NestedStack {
                 SECRET_NAME: stripeSecrets.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
             },
+            timeout: cdk.Duration.seconds(30),
         });
 
         userBillingTable.grantWriteData(setupFn);
@@ -61,6 +62,27 @@ export class BillingStack extends cdk.NestedStack {
                 STRIPE_PRODUCT_ID: props.stripeProductId,
                 STRIPE_PRICE_IDS: JSON.stringify(props.stripePriceIds),
                 HOME_URL: props.homeUrl,
+            },
+            timeout: cdk.Duration.seconds(30),
+        });
+
+        stripeSecrets.grantRead(portalFn);
+        userBillingTable.grantReadData(portalFn);
+
+        // Create account status function
+        const statusFn = new lambda.Function(this, "statusFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "portal"), {
+                bundling: {
+                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+                },
+            }),
+            handler: "index.lambda_handler",
+            environment: {
+                SECRET_NAME: stripeSecrets.secretName,
+                USER_BILLING_TABLE: userBillingTable.tableName,
+                STRIPE_PRODUCT_ID: props.stripeProductId,
             },
             timeout: cdk.Duration.seconds(30),
         });

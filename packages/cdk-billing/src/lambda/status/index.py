@@ -12,13 +12,11 @@ dynamodb_client = boto3.client("dynamodb")
 
 
 def lambda_handler(event, context):
-    logger.info(f"Retrieving user portal for '{event}'")
+    logger.info(f"Retrieving account status for '{event}'")
 
     secret_name = os.getenv("SECRET_NAME")
     user_billing_table = os.getenv("USER_BILLING_TABLE")
     stripe_product_id = os.getenv("STRIPE_PRODUCT_ID")
-    stripe_price_ids = json.loads(os.getenv("STRIPE_PRICE_IDS"))
-    home_url = os.getenv("HOME_URL")
 
     username = event["requestContext"]["identity"]["user"] # **** Would be good to verify this with a real API endpoint
 
@@ -47,37 +45,12 @@ def lambda_handler(event, context):
             active = True
             break
 
-    # Route to a checkout
-    if not active:
-        session = stripe.checkout.Session.create(
-            success_url=home_url,
-            line_items=[{"price": price_id} for price_id in stripe_price_ids],
-            mode="subscription",
-            customer=customer_id
-        )
-
-        logger.info(f"Created checkout session for user `{username}`")
-
-        return {
-            "statusCode": 302,
-            "headers": {
-                "Access-Control-Allow-Origin": "*",
-                "Location": session["url"]
-            }
-        }
-
-    # Route to a portal
-    portal = stripe.billing_portal.Session.create(
-        customer=customer_id,
-        return_url=home_url
-    )
-
-    logger.info(f"Created portal session for user `{username}`")
-
     return {
         "statusCode": 302,
         "headers": {
             "Access-Control-Allow-Origin": "*",
-            "Location": portal["url"]
-        }
+        },
+        "body": json.dumps({
+            "active": active
+        })
     }
