@@ -73,7 +73,14 @@ def lambda_handler(event, context):
             "userId": {"S": partner_username},
             "stripeAccountId": {"S": account_id}
         },
-        ConditionExpression="attribute_not_exists(partnerId)"
+        ConditionExpression="attribute_not_exists(userId)"
     )
 
     logger.info(f"Created and stored account '{account_id}' for user '{partner_username}' with email '{partner_email}'")
+
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Access-Control-Allow-Origin": "*",
+        }
+    }

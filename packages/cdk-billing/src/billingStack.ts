@@ -129,6 +129,26 @@ export class BillingStack extends cdk.NestedStack {
             })
         );
         stripeSecrets.grantRead(partnerRegisterFn);
-        partnerTable.grantReadData(partnerRegisterFn);
+        partnerTable.grantWriteData(partnerRegisterFn);
+
+        // Get partner dashboard
+        const partnerDashboardFn = new lambda.Function(this, "partnerDashboardFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "partnerDashboard"), {
+                bundling: {
+                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+                },
+            }),
+            handler: "index.lambda_handler",
+            environment: {
+                SECRET_NAME: stripeSecrets.secretName,
+                PARTNER_TABLE: partnerTable.tableName,
+            },
+            timeout: cdk.Duration.seconds(30),
+        });
+
+        stripeSecrets.grantRead(partnerDashboardFn);
+        partnerTable.grantReadData(partnerDashboardFn);
     }
 }
