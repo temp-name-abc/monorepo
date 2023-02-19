@@ -37,6 +37,8 @@ export class BillingStack extends cdk.NestedStack {
             },
         });
 
+        userBillingTable.grantWriteData(setupFn);
+
         stripeSecrets.grantRead(setupFn);
 
         props.userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, setupFn);

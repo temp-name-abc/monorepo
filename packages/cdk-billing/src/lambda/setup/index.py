@@ -12,15 +12,17 @@ dynamodb_client = boto3.client("dynamodb")
 
 
 def lambda_handler(event, context):
+    logger.info(f"Setting up customer account for event '{event}'")
+
     secret_name = os.getenv("SECRET_NAME")
     user_billing_table = os.getenv("USER_BILLING_TABLE")
 
     username = event["userName"]
-    user_email = event["userAttributes"]["email"]
+    user_email = event["request"]["userAttributes"]["email"]
 
-    # Load the Stripe secret
-    raw_secret = secrets_manager_client.get_secret_value(SecretId=secret_name)
-    secret = json.loads(raw_secret)
+    # Load the Stripe key
+    secret_raw = secrets_manager_client.get_secret_value(SecretId=secret_name)
+    secret = json.loads(secret_raw["SecretString"])
 
     stripe.api_key = secret["STRIPE_KEY_SECRET"]
 
@@ -34,8 +36,8 @@ def lambda_handler(event, context):
     dynamodb_client.put_item(
         TableName=user_billing_table,
         Item={
-            "userId": username,
-            "customerId": customer_id
+            "userId": {"S": username},
+            "customerId": {"S": customer_id}
         }
     )
 
