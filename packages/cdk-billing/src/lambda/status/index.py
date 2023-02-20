@@ -14,11 +14,13 @@ dynamodb_client = boto3.client("dynamodb")
 def lambda_handler(event, context):
     logger.info(f"Retrieving account status for '{event}'")
 
+    # **** This needs to be rewritten to be on the behalf of an admin or some other authorized user - they will not be calling this themselves
+
     secret_name = os.getenv("SECRET_NAME")
     user_billing_table = os.getenv("USER_BILLING_TABLE")
     products_table = os.getenv("PRODUCTS_TABLE")
 
-    username = event["requestContext"]["identity"]["user"] # **** Would be good to verify this with a real API endpoint
+    username = event["requestContext"]["authorizer"]["claims"]["sub"]
 
     # Load the Stripe key
     secret_raw = secrets_manager_client.get_secret_value(SecretId=secret_name)

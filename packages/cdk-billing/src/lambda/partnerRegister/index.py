@@ -22,8 +22,8 @@ def lambda_handler(event, context):
     body = json.loads(event["body"])
     partner_username = body["username"]
 
-    user_pool_id = event["requestContext"]["authorizer"]["userPoolId"]
-    caller_username = event["requestContext"]["identity"]["user"] # **** Would be good to verify this with a real API endpoint
+    user_pool_id = event["requestContext"]["authorizer"]["claims"]["iss"].split("/")[-1]
+    caller_username = event["requestContext"]["authorizer"]["claims"]["sub"]
 
     # Only admins can register users
     groups_response = client.admin_list_groups_for_user(

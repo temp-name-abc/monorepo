@@ -17,7 +17,7 @@ def lambda_handler(event, context):
     secret_name = os.getenv("SECRET_NAME")
     partner_table = os.getenv("PARTNER_TABLE")
 
-    username = event["requestContext"]["identity"]["user"] # **** Would be good to verify this with a real API endpoint
+    username = event["requestContext"]["authorizer"]["claims"]["sub"]
 
     # Load the Stripe key
     secret_raw = secrets_manager_client.get_secret_value(SecretId=secret_name)
