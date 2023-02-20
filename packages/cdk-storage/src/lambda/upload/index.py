@@ -12,7 +12,6 @@ s3_client = boto3.client("s3")
 dynamodb_client = boto3.client("dynamodb")
 
 ALLOWED_FILE_TYPES = ["txt"]
-EXPIRE_MINUTES = 60
 
 
 def lambda_handler(event, context):
@@ -20,6 +19,7 @@ def lambda_handler(event, context):
 
     upload_records_table = os.getenv("UPLOAD_RECORDS_TABLE")
     temp_storage_bucket = os.getenv("TEMP_STORAGE_BUCKET")
+    ttl_expiry = os.getenv("TTL_EXPIRY")
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
 
@@ -42,7 +42,7 @@ def lambda_handler(event, context):
 
     # Upload a key with the user id
     now = datetime.utcnow()
-    expiry_time = now + timedelta(minutes=EXPIRE_MINUTES)
+    expiry_time = now + timedelta(seconds=float(ttl_expiry))
     ttl_seconds = int(expiry_time.timestamp())
 
     dynamodb_client.put_item(
@@ -63,7 +63,7 @@ def lambda_handler(event, context):
             "Bucket": temp_storage_bucket,
             "Key": key
         },
-        ExpiresIn=EXPIRE_MINUTES
+        ExpiresIn=86400
     )
 
     logger.info(f"Created file upload record with key '{key}' for user '{user_id}' with file type '{file_type}'")

@@ -33,6 +33,8 @@ export class StorageStack extends cdk.NestedStack {
             timeToLiveAttribute: "ttl",
         });
 
+        const ttlExpiry = cdk.Duration.days(1);
+
         const tempStorageBucket = new s3.Bucket(this, "tempStorageBucket", {
             blockPublicAccess: {
                 blockPublicAcls: true,
@@ -40,6 +42,7 @@ export class StorageStack extends cdk.NestedStack {
                 ignorePublicAcls: true,
                 restrictPublicBuckets: true,
             },
+            lifecycleRules: [{ expiration: ttlExpiry, enabled: true }],
         });
 
         const uploadFn = new lambda.Function(this, "uploadFn", {
@@ -49,6 +52,7 @@ export class StorageStack extends cdk.NestedStack {
             environment: {
                 UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
                 TEMP_STORAGE_BUCKET: tempStorageBucket.bucketName,
+                TTL_EXPIRY: ttlExpiry.toSeconds().toString(),
             },
             timeout: cdk.Duration.seconds(30),
         });
