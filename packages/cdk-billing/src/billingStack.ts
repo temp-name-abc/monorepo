@@ -194,7 +194,7 @@ export class BillingStack extends cdk.NestedStack {
                         },
                     },
                 ],
-                // authorizationType: apigw.AuthorizationType.IAM,
+                authorizationType: apigw.AuthorizationType.IAM,
             }
         );
     }
