@@ -26,16 +26,9 @@ export class BillingStack extends cdk.NestedStack {
         // Create API resources
         const billingResource = props.api.root.addResource("billing");
 
-        const accountResource = billingResource.addResource("account");
-
-        const portalResource = accountResource.addResource("portal");
-        const statusResource = accountResource.addResource("status");
-        const usageResource = accountResource.addResource("usage");
-
-        const partnerResource = billingResource.addResource("partner");
-
-        const dashboardResource = partnerResource.addResource("dashboard");
-        const registerResource = partnerResource.addResource("register");
+        const portalResource = billingResource.addResource("portal");
+        const statusResource = billingResource.addResource("status");
+        const usageResource = billingResource.addResource("usage");
 
         // Create billing setup function for new accounts
         const userBillingTable = new dynamodb.Table(this, "userBillingTable", {
@@ -67,7 +60,6 @@ export class BillingStack extends cdk.NestedStack {
         // Create account portal function
         const productsTable = new dynamodb.Table(this, "productsTable", {
             partitionKey: { name: "productId", type: dynamodb.AttributeType.STRING },
-            sortKey: { name: "priceId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
         });
 
@@ -124,74 +116,13 @@ export class BillingStack extends cdk.NestedStack {
             authorizationType: apigw.AuthorizationType.IAM,
         });
 
-        // Store partner account details
-        const partnerTable = new dynamodb.Table(this, "partnerTable", {
-            partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
-            pointInTimeRecovery: true,
-        });
-
-        const partnerRegisterFn = new lambda.Function(this, "partnerRegisterFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "partnerRegister"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
-            handler: "index.lambda_handler",
-            environment: {
-                SECRET_NAME: stripeSecrets.secretName,
-                PARTNER_TABLE: partnerTable.tableName,
-                ADMIN_GROUP_NAME: props.adminGroupName,
-            },
-            timeout: cdk.Duration.seconds(30),
-        });
-
-        partnerRegisterFn.addToRolePolicy(
-            new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: ["cognito-idp:AdminListGroupsForUser", "cognito-idp:AdminGetUser"],
-                resources: ["*"],
-            })
-        );
-        stripeSecrets.grantRead(partnerRegisterFn);
-        partnerTable.grantWriteData(partnerRegisterFn);
-
-        registerResource.addMethod("POST", new apigw.LambdaIntegration(partnerRegisterFn), {
-            authorizer: props.apiAuth,
-            authorizationType: apigw.AuthorizationType.COGNITO,
-        });
-
-        // Get partner dashboard
-        const partnerDashboardFn = new lambda.Function(this, "partnerDashboardFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "partnerDashboard"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
-            handler: "index.lambda_handler",
-            environment: {
-                SECRET_NAME: stripeSecrets.secretName,
-                PARTNER_TABLE: partnerTable.tableName,
-            },
-            timeout: cdk.Duration.seconds(30),
-        });
-
-        stripeSecrets.grantRead(partnerDashboardFn);
-        partnerTable.grantReadData(partnerDashboardFn);
-
-        dashboardResource.addMethod("GET", new apigw.LambdaIntegration(partnerDashboardFn), {
-            authorizer: props.apiAuth,
-            authorizationType: apigw.AuthorizationType.COGNITO,
-        });
-
         // Submit usage events
         // **** Submit the userId, timestamp, productId
         // **** Authenticate using IAM
         // **** Check if we need to delegate prices between others based on the commission value (e.g. partner, percentage)
         // **** Also need to add idempotency and SQS API gateway integration
         // **** Actually, this payout integration will need to happen as a part of the checkout subscription if the price matches - we need some reverse mapping for these users
+        // **** We should also include a defer type - where one user can setup an account and then another user can pay on behalf of them
+        // **** We also need to create a shared service account
     }
 }

@@ -11,6 +11,24 @@ secrets_manager_client = boto3.client("secretsmanager")
 dynamodb_client = boto3.client("dynamodb")
 
 
+# Route to a portal
+def route_to_portal(customer_id: str, home_url: str, username: str):
+    portal = stripe.billing_portal.Session.create(
+        customer=customer_id,
+        return_url=home_url
+    )
+
+    logger.info(f"Created portal session for user `{username}`")
+
+    return {
+        "statusCode": 302,
+        "headers": {
+            "Access-Control-Allow-Origin": "*",
+            "Location": portal["url"]
+        }
+    }
+
+
 def lambda_handler(event, context):
     logger.info(f"Retrieving user portal for '{event}'")
 
@@ -20,6 +38,12 @@ def lambda_handler(event, context):
     home_url = os.getenv("HOME_URL")
 
     username = event["requestContext"]["authorizer"]["claims"]["cognito:username"]
+    
+    query_params = event["queryStringParameters"]
+
+    product_id = None
+    if "productId" in query_params:
+        product_id = query_params["productId"]
 
     # Load the Stripe key
     secret_raw = secrets_manager_client.get_secret_value(SecretId=secret_name)
@@ -36,19 +60,25 @@ def lambda_handler(event, context):
     item = customer_response["Item"]
     customer_id = item["customerId"]["S"]
 
-    # Retrieve all products
-    products_response = dynamodb_client.scan(TableName=products_table)
-    items = products_response["Items"]
+    if product_id == None:
+        return route_to_portal(customer_id, home_url, username)
 
-    while "LastEvaluatedKey" in products_response:
-        products_response = dynamodb_client.scan(
-            TableName=products_table,
-            ExclusiveStartKey=products_response["LastEvaluatedKey"]
-        )
-        items.extend(products_response["Items"])
+    # Retrieve the product
+    product_response = dynamodb_client.get_item(
+        TableName=products_table,
+        Key={"productId": {"S": product_id}}
+    )
 
-    stripe_product_id = items[0]["stripeProductId"]["S"]
-    stripe_price_ids = [item["stripePriceId"]["S"] for item in items]
+    item = product_response["Item"]
+
+    stripe_product_id = item["stripeProductId"]["S"]
+    stripe_price_id = item["stripeProductId"]["S"]
+
+    stripe_partner_id = None
+    partner_share = None
+    if "stripePartnerId" in item and "partnerShare" in item:
+        stripe_partner_id = item["stripePartnerId"]["S"]
+        partner_share = item["partnerShare"]["S"]
 
     # Check if the customer already has a subscription
     customer = stripe.Customer.retrieve(customer_id, expand=["subscriptions"])
@@ -60,37 +90,27 @@ def lambda_handler(event, context):
             active = True
             break
 
-    # Route to a checkout
-    if not active:
-        session = stripe.checkout.Session.create(
-            success_url=home_url,
-            line_items=[{"price": price_id} for price_id in stripe_price_ids],
-            mode="subscription",
-            customer=customer_id
-        )
+    if active:
+        return route_to_portal(customer_id, home_url, username)
 
-        logger.info(f"Created checkout session for user `{username}`")
+    # Route to checkout
+    subscription_data = None if stripe_partner_id == None else {"transfer_data": {"destination": stripe_partner_id, "amount_percent": partner_share}}
 
-        return {
-            "statusCode": 302,
-            "headers": {
-                "Access-Control-Allow-Origin": "*",
-                "Location": session["url"]
-            }
-        }
-
-    # Route to a portal
-    portal = stripe.billing_portal.Session.create(
+    session = stripe.checkout.Session.create(
+        success_url=home_url,
+        line_items=[{"price": stripe_price_id}],
+        mode="subscription",
         customer=customer_id,
-        return_url=home_url
+        subscription_data=subscription_data
     )
 
-    logger.info(f"Created portal session for user `{username}`")
+    logger.info(f"Created checkout session for user `{username}`")
 
     return {
         "statusCode": 302,
         "headers": {
             "Access-Control-Allow-Origin": "*",
-            "Location": portal["url"]
+            "Location": session["url"]
         }
     }
+
