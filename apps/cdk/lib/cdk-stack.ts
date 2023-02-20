@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { CoreStack } from "cdk-core";
 import { Construct } from "constructs";
 import { BillingStack } from "cdk-billing";
+import { StorageStack } from "cdk-storage";
 import { cdkEnv } from "types";
 import dotenv from "dotenv";
 
@@ -28,6 +29,13 @@ export class CdkStack extends cdk.Stack {
             apiAuth: coreStack.apiAuth,
             userPool: coreStack.userPool,
             homeUrl: env.homeUrl,
+        });
+
+        new StorageStack(this, "storageStack", {
+            api: coreStack.api,
+            apiAuth: coreStack.apiAuth,
+            pineconeSecrets: coreStack.pineconeSecrets,
+            openAISecrets: coreStack.openAISecrets,
         });
     }
 }
