@@ -33,7 +33,14 @@ export class StorageStack extends cdk.NestedStack {
             timeToLiveAttribute: "ttl",
         });
 
-        const tempStorageBucket = new s3.Bucket(this, "tempStorageBucket");
+        const tempStorageBucket = new s3.Bucket(this, "tempStorageBucket", {
+            blockPublicAccess: {
+                blockPublicAcls: true,
+                blockPublicPolicy: true,
+                ignorePublicAcls: true,
+                restrictPublicBuckets: true,
+            },
+        });
 
         const uploadFn = new lambda.Function(this, "uploadFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
@@ -48,5 +55,10 @@ export class StorageStack extends cdk.NestedStack {
 
         uploadRecordsTable.grantWriteData(uploadFn);
         tempStorageBucket.grantWrite(uploadFn);
+
+        documentResource.addMethod("POST", new apigw.LambdaIntegration(uploadFn), {
+            authorizer: props.apiAuth,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
     }
 }
