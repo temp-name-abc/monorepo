@@ -161,30 +161,30 @@ export class BillingStack extends cdk.NestedStack {
         });
         usageQueue.grantSendMessages(credentialsRole);
 
-        usageResource.addMethod(
-            "POST",
-            new apigw.AwsIntegration({
-                service: "sqs",
-                path: `${process.env.CDK_DEFAULT_ACCOUNT}/${usageQueue.queueName}`,
-                integrationHttpMethod: "POST",
-                options: {
-                    credentialsRole,
-                    requestParameters: {
-                        "integration.request.header.Content-Type": "'application/x-www-form-urlencoded'",
-                    },
-                    requestTemplates: {
-                        "application/json": "Action=SendMessage&MessageBody=$input.body",
-                    },
-                    integrationResponses: [
-                        {
-                            statusCode: "200",
-                            responseParameters: {
-                                "method.response.header.Access-Control-Allow-Origin": "'*'",
-                            },
-                        },
-                    ],
-                },
-            })
-        );
+        // usageResource.addMethod(
+        //     "POST",
+        //     new apigw.AwsIntegration({
+        //         service: "sqs",
+        //         path: `${process.env.CDK_DEFAULT_ACCOUNT}/${usageQueue.queueName}`,
+        //         integrationHttpMethod: "POST",
+        //         options: {
+        //             credentialsRole,
+        //             requestParameters: {
+        //                 "integration.request.header.Content-Type": "'application/x-www-form-urlencoded'",
+        //             },
+        //             requestTemplates: {
+        //                 "application/json": "Action=SendMessage&MessageBody=$input.body",
+        //             },
+        //             integrationResponses: [
+        //                 {
+        //                     statusCode: "200",
+        //                     responseParameters: {
+        //                         "method.response.header.Access-Control-Allow-Origin": "'*'",
+        //                     },
+        //                 },
+        //             ],
+        //         },
+        //     })
+        // );
     }
 }
