@@ -192,5 +192,6 @@ export class BillingStack extends cdk.NestedStack {
         // **** Authenticate using IAM
         // **** Check if we need to delegate prices between others based on the commission value (e.g. partner, percentage)
         // **** Also need to add idempotency and SQS API gateway integration
+        // **** Actually, this payout integration will need to happen as a part of the checkout subscription if the price matches - we need some reverse mapping for these users
     }
 }
