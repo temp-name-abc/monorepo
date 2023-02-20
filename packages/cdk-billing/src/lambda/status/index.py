@@ -30,22 +30,20 @@ def lambda_handler(event, context):
     stripe.api_key = secret["STRIPE_KEY_SECRET"]
 
     # Retrieve customer account
-    response = dynamodb_client.get_item(
+    user_data = dynamodb_client.get_item(
         TableName=user_billing_table,
         Key={"userId": {"S": user_id}}
-    )
+    )["Item"]
 
-    item = response["Item"]
-    customer_id = item["stripeCustomerId"]["S"]
+    customer_id = user_data["stripeCustomerId"]["S"]
 
     # Retrieve the product id
-    response = dynamodb_client.get_item(
+    product_data = dynamodb_client.get_item(
         TableName=products_table,
         Key={"productId": {"S": product_id}}
-    )
-    items = response["Item"]
+    )["Item"]
 
-    stripe_product_id = items[0]["stripeProductId"]["S"]
+    stripe_product_id = product_data["stripeProductId"]["S"]
 
     # Check if the customer already has a subscription
     customer = stripe.Customer.retrieve(customer_id, expand=["subscriptions"])
