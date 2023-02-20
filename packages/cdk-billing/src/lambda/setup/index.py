@@ -1,5 +1,4 @@
 import boto3
-import json
 import os
 import logging
 import stripe
@@ -14,17 +13,14 @@ dynamodb_client = boto3.client("dynamodb")
 def lambda_handler(event, context):
     logger.info(f"Setting up user account for event '{event}'")
 
-    secret_name = os.getenv("SECRET_NAME")
+    stripe_secret = os.getenv("STRIPE_SECRET")
     user_billing_table = os.getenv("USER_BILLING_TABLE")
 
     user_id = event["request"]["userAttributes"]["sub"]
     user_email = event["request"]["userAttributes"]["email"]
 
     # Load the Stripe key
-    secret_raw = secrets_manager_client.get_secret_value(SecretId=secret_name)
-    secret = json.loads(secret_raw["SecretString"])
-
-    stripe.api_key = secret["STRIPE_KEY_SECRET"]
+    stripe.api_key = secrets_manager_client.get_secret_value(SecretId=stripe_secret)["SecretString"]
 
     # Create a new account for the user and store if it doesn't exist
     response = stripe.Customer.create(

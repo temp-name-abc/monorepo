@@ -14,7 +14,7 @@ dynamodb_client = boto3.client("dynamodb")
 def lambda_handler(event, context):
     logger.info(f"Retrieving account status for '{event}'")
 
-    secret_name = os.getenv("SECRET_NAME")
+    stripe_secret = os.getenv("STRIPE_SECRET")
     user_billing_table = os.getenv("USER_BILLING_TABLE")
     products_table = os.getenv("PRODUCTS_TABLE")
 
@@ -24,10 +24,7 @@ def lambda_handler(event, context):
     product_id = query_params["productId"]
 
     # Load the Stripe key
-    secret_raw = secrets_manager_client.get_secret_value(SecretId=secret_name)
-    secret = json.loads(secret_raw["SecretString"])
-
-    stripe.api_key = secret["STRIPE_KEY_SECRET"]
+    stripe.api_key = secrets_manager_client.get_secret_value(SecretId=stripe_secret)["SecretString"]
 
     # Retrieve customer account
     user_data = dynamodb_client.get_item(

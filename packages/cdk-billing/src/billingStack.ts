@@ -49,7 +49,7 @@ export class BillingStack extends cdk.NestedStack {
             }),
             handler: "index.lambda_handler",
             environment: {
-                SECRET_NAME: stripeSecrets.secretName,
+                STRIPE_SECRET: stripeSecrets.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
             },
             timeout: cdk.Duration.seconds(30),
@@ -76,7 +76,7 @@ export class BillingStack extends cdk.NestedStack {
             }),
             handler: "index.lambda_handler",
             environment: {
-                SECRET_NAME: stripeSecrets.secretName,
+                STRIPE_SECRET: stripeSecrets.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
                 PRODUCTS_TABLE: productsTable.tableName,
                 HOME_URL: props.homeUrl,
@@ -104,7 +104,7 @@ export class BillingStack extends cdk.NestedStack {
             }),
             handler: "index.lambda_handler",
             environment: {
-                SECRET_NAME: stripeSecrets.secretName,
+                STRIPE_SECRET: stripeSecrets.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
                 PRODUCTS_TABLE: productsTable.tableName,
             },
@@ -137,7 +137,7 @@ export class BillingStack extends cdk.NestedStack {
             }),
             handler: "index.lambda_handler",
             environment: {
-                SECRET_NAME: stripeSecrets.secretName,
+                STRIPE_SECRET: stripeSecrets.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
                 PRODUCTS_TABLE: productsTable.tableName,
                 USAGE_TABLE: usageTable.tableName,

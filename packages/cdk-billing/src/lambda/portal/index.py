@@ -1,5 +1,4 @@
 import boto3
-import json
 import os
 import logging
 import stripe
@@ -32,7 +31,7 @@ def route_to_portal(customer_id: str, home_url: str, user_id: str):
 def lambda_handler(event, context):
     logger.info(f"Retrieving user portal for '{event}'")
 
-    secret_name = os.getenv("SECRET_NAME")
+    stripe_secret = os.getenv("STRIPE_SECRET")
     user_billing_table = os.getenv("USER_BILLING_TABLE")
     products_table = os.getenv("PRODUCTS_TABLE")
     home_url = os.getenv("HOME_URL")
@@ -46,10 +45,7 @@ def lambda_handler(event, context):
         product_id = query_params["productId"]
 
     # Load the Stripe key
-    secret_raw = secrets_manager_client.get_secret_value(SecretId=secret_name)
-    secret = json.loads(secret_raw["SecretString"])
-
-    stripe.api_key = secret["STRIPE_KEY_SECRET"]
+    stripe.api_key = secrets_manager_client.get_secret_value(SecretId=stripe_secret)["SecretString"]
 
     # Retrieve customer account
     customer_response = dynamodb_client.get_item(
