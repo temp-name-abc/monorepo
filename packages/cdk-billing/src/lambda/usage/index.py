@@ -35,7 +35,7 @@ def lambda_handler(event, context):
         timestamp = body["timestamp"]
         product_id = body["productId"]
 
-        key = hashlib.sha256(f"{user_id}:{timestamp}:{product_id}").hexdigest()
+        key = hashlib.sha256(f"{user_id}:{timestamp}:{product_id}".encode()).hexdigest()
 
         # Retrieve user and product data
         user_data = dynamodb_client.get_item(TableName=user_billing_table, Key={"userId": {"S": user_id}})["Item"]
@@ -53,13 +53,15 @@ def lambda_handler(event, context):
             ConditionExpression="attribute_not_exists(id)"
         )
 
-        customer = stripe.Customer.retrieve(user_data["stripeCustomerId"], expand=["subscriptions"])
+        customer = stripe.Customer.retrieve(user_data["stripeCustomerId"]["S"], expand=["subscriptions"])
         subscriptions = customer["subscriptions"]["data"]
 
         for subscription in subscriptions:
-            if subscription["items"]["data"][0]["price"]["product"] == product_data["stripeProductId"]:
+            subscription_item = subscription["items"]["data"][0]
+
+            if subscription_item["price"]["product"] == product_data["stripeProductId"]["S"]:
                 stripe.SubscriptionItem.create_usage_record(
-                    subscription["id"],
+                    subscription_item["id"],
                     quantity=1,
                     timestamp=timestamp
                 )
