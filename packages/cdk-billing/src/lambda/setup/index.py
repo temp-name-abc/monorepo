@@ -17,7 +17,7 @@ def lambda_handler(event, context):
     secret_name = os.getenv("SECRET_NAME")
     user_billing_table = os.getenv("USER_BILLING_TABLE")
 
-    user_id = event["userName"]
+    user_id = event["request"]["userAttributes"]["sub"]
     user_email = event["request"]["userAttributes"]["email"]
 
     # Load the Stripe key

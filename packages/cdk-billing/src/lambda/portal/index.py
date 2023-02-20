@@ -37,7 +37,7 @@ def lambda_handler(event, context):
     products_table = os.getenv("PRODUCTS_TABLE")
     home_url = os.getenv("HOME_URL")
 
-    user_id = event["requestContext"]["authorizer"]["claims"]["cognito:username"]
+    user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     
     query_params = event["queryStringParameters"]
 
