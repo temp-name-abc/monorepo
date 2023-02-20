@@ -37,7 +37,7 @@ def lambda_handler(event, context):
         TableName=user_billing_table,
         Item={
             "userId": {"S": username},
-            "customerId": {"S": customer_id}
+            "stripeCustomerId": {"S": customer_id}
         },
         ConditionExpression="attribute_not_exists(userId)"
     )

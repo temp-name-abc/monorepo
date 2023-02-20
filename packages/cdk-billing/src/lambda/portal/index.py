@@ -58,7 +58,7 @@ def lambda_handler(event, context):
     )
 
     item = customer_response["Item"]
-    customer_id = item["customerId"]["S"]
+    customer_id = item["stripeCustomerId"]["S"]
 
     if product_id == None:
         return route_to_portal(customer_id, home_url, username)
