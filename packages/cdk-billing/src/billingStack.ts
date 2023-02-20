@@ -8,7 +8,7 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as apigw from "aws-cdk-lib/aws-apigateway";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as iam from "aws-cdk-lib/aws-iam";
-import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
+import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 
 interface IStackProps extends cdk.NestedStackProps {
     api: apigw.RestApi;
@@ -154,7 +154,7 @@ export class BillingStack extends cdk.NestedStack {
             visibilityTimeout: usageFnTimeout,
         });
 
-        usageFn.addEventSource(new SqsEventSource(usageQueue));
+        usageFn.addEventSource(new lambdaEventSources.SqsEventSource(usageQueue));
 
         const credentialsRole = new iam.Role(this, "usageApiSqsRole", {
             assumedBy: new iam.ServicePrincipal("apigateway.amazonaws.com"),

@@ -5,7 +5,7 @@ import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as iam from "aws-cdk-lib/aws-iam";
+import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
 
 interface IStackProps extends cdk.NestedStackProps {
@@ -64,5 +64,45 @@ export class StorageStack extends cdk.NestedStack {
             authorizer: props.apiAuth,
             authorizationType: apigw.AuthorizationType.COGNITO,
         });
+
+        // Create object processing function
+        const documentTable = new dynamodb.Table(this, "documentTable", {
+            partitionKey: { name: "documentId", type: dynamodb.AttributeType.STRING },
+        });
+
+        const documentBucket = new s3.Bucket(this, "documentBucket", {
+            blockPublicAccess: {
+                blockPublicAcls: true,
+                blockPublicPolicy: true,
+                ignorePublicAcls: true,
+                restrictPublicBuckets: true,
+            },
+        });
+
+        const processFn = new lambda.Function(this, "processFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "process"), {
+                bundling: {
+                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+                },
+            }),
+            handler: "index.lambda_handler",
+            environment: {
+                PINECONE_SECRET: props.pineconeSecrets.secretName,
+                OPENAI_SECRET: props.openAISecrets.secretName,
+                UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
+                TEMP_STORAGE_BUCKET: tempStorageBucket.bucketName,
+                DOCUMENT_TABLE: documentTable.tableName,
+                DOCUMENT_BUCKET: documentBucket.bucketName,
+            },
+            timeout: cdk.Duration.minutes(15),
+        });
+
+        processFn.addEventSource(
+            new lambdaEventSources.S3EventSource(tempStorageBucket, {
+                events: [s3.EventType.OBJECT_CREATED_PUT],
+            })
+        );
     }
 }
