@@ -121,8 +121,7 @@ export class BillingStack extends cdk.NestedStack {
         productsTable.grantReadData(statusFn);
 
         statusResource.addMethod("GET", new apigw.LambdaIntegration(statusFn), {
-            authorizer: props.apiAuth,
-            authorizationType: apigw.AuthorizationType.COGNITO,
+            authorizationType: apigw.AuthorizationType.IAM,
         });
 
         // Store partner account details
