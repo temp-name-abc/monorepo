@@ -5,6 +5,7 @@ import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
 
@@ -92,12 +93,26 @@ export class StorageStack extends cdk.NestedStack {
                 PINECONE_SECRET: props.pineconeSecrets.secretName,
                 OPENAI_SECRET: props.openAISecrets.secretName,
                 UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
-                TEMP_STORAGE_BUCKET: tempStorageBucket.bucketName,
                 DOCUMENT_TABLE: documentTable.tableName,
                 DOCUMENT_BUCKET: documentBucket.bucketName,
+                API_DOMAIN: props.api.url,
             },
             timeout: cdk.Duration.minutes(15),
         });
+
+        props.pineconeSecrets.grantRead(processFn);
+        props.openAISecrets.grantRead(processFn);
+        tempStorageBucket.grantRead(processFn);
+        uploadRecordsTable.grantReadData(processFn);
+        documentTable.grantWriteData(processFn);
+        documentBucket.grantWrite(processFn);
+        processFn.addToRolePolicy(
+            new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: ["execute-api:Invoke"],
+                resources: ["*"],
+            })
+        );
 
         processFn.addEventSource(
             new lambdaEventSources.S3EventSource(tempStorageBucket, {
