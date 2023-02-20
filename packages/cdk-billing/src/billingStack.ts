@@ -6,6 +6,8 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as path from "path";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as apigw from "aws-cdk-lib/aws-apigateway";
+import * as sqs from "aws-cdk-lib/aws-sqs";
+import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
 interface IStackProps extends cdk.NestedStackProps {
     api: apigw.RestApi;
@@ -120,6 +122,8 @@ export class BillingStack extends cdk.NestedStack {
             pointInTimeRecovery: true,
         });
 
+        const usageFnTimeout = cdk.Duration.minutes(5);
+
         const usageFn = new lambda.Function(this, "usageFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
             code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "usage"), {
@@ -135,12 +139,18 @@ export class BillingStack extends cdk.NestedStack {
                 PRODUCTS_TABLE: productsTable.tableName,
                 USAGE_TABLE: usageTable.tableName,
             },
-            timeout: cdk.Duration.seconds(30),
+            timeout: usageFnTimeout,
         });
 
         stripeSecrets.grantRead(usageFn);
         userBillingTable.grantReadData(usageFn);
         productsTable.grantReadData(usageFn);
         usageTable.grantWriteData(usageFn);
+
+        const usageQueue = new sqs.Queue(this, "usageQueue", {
+            visibilityTimeout: usageFnTimeout,
+        });
+
+        usageFn.addEventSource(new SqsEventSource(usageQueue));
     }
 }
