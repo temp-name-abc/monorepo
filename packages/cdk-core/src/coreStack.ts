@@ -52,6 +52,9 @@ export class CoreStack extends cdk.NestedStack {
         // Create the REST API
         this.api = new apigw.RestApi(this, "restApi", {
             restApiName: "monorepoRestApi",
+            defaultCorsPreflightOptions: {
+                allowOrigins: apigw.Cors.ALL_ORIGINS,
+            },
         });
 
         this.apiAuth = new apigw.CognitoUserPoolsAuthorizer(this, "apiAuth", {

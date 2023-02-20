@@ -7,6 +7,7 @@ import * as path from "path";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as apigw from "aws-cdk-lib/aws-apigateway";
 import * as sqs from "aws-cdk-lib/aws-sqs";
+import * as iam from "aws-cdk-lib/aws-iam";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
 interface IStackProps extends cdk.NestedStackProps {
@@ -27,8 +28,10 @@ export class BillingStack extends cdk.NestedStack {
         const billingResource = props.api.root.addResource("billing");
 
         const portalResource = billingResource.addResource("portal");
-        const statusResource = billingResource.addResource("status");
-        const usageResource = billingResource.addResource("usage");
+        const iamResource = billingResource.addResource("iam");
+
+        const statusResource = iamResource.addResource("status");
+        const usageResource = iamResource.addResource("usage");
 
         // Create billing setup function for new accounts
         const userBillingTable = new dynamodb.Table(this, "userBillingTable", {
@@ -152,5 +155,36 @@ export class BillingStack extends cdk.NestedStack {
         });
 
         usageFn.addEventSource(new SqsEventSource(usageQueue));
+
+        const credentialsRole = new iam.Role(this, "usageApiSqsRole", {
+            assumedBy: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+        });
+        usageQueue.grantSendMessages(credentialsRole);
+
+        usageResource.addMethod(
+            "POST",
+            new apigw.AwsIntegration({
+                service: "sqs",
+                path: `${process.env.CDK_DEFAULT_ACCOUNT}/${usageQueue.queueName}`,
+                integrationHttpMethod: "POST",
+                options: {
+                    credentialsRole,
+                    requestParameters: {
+                        "integration.request.header.Content-Type": "'application/x-www-form-urlencoded'",
+                    },
+                    requestTemplates: {
+                        "application/json": "Action=SendMessage&MessageBody=$input.body",
+                    },
+                    integrationResponses: [
+                        {
+                            statusCode: "200",
+                            responseParameters: {
+                                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                            },
+                        },
+                    ],
+                },
+            })
+        );
     }
 }
