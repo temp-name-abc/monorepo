@@ -84,14 +84,9 @@ def lambda_handler(event, context):
     customer = stripe.Customer.retrieve(customer_id, expand=["subscriptions"])
     subscription_items = customer["subscriptions"]["data"]
 
-    active = False
     for subscription_item in subscription_items:
         if subscription_item["items"]["data"][0]["price"]["product"] == stripe_product_id:
-            active = True
-            break
-
-    if active:
-        return route_to_portal(customer_id, home_url, username)
+            return route_to_portal(customer_id, home_url, username)
 
     # Route to checkout
     subscription_data = None if stripe_partner_id == None else {"transfer_data": {"destination": stripe_partner_id, "amount_percent": partner_share}}
