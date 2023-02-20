@@ -37,12 +37,7 @@ export class StorageStack extends cdk.NestedStack {
 
         const uploadFn = new lambda.Function(this, "uploadFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "upload"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "upload")),
             handler: "index.lambda_handler",
             environment: {
                 UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
