@@ -33,7 +33,7 @@ def lambda_handler(event, context):
         # Extract data
         user_id = body["userId"]
         timestamp = body["timestamp"]
-        product_id = body["product_id"]
+        product_id = body["productId"]
 
         key = hashlib.sha256(f"{user_id}:{timestamp}:{product_id}").hexdigest()
 
