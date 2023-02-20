@@ -42,16 +42,20 @@ def lambda_handler(event, context):
         product_data = dynamodb_client.get_item(TableName=products_table, Key={"productId": {"S": product_id}})["Item"]
 
         # Create record and report usage if not exists
-        dynamodb_client.put_item(
-            TableName=usage_table,
-            Item={
-                "id": {"S": key},
-                "timestamp": {"S": timestamp},
-                "productId": {"S": product_id},
-                "metadata": {"S": json.dumps({"userData": user_data, "productData": product_data})}
-            },
-            ConditionExpression="attribute_not_exists(id)"
-        )
+        try:
+            dynamodb_client.put_item(
+                TableName=usage_table,
+                Item={
+                    "id": {"S": key},
+                    "timestamp": {"S": timestamp},
+                    "productId": {"S": product_id},
+                    "metadata": {"S": json.dumps({"userData": user_data, "productData": product_data})}
+                },
+                ConditionExpression="attribute_not_exists(id)"
+            )
+        except dynamodb_client.exceptions.ConditionalCheckFailedException:
+            logger.info(f"Already reported usage for key '{key}'")
+            continue
 
         customer = stripe.Customer.retrieve(user_data["stripeCustomerId"]["S"], expand=["subscriptions"])
         subscriptions = customer["subscriptions"]["data"]
