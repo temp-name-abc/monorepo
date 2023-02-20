@@ -6,8 +6,11 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as path from "path";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as apigw from "aws-cdk-lib/aws-apigateway";
 
 interface IStackProps extends cdk.NestedStackProps {
+    api: apigw.RestApi;
+    apiAuth: apigw.CognitoUserPoolsAuthorizer;
     userPool: cognito.UserPool;
     homeUrl: string;
     adminGroupName: string;
@@ -19,6 +22,20 @@ export class BillingStack extends cdk.NestedStack {
 
         // Create Stripe secrets storage
         const stripeSecrets = new secretsmanager.Secret(this, "stripeSecrets");
+
+        // Create API resources
+        const billingResource = props.api.root.addResource("billing");
+
+        const accountResource = billingResource.addResource("account");
+
+        const portalResource = accountResource.addResource("portal");
+        const statusResource = accountResource.addResource("status");
+        const usageResource = accountResource.addResource("usage");
+
+        const partnerResource = billingResource.addResource("partner");
+
+        const dashboardResource = partnerResource.addResource("dashboard");
+        const registerResource = partnerResource.addResource("register");
 
         // Create billing setup function for new accounts
         const userBillingTable = new dynamodb.Table(this, "userBillingTable", {
@@ -75,6 +92,11 @@ export class BillingStack extends cdk.NestedStack {
         stripeSecrets.grantRead(portalFn);
         userBillingTable.grantReadData(portalFn);
         productsTable.grantReadData(portalFn);
+
+        portalResource.addMethod("GET", new apigw.LambdaIntegration(portalFn), {
+            authorizer: props.apiAuth,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
 
         // Create account status function
         const statusFn = new lambda.Function(this, "statusFn", {
