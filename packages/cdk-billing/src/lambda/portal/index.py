@@ -12,13 +12,13 @@ dynamodb_client = boto3.client("dynamodb")
 
 
 # Route to a portal
-def route_to_portal(customer_id: str, home_url: str, username: str):
+def route_to_portal(customer_id: str, home_url: str, user_id: str):
     portal = stripe.billing_portal.Session.create(
         customer=customer_id,
         return_url=home_url
     )
 
-    logger.info(f"Created portal session for user `{username}`")
+    logger.info(f"Created portal session for user `{user_id}`")
 
     return {
         "statusCode": 302,
@@ -37,7 +37,7 @@ def lambda_handler(event, context):
     products_table = os.getenv("PRODUCTS_TABLE")
     home_url = os.getenv("HOME_URL")
 
-    username = event["requestContext"]["authorizer"]["claims"]["cognito:username"]
+    user_id = event["requestContext"]["authorizer"]["claims"]["cognito:username"]
     
     query_params = event["queryStringParameters"]
 
@@ -54,14 +54,14 @@ def lambda_handler(event, context):
     # Retrieve customer account
     customer_response = dynamodb_client.get_item(
         TableName=user_billing_table,
-        Key={"userId": {"S": username}}
+        Key={"userId": {"S": user_id}}
     )
 
     item = customer_response["Item"]
     customer_id = item["stripeCustomerId"]["S"]
 
     if product_id == None:
-        return route_to_portal(customer_id, home_url, username)
+        return route_to_portal(customer_id, home_url, user_id)
 
     # Retrieve the product
     product_response = dynamodb_client.get_item(
@@ -86,7 +86,7 @@ def lambda_handler(event, context):
 
     for subscription_item in subscription_items:
         if subscription_item["items"]["data"][0]["price"]["product"] == stripe_product_id:
-            return route_to_portal(customer_id, home_url, username)
+            return route_to_portal(customer_id, home_url, user_id)
 
     # Route to checkout
     subscription_data = None if stripe_partner_id == None else {"transfer_data": {"destination": stripe_partner_id, "amount_percent": partner_share}}
@@ -99,7 +99,7 @@ def lambda_handler(event, context):
         subscription_data=subscription_data
     )
 
-    logger.info(f"Created checkout session for user `{username}`")
+    logger.info(f"Created checkout session for user `{user_id}`")
 
     return {
         "statusCode": 302,

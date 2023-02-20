@@ -17,7 +17,7 @@ def lambda_handler(event, context):
     secret_name = os.getenv("SECRET_NAME")
     user_billing_table = os.getenv("USER_BILLING_TABLE")
 
-    username = event["userName"]
+    user_id = event["userName"]
     user_email = event["request"]["userAttributes"]["email"]
 
     # Load the Stripe key
@@ -36,12 +36,12 @@ def lambda_handler(event, context):
     dynamodb_client.put_item(
         TableName=user_billing_table,
         Item={
-            "userId": {"S": username},
+            "userId": {"S": user_id},
             "stripeCustomerId": {"S": customer_id}
         },
         ConditionExpression="attribute_not_exists(userId)"
     )
 
-    logger.info(f"Created and stored customer '{customer_id}' for user '{username}' with email '{user_email}'")
+    logger.info(f"Created and stored customer '{customer_id}' for user '{user_id}' with email '{user_email}'")
 
     return event

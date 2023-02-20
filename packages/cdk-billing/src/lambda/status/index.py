@@ -18,7 +18,10 @@ def lambda_handler(event, context):
     user_billing_table = os.getenv("USER_BILLING_TABLE")
     products_table = os.getenv("PRODUCTS_TABLE")
 
-    username = event["queryStringParameters"]["userId"]
+    query_params = event["queryStringParameters"]
+
+    user_id = query_params["userId"]
+    product_id = query_params["productId"]
 
     # Load the Stripe key
     secret_raw = secrets_manager_client.get_secret_value(SecretId=secret_name)
@@ -29,15 +32,18 @@ def lambda_handler(event, context):
     # Retrieve customer account
     response = dynamodb_client.get_item(
         TableName=user_billing_table,
-        Key={"userId": {"S": username}}
+        Key={"userId": {"S": user_id}}
     )
 
     item = response["Item"]
     customer_id = item["stripeCustomerId"]["S"]
 
     # Retrieve the product id
-    response = dynamodb_client.scan(TableName=products_table, Limit=1)
-    items = response["Items"]
+    response = dynamodb_client.get_item(
+        TableName=products_table,
+        Key={"productId": {"S": product_id}}
+    )
+    items = response["Item"]
 
     stripe_product_id = items[0]["stripeProductId"]["S"]
 
@@ -51,7 +57,7 @@ def lambda_handler(event, context):
             active = True
             break
 
-    logger.info(f"Retrieved status active = '{active}' for user '{username}'")
+    logger.info(f"Retrieved status active '{active}' for user '{user_id}'")
 
     return {
         "statusCode": 200,
