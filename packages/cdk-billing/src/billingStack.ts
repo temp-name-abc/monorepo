@@ -5,7 +5,6 @@ import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as path from "path";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
-import * as iam from "aws-cdk-lib/aws-iam";
 import * as apigw from "aws-cdk-lib/aws-apigateway";
 
 interface IStackProps extends cdk.NestedStackProps {
@@ -13,7 +12,6 @@ interface IStackProps extends cdk.NestedStackProps {
     apiAuth: apigw.CognitoUserPoolsAuthorizer;
     userPool: cognito.UserPool;
     homeUrl: string;
-    adminGroupName: string;
 }
 
 export class BillingStack extends cdk.NestedStack {

@@ -28,7 +28,6 @@ export class CdkStack extends cdk.Stack {
             apiAuth: coreStack.apiAuth,
             userPool: coreStack.userPool,
             homeUrl: env.homeUrl,
-            adminGroupName: coreStack.adminGroupName,
         });
     }
 }

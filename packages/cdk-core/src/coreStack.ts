@@ -13,7 +13,6 @@ export class CoreStack extends cdk.NestedStack {
     public readonly userPool: cognito.UserPool;
     public readonly api: apigw.RestApi;
     public readonly apiAuth: apigw.CognitoUserPoolsAuthorizer;
-    public readonly adminGroupName: string = "adminGroup";
 
     constructor(scope: Construct, id: string, props: IStackProps) {
         super(scope, id, props);
@@ -48,12 +47,6 @@ export class CoreStack extends cdk.NestedStack {
             oAuth: {
                 callbackUrls: [props.homeUrl],
             },
-        });
-
-        // Create groups
-        new cognito.CfnUserPoolGroup(this, "adminGroup", {
-            userPoolId: this.userPool.userPoolId,
-            groupName: this.adminGroupName,
         });
 
         // Create the REST API
