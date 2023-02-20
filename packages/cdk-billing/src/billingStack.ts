@@ -186,5 +186,11 @@ export class BillingStack extends cdk.NestedStack {
             authorizer: props.apiAuth,
             authorizationType: apigw.AuthorizationType.COGNITO,
         });
+
+        // Submit usage events
+        // **** Submit the userId, timestamp, productId
+        // **** Authenticate using IAM
+        // **** Check if we need to delegate prices between others based on the commission value (e.g. partner, percentage)
+        // **** Also need to add idempotency and SQS API gateway integration
     }
 }
