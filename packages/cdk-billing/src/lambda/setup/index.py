@@ -12,7 +12,7 @@ dynamodb_client = boto3.client("dynamodb")
 
 
 def lambda_handler(event, context):
-    logger.info(f"Setting up customer account for event '{event}'")
+    logger.info(f"Setting up user account for event '{event}'")
 
     secret_name = os.getenv("SECRET_NAME")
     user_billing_table = os.getenv("USER_BILLING_TABLE")
