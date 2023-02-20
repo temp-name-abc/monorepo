@@ -44,9 +44,4 @@ def lambda_handler(event, context):
 
     logger.info(f"Created and stored customer '{customer_id}' for user '{username}' with email '{user_email}'")
 
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Access-Control-Allow-Origin": "*",
-        }
-    }
+    return event
