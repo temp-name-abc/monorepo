@@ -72,7 +72,7 @@ def lambda_handler(event, context):
     item = product_response["Item"]
 
     stripe_product_id = item["stripeProductId"]["S"]
-    stripe_price_id = item["stripeProductId"]["S"]
+    stripe_price_id = item["stripePriceId"]["S"]
 
     stripe_partner_id = None
     partner_share = None
