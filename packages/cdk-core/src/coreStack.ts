@@ -1,6 +1,7 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as cognito from "aws-cdk-lib/aws-cognito";
+import * as apigw from "aws-cdk-lib/aws-apigateway";
 
 interface IStackProps extends cdk.NestedStackProps {
     googleClientId: string;
@@ -10,6 +11,8 @@ interface IStackProps extends cdk.NestedStackProps {
 
 export class CoreStack extends cdk.NestedStack {
     public readonly userPool: cognito.UserPool;
+    public readonly api: apigw.RestApi;
+    public readonly apiAuth: apigw.CognitoUserPoolsAuthorizer;
     public readonly adminGroupName: string = "adminGroup";
 
     constructor(scope: Construct, id: string, props: IStackProps) {
@@ -51,6 +54,13 @@ export class CoreStack extends cdk.NestedStack {
         new cognito.CfnUserPoolGroup(this, "adminGroup", {
             userPoolId: this.userPool.userPoolId,
             groupName: this.adminGroupName,
+        });
+
+        // Create the REST API
+        this.api = new apigw.RestApi(this, "restApi");
+
+        this.apiAuth = new apigw.CognitoUserPoolsAuthorizer(this, "apiAuth", {
+            cognitoUserPools: [this.userPool],
         });
     }
 }
