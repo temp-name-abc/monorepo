@@ -23,7 +23,7 @@ def lambda_handler(event, context):
     partner_username = body["username"]
 
     user_pool_id = event["requestContext"]["authorizer"]["claims"]["iss"].split("/")[-1]
-    caller_username = event["requestContext"]["authorizer"]["claims"]["sub"]
+    caller_username = event["requestContext"]["authorizer"]["claims"]["cognito:username"]
 
     # Only admins can register users
     groups_response = client.admin_list_groups_for_user(

@@ -19,7 +19,7 @@ def lambda_handler(event, context):
     products_table = os.getenv("PRODUCTS_TABLE")
     home_url = os.getenv("HOME_URL")
 
-    username = event["requestContext"]["authorizer"]["claims"]["sub"]
+    username = event["requestContext"]["authorizer"]["claims"]["cognito:username"]
 
     # Load the Stripe key
     secret_raw = secrets_manager_client.get_secret_value(SecretId=secret_name)
