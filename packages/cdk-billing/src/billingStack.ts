@@ -114,13 +114,33 @@ export class BillingStack extends cdk.NestedStack {
             authorizationType: apigw.AuthorizationType.IAM,
         });
 
-        // Submit usage events
-        // **** Submit the userId, timestamp, productId
-        // **** Authenticate using IAM
-        // **** Check if we need to delegate prices between others based on the commission value (e.g. partner, percentage)
-        // **** Also need to add idempotency and SQS API gateway integration
-        // **** Actually, this payout integration will need to happen as a part of the checkout subscription if the price matches - we need some reverse mapping for these users
-        // **** We should also include a defer type - where one user can setup an account and then another user can pay on behalf of them
-        // **** We also need to create a shared service account
+        // Setup payment processing
+        const usageTable = new dynamodb.Table(this, "usageTable", {
+            partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
+            pointInTimeRecovery: true,
+        });
+
+        const usageFn = new lambda.Function(this, "usageFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "usage"), {
+                bundling: {
+                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+                },
+            }),
+            handler: "index.lambda_handler",
+            environment: {
+                SECRET_NAME: stripeSecrets.secretName,
+                USER_BILLING_TABLE: userBillingTable.tableName,
+                PRODUCTS_TABLE: productsTable.tableName,
+                USAGE_TABLE: usageTable.tableName,
+            },
+            timeout: cdk.Duration.seconds(30),
+        });
+
+        stripeSecrets.grantRead(usageFn);
+        userBillingTable.grantReadData(usageFn);
+        productsTable.grantReadData(usageFn);
+        usageTable.grantWriteData(usageFn);
     }
 }
