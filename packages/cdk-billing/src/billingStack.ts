@@ -120,6 +120,11 @@ export class BillingStack extends cdk.NestedStack {
         userBillingTable.grantReadData(statusFn);
         productsTable.grantReadData(statusFn);
 
+        statusResource.addMethod("GET", new apigw.LambdaIntegration(statusFn), {
+            authorizer: props.apiAuth,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
+
         // Store partner account details
         const partnerTable = new dynamodb.Table(this, "partnerTable", {
             partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
@@ -153,6 +158,11 @@ export class BillingStack extends cdk.NestedStack {
         stripeSecrets.grantRead(partnerRegisterFn);
         partnerTable.grantWriteData(partnerRegisterFn);
 
+        registerResource.addMethod("POST", new apigw.LambdaIntegration(partnerRegisterFn), {
+            authorizer: props.apiAuth,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
+
         // Get partner dashboard
         const partnerDashboardFn = new lambda.Function(this, "partnerDashboardFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
@@ -172,5 +182,10 @@ export class BillingStack extends cdk.NestedStack {
 
         stripeSecrets.grantRead(partnerDashboardFn);
         partnerTable.grantReadData(partnerDashboardFn);
+
+        dashboardResource.addMethod("GET", new apigw.LambdaIntegration(partnerDashboardFn), {
+            authorizer: props.apiAuth,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
     }
 }
