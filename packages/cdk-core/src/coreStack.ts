@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as apigw from "aws-cdk-lib/aws-apigateway";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 
 interface IStackProps extends cdk.NestedStackProps {
     googleClientId: string;
@@ -13,6 +14,8 @@ export class CoreStack extends cdk.NestedStack {
     public readonly userPool: cognito.UserPool;
     public readonly api: apigw.RestApi;
     public readonly apiAuth: apigw.CognitoUserPoolsAuthorizer;
+    public readonly pineconeSecrets: secretsmanager.Secret;
+    public readonly openAISecrets: secretsmanager.Secret;
 
     constructor(scope: Construct, id: string, props: IStackProps) {
         super(scope, id, props);
@@ -60,5 +63,9 @@ export class CoreStack extends cdk.NestedStack {
         this.apiAuth = new apigw.CognitoUserPoolsAuthorizer(this, "apiAuth", {
             cognitoUserPools: [this.userPool],
         });
+
+        // Store secrets
+        this.pineconeSecrets = new secretsmanager.Secret(this, "pineconeSecrets");
+        this.openAISecrets = new secretsmanager.Secret(this, "openAISecrets");
     }
 }
