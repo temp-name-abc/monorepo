@@ -40,12 +40,13 @@ def lambda_handler(event, context):
     api_url = os.getenv("API_URL")
     product_id = os.getenv("PRODUCT_ID")
 
+    user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
+
     body = json.loads(event["body"])
 
     # Load and validate parameters
     prev_chat_id = body["previousChatId"] if "previousChatId" in body else None
     collection_id = body["collectionId"] if "collectionId" in body else None
-    user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     question = body["question"]
 
     if prev_chat_id != None or collection_id != None:

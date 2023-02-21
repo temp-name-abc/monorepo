@@ -32,7 +32,12 @@ export class ChatStack extends cdk.NestedStack {
 
         const chatFn = new lambda.Function(this, "chatFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "chat")),
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "chat"), {
+                bundling: {
+                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+                },
+            }),
             handler: "index.lambda_handler",
             environment: {
                 OPENAI_SECRET: openAISecret.secretName,
