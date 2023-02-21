@@ -99,7 +99,7 @@ def lambda_handler(event, context):
         )["data"][0]["embedding"]
 
         index.upsert([
-            (key, embeddings)
+            (key, embeddings, {"userId": user_id})
         ])
 
         # Update the resource
