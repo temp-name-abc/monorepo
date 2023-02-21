@@ -89,12 +89,7 @@ export class StorageStack extends cdk.NestedStack {
 
         const processFn = new lambda.Function(this, "processFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "process"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
+            code: lambda.Code.fromDockerBuild(path.join(__dirname, "lambda", "process")),
             handler: "index.lambda_handler",
             environment: {
                 PINECONE_SECRET: pineconeSecret.secretName,
@@ -133,12 +128,7 @@ export class StorageStack extends cdk.NestedStack {
         // Create search function
         const searchFn = new lambda.Function(this, "searchFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "search"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
+            code: lambda.Code.fromDockerBuild(path.join(__dirname, "lambda", "search")),
             handler: "index.lambda_handler",
             environment: {
                 PINECONE_SECRET: pineconeSecret.secretName,
