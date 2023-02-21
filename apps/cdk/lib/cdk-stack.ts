@@ -5,6 +5,7 @@ import { BillingStack } from "cdk-billing";
 import { StorageStack } from "cdk-storage";
 import { cdkEnv } from "types";
 import dotenv from "dotenv";
+import { ChatStack } from "../../../packages/cdk-chat";
 
 dotenv.config({ path: "./.env.local" });
 
@@ -16,6 +17,7 @@ const env = cdkEnv.parse({
     pineconeEnv: process.env.PINECONE_ENV,
     pineconeIndex: process.env.PINECONE_INDEX,
     productIdDocumentProcessText: process.env.PRODUCT_ID_DOCUMENT_PROCESS_TEXT,
+    productIdChat: process.env.PRODUCT_ID_CHAT,
 });
 
 export class CdkStack extends cdk.Stack {
@@ -41,7 +43,14 @@ export class CdkStack extends cdk.Stack {
             apiUrl: env.apiUrl,
             pineconeEnv: env.pineconeEnv,
             pineconeIndex: env.pineconeIndex,
-            productIdDocumentProcessText: env.productIdDocumentProcessText,
+            productId: env.productIdDocumentProcessText,
+        });
+
+        new ChatStack(this, "chatStack", {
+            api: coreStack.api,
+            authorizer: coreStack.authorizer,
+            apiUrl: env.apiUrl,
+            productId: env.productIdChat,
         });
     }
 }
