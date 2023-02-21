@@ -11,8 +11,6 @@ logger.setLevel(logging.INFO)
 s3_client = boto3.client("s3")
 dynamodb_client = boto3.client("dynamodb")
 
-ALLOWED_FILE_TYPES = ["txt"]
-
 
 def lambda_handler(event, context):
     logger.info(f"Creating file upload request for '{event}'")
@@ -24,18 +22,6 @@ def lambda_handler(event, context):
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
 
     body = json.loads(event["body"])
-
-    file_type = body["fileType"]
-
-    # Validate the file type
-    if file_type not in ALLOWED_FILE_TYPES:
-        return {
-            "statusCode": 400,
-            "headers": {
-                "Access-Control-Allow-Origin": "*",
-            },
-            "body": f"Invalid file type. Allowed file types '{ALLOWED_FILE_TYPES}'"
-        }
 
     # Create a new key for the request
     key = str(uuid.uuid4())
@@ -50,7 +36,6 @@ def lambda_handler(event, context):
         Item={
             "uploadId": {"S": key},
             "userId": {"S": user_id},
-            "fileType": {"S": file_type},
             "ttl": {"N": str(ttl_seconds)}
         },
         ConditionExpression="attribute_not_exists(uploadId)"
@@ -66,7 +51,7 @@ def lambda_handler(event, context):
         ExpiresIn=86400
     )
 
-    logger.info(f"Created file upload record with key '{key}' for user '{user_id}' with file type '{file_type}'")
+    logger.info(f"Created file upload record with key '{key}' for user '{user_id}'")
 
     return {
         "statusCode": 200,

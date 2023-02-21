@@ -6,6 +6,8 @@ export const cdkEnv = z.object({
     homeUrl: z.string(),
     apiUrl: z.string(),
     pineconeEnv: z.string(),
+    pineconeIndex: z.string(),
+    productIdDocumentProcessText: z.string(),
 });
 
 export type ICdkEnv = z.infer<typeof cdkEnv>;

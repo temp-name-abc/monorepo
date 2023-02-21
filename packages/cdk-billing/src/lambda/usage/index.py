@@ -44,7 +44,7 @@ def lambda_handler(event, context):
                 TableName=usage_table,
                 Item={
                     "id": {"S": key},
-                    "timestamp": {"S": timestamp},
+                    "timestamp": {"N": timestamp},
                     "productId": {"S": product_id},
                     "metadata": {"S": json.dumps({"userData": user_data, "productData": product_data})}
                 },

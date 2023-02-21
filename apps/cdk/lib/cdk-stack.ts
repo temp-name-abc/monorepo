@@ -14,6 +14,8 @@ const env = cdkEnv.parse({
     homeUrl: process.env.HOME_URL,
     apiUrl: process.env.API_URL,
     pineconeEnv: process.env.PINECONE_ENV,
+    pineconeIndex: process.env.PINECONE_INDEX,
+    productIdDocumentProcessText: process.env.PRODUCT_ID_DOCUMENT_PROCESS_TEXT,
 });
 
 export class CdkStack extends cdk.Stack {
@@ -38,6 +40,8 @@ export class CdkStack extends cdk.Stack {
             authorizer: coreStack.authorizer,
             apiUrl: env.apiUrl,
             pineconeEnv: env.pineconeEnv,
+            pineconeIndex: env.pineconeIndex,
+            productIdDocumentProcessText: env.productIdDocumentProcessText,
         });
     }
 }

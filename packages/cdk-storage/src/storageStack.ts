@@ -14,6 +14,8 @@ interface IStackProps extends cdk.NestedStackProps {
     authorizer: apigw.CognitoUserPoolsAuthorizer;
     apiUrl: string;
     pineconeEnv: string;
+    pineconeIndex: string;
+    productIdDocumentProcessText: string;
 }
 
 export class StorageStack extends cdk.NestedStack {
@@ -73,6 +75,7 @@ export class StorageStack extends cdk.NestedStack {
         // Create object processing function
         const documentTable = new dynamodb.Table(this, "documentTable", {
             partitionKey: { name: "documentId", type: dynamodb.AttributeType.STRING },
+            timeToLiveAttribute: "ttl",
         });
 
         const documentBucket = new s3.Bucket(this, "documentBucket", {
@@ -101,6 +104,8 @@ export class StorageStack extends cdk.NestedStack {
                 DOCUMENT_BUCKET: documentBucket.bucketName,
                 API_URL: props.apiUrl,
                 PINECONE_ENV: props.pineconeEnv,
+                PINECONE_INDEX: props.pineconeIndex,
+                PRODUCT_ID: props.productIdDocumentProcessText,
             },
             timeout: cdk.Duration.minutes(15),
         });
