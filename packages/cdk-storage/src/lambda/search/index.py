@@ -4,10 +4,6 @@ import os
 import logging
 import openai
 import pinecone
-import requests
-from datetime import datetime, timedelta
-from botocore.auth import SigV4Auth
-from botocore.awsrequest import AWSRequest
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

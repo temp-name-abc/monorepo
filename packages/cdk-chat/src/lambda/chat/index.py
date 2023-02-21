@@ -4,9 +4,10 @@ import os
 import logging
 import openai
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
+import uuid
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -42,12 +43,12 @@ def lambda_handler(event, context):
     body = json.loads(event["body"])
 
     # Load and validate parameters
-    previous_chat_id = body["previousChatId"] if "previousChatId" in body else None
+    prev_chat_id = body["previousChatId"] if "previousChatId" in body else None
     collection_id = body["previousChatId"] if "previousChatId" in body else None
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
-    query = body["query"]
+    question = body["question"]
 
-    if previous_chat_id != None or collection_id != None:
+    if prev_chat_id != None or collection_id != None:
         return {
             "statusCode": 400,
             "headers": {
@@ -59,16 +60,25 @@ def lambda_handler(event, context):
     # Load the OpenAI API key
     openai.api_key = secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"]
 
-    # Load the previous chat
-    prev_chat_response = dynamodb_client.get_item(
-        TableName=conversations_table,
-        Key={"chatId": {"S": previous_chat_id}}
-    )
+    # Load the chat data
+    chat_id = str(uuid.uuid4())
+    conversation_id = str(uuid.uuid4())
+    context = []
 
-    if "Item" in prev_chat_response:
-        pass
+    now = datetime.utcnow()
+    timestamp = int(now.timestamp())
 
-    # Check the user can bill
+    if prev_chat_id != None:
+        prev_chat_data = dynamodb_client.get_item(
+            TableName=conversations_table,
+            Key={"chatId": {"S": prev_chat_id}}
+        )["Item"]
+
+        collection_id = prev_chat_data["collectionId"]["S"]
+        conversation_id = prev_chat_data["conversationId"]["S"]
+        context = json.loads(prev_chat_data["context"]["S"])
+
+    # Check the user can be billed bill
     active_url = f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
     active_request = make_request(active_url, "GET")
     active_req = requests.get(active_url, headers=active_request.headers)
@@ -85,3 +95,7 @@ def lambda_handler(event, context):
             },
             "body": msg
         }
+
+    # Begin the prompt loop
+
+    
