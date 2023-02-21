@@ -129,5 +129,35 @@ export class StorageStack extends cdk.NestedStack {
                 events: [s3.EventType.OBJECT_CREATED_POST],
             })
         );
+
+        // Create search function
+        const searchFn = new lambda.Function(this, "searchFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "search"), {
+                bundling: {
+                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+                },
+            }),
+            handler: "index.lambda_handler",
+            environment: {
+                PINECONE_SECRET: pineconeSecret.secretName,
+                OPENAI_SECRET: openAISecret.secretName,
+                DOCUMENT_TABLE: documentTable.tableName,
+                DOCUMENT_BUCKET: documentBucket.bucketName,
+                PINECONE_ENV: props.pineconeEnv,
+                PINECONE_INDEX: props.pineconeIndex,
+            },
+            timeout: cdk.Duration.minutes(1),
+        });
+
+        pineconeSecret.grantRead(processFn);
+        openAISecret.grantRead(processFn);
+        documentTable.grantReadData(processFn);
+        documentBucket.grantRead(processFn);
+
+        searchResource.addMethod("GET", new apigw.LambdaIntegration(searchFn), {
+            authorizationType: apigw.AuthorizationType.IAM,
+        });
     }
 }
