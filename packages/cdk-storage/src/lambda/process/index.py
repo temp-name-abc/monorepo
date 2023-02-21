@@ -133,7 +133,7 @@ def lambda_handler(event, context):
         ])
 
         # Upload text to S3
-        s3_client.put_object(Bucket=document_bucket, Key=document_table, Body=body)
+        s3_client.put_object(Bucket=document_bucket, Key=key, Body=body)
 
         # Update the resource
         dynamodb_client.put_item(
