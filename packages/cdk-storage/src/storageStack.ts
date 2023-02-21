@@ -126,7 +126,7 @@ export class StorageStack extends cdk.NestedStack {
 
         processFn.addEventSource(
             new lambdaEventSources.S3EventSource(tempStorageBucket, {
-                events: [s3.EventType.OBJECT_CREATED_PUT],
+                events: [s3.EventType.OBJECT_CREATED_POST],
             })
         );
     }
