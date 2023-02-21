@@ -119,7 +119,8 @@ export class StorageStack extends cdk.NestedStack {
         processFn.addToRolePolicy(
             new iam.PolicyStatement({
                 effect: iam.Effect.ALLOW,
-                actions: ["execute-api:Invoke"],
+                // actions: ["execute-api:Invoke"],
+                actions: ["*"],
                 resources: ["*"],
             })
         );

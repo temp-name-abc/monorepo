@@ -42,6 +42,10 @@ def lambda_handler(event, context):
 
     index = pinecone.Index(pinecone_index)
 
+    # Create auth credentials
+    session = boto3.Session()
+    credentials = session.get_credentials()
+
     # Process records
     for record in event["Records"]:
         key = record["s3"]["object"]["key"]
@@ -71,17 +75,24 @@ def lambda_handler(event, context):
         user_id = upload_data["userId"]["S"]
 
         # Check if the user has subscribed
-        r = requests.get(f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}")
+        r = requests.get(
+            f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
+        )
+
         if not r.ok or not r.json()["active"]:
-            logger.info(f"User '{user_id}' has not subscribed to product '{product_id}'")
+            logger.info(f"User '{user_id}' has not subscribed to product '{product_id}' with status code '{r.status_code}'")
             continue
 
         # Record usage for user
-        r = requests.post(f"{api_url}/billing/iam/usage", data={
-            "userId": user_id,
-            "timestamp": timestamp,
-            "productId": product_id
-        })
+        r = requests.post(
+            f"{api_url}/billing/iam/usage",
+            data={
+                "userId": user_id,
+                "timestamp": timestamp,
+                "productId": product_id
+            }
+        )
+
         if not r.ok:
             logger.info(f"Unable to record usage for user '{user_id}' with product '{product_id}'")
             continue
