@@ -39,7 +39,6 @@ def lambda_handler(event, context):
     pinecone_secret = os.getenv("PINECONE_SECRET")
     openai_secret = os.getenv("OPENAI_SECRET")
     upload_records_table = os.getenv("UPLOAD_RECORDS_TABLE")
-    temp_storage_bucket = os.getenv("TEMP_STORAGE_BUCKET")
     document_table = os.getenv("DOCUMENT_TABLE")
     document_bucket = os.getenv("DOCUMENT_BUCKET")
     api_url = os.getenv("API_URL")
@@ -63,6 +62,7 @@ def lambda_handler(event, context):
     # Process records
     for record in event["Records"]:
         key = record["s3"]["object"]["key"]
+        bucket_name = record["s3"]["bucket"]["name"]
 
         # Create a record to lock the resource temporarily
         now = datetime.utcnow()
@@ -116,7 +116,7 @@ def lambda_handler(event, context):
             continue
 
         # Retrieve the text and store it in S3
-        obj_res = s3_client.get_object(Bucket=temp_storage_bucket, Key=key)
+        obj_res = s3_client.get_object(Bucket=bucket_name, Key=key)
         body = obj_res["Body"].read().decode("utf-8")
 
         s3_client.put_object(Bucket=document_bucket, Key=document_table, Body=body)
