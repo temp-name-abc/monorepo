@@ -21,8 +21,6 @@ def lambda_handler(event, context):
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
 
-    body = json.loads(event["body"])
-
     # Create a new key for the request
     key = str(uuid.uuid4())
 
