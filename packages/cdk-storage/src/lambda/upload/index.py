@@ -19,7 +19,10 @@ def lambda_handler(event, context):
     temp_storage_bucket = os.getenv("TEMP_STORAGE_BUCKET")
     ttl_expiry = os.getenv("TTL_EXPIRY")
 
+    body = json.loads(event["body"])
+
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
+    collection_id = body["collectionId"]
 
     # Create a new key for the request
     key = str(uuid.uuid4())
@@ -35,6 +38,7 @@ def lambda_handler(event, context):
             "uploadId": {"S": key},
             "userId": {"S": user_id},
             "ttl": {"N": str(ttl_seconds)},
+            "collectionId": {"S": collection_id}
         },
         ConditionExpression="attribute_not_exists(uploadId)"
     )

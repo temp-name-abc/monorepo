@@ -2,9 +2,9 @@ import boto3
 import json
 import os
 import logging
-# import openai
-# import pinecone
-# import requests
+import openai
+import pinecone
+import requests
 from datetime import datetime, timedelta
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
@@ -16,136 +16,137 @@ s3_client = boto3.client("s3")
 dynamodb_client = boto3.client("dynamodb")
 secrets_manager_client = boto3.client("secretsmanager")
 
-def lambda_handler(event, context):
+
+def make_request(url, method, data = None):
     session = boto3.session.Session()
     credentials = session.get_credentials()
     region = os.getenv("AWS_REGION")
     service = "execute-api"
-    
-    api_url = os.getenv("API_URL")
-    
-    request_url = f"{api_url}/billing/iam/status?userId=07343b80-f256-4d60-a412-36dec0a4ea40&productId=storage.document.process.text"
-    
-    print(request_url)
-    
+
     headers = {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json"
     }
-    
-    http_request = AWSRequest(method='GET', url=request_url, headers=headers)
+
+    http_request = AWSRequest(method=method, url=url, headers=headers, data=data)
     SigV4Auth(credentials, service, region).add_auth(http_request)
-    
-    print(http_request.headers)
 
-# def lambda_handler(event, context):
-#     logger.info(f"Processing files for '{event}'")
+    return http_request
 
-#     pinecone_secret = os.getenv("PINECONE_SECRET")
-#     openai_secret = os.getenv("OPENAI_SECRET")
-#     upload_records_table = os.getenv("UPLOAD_RECORDS_TABLE")
-#     temp_storage_bucket = os.getenv("TEMP_STORAGE_BUCKET")
-#     document_table = os.getenv("DOCUMENT_TABLE")
-#     document_bucket = os.getenv("DOCUMENT_BUCKET")
-#     api_url = os.getenv("API_URL")
-#     pinecone_env = os.getenv("PINECONE_ENV")
-#     pinecone_index = os.getenv("PINECONE_INDEX")
-#     product_id = os.getenv("PRODUCT_ID")
 
-#     # Load the OpenAI API key
-#     openai.api_key = secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"]
+def lambda_handler(event, context):
+    logger.info(f"Processing files for '{event}'")
 
-#     # Load the Pinecone API key
-#     pinecone_api_key = secrets_manager_client.get_secret_value(SecretId=pinecone_secret)["SecretString"]
+    pinecone_secret = os.getenv("PINECONE_SECRET")
+    openai_secret = os.getenv("OPENAI_SECRET")
+    upload_records_table = os.getenv("UPLOAD_RECORDS_TABLE")
+    temp_storage_bucket = os.getenv("TEMP_STORAGE_BUCKET")
+    document_table = os.getenv("DOCUMENT_TABLE")
+    document_bucket = os.getenv("DOCUMENT_BUCKET")
+    api_url = os.getenv("API_URL")
+    pinecone_env = os.getenv("PINECONE_ENV")
+    pinecone_index = os.getenv("PINECONE_INDEX")
+    product_id = os.getenv("PRODUCT_ID")
 
-#     pinecone.init(
-#         api_key=pinecone_api_key,
-#         environment=pinecone_env
-#     )
+    # Load the OpenAI API key
+    openai.api_key = secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"]
 
-#     index = pinecone.Index(pinecone_index)
+    # Load the Pinecone API key
+    pinecone_api_key = secrets_manager_client.get_secret_value(SecretId=pinecone_secret)["SecretString"]
 
-#     # Process records
-#     for record in event["Records"]:
-#         key = record["s3"]["object"]["key"]
+    pinecone.init(
+        api_key=pinecone_api_key,
+        environment=pinecone_env
+    )
 
-#         # Create a record to lock the resource temporarily
-#         now = datetime.utcnow()
-#         timestamp = int(now.timestamp())
-#         expiry_time = now + timedelta(minutes=15)
-#         ttl_seconds = int(expiry_time.timestamp())
+    index = pinecone.Index(pinecone_index)
 
-#         dynamodb_client.put_item(
-#             TableName=document_table,
-#             Item={
-#                 "documentId": {"S": key},
-#                 "ttl": {"N": str(ttl_seconds)},
-#                 "status": {"S": "in_progress"}
-#             },
-#             ConditionExpression="attribute_not_exists(documentId)"
-#         )
+    # Process records
+    for record in event["Records"]:
+        key = record["s3"]["object"]["key"]
 
-#         # Get the upload data
-#         upload_data = dynamodb_client.get_item(
-#             TableName=upload_records_table,
-#             Key={"uploadId": {"S": key}}
-#         )["Item"]
+        # Create a record to lock the resource temporarily
+        now = datetime.utcnow()
+        timestamp = int(now.timestamp())
+        expiry_time = now + timedelta(minutes=15)
+        ttl_seconds = int(expiry_time.timestamp())
 
-#         user_id = upload_data["userId"]["S"]
+        dynamodb_client.put_item(
+            TableName=document_table,
+            Item={
+                "documentId": {"S": key},
+                "ttl": {"N": str(ttl_seconds)},
+                "status": {"S": "in_progress"}
+            },
+            ConditionExpression="attribute_not_exists(documentId)"
+        )
 
-#         # Check if the user has subscribed
-#         active_req = requests.get(
-#             f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
-#         )
+        # Get the upload data
+        upload_data = dynamodb_client.get_item(
+            TableName=upload_records_table,
+            Key={"uploadId": {"S": key}}
+        )["Item"]
 
-#         if not active_req.ok or not active_req.json()["active"]:
-#             logger.info(f"User '{user_id}' has not subscribed to product '{product_id}' with status code '{active_req.status_code}'")
-#             continue
+        user_id = upload_data["userId"]["S"]
+        collection_id = upload_data["collectionId"]["S"]
 
-#         # Record usage for user
-#         usage_req = requests.post(
-#             f"{api_url}/billing/iam/usage",
-#             data={
-#                 "userId": user_id,
-#                 "timestamp": timestamp,
-#                 "productId": product_id
-#             }
-#         )
+        # Check if the user has subscribed
+        active_url = f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
+        active_request = make_request(active_url, "GET")
+        active_req = requests.get(active_url, headers=active_request.headers)
 
-#         if not usage_req.ok:
-#             logger.info(f"Unable to record usage for user '{user_id}' with product '{product_id}' with status code '{usage_req.status_code}'")
-#             continue
+        if not active_req.ok or not active_req.json()["active"]:
+            logger.info(f"User '{user_id}' has not subscribed to product '{product_id}' with status code '{active_req.status_code}'")
+            continue
 
-#         # Retrieve the text and store it in S3
-#         obj_res = s3_client.get_object(Bucket=temp_storage_bucket, Key=key)
-#         body = obj_res["Body"].read().decode("utf-8")
+        # Record usage for user
+        usage_url = f"{api_url}/billing/iam/usage"
+        usage_request = make_request(usage_url, "POST", {
+            "userId": user_id,
+            "timestamp": timestamp,
+            "productId": product_id
+        })
+        usage_req = requests.post(
+            usage_url,
+            headers=usage_request.headers,
+            data=usage_request.data
+        )
 
-#         s3_client.put_object(Bucket=document_bucket, Key=document_table, Body=body)
+        if not usage_req.ok:
+            logger.info(f"Unable to record usage for user '{user_id}' with product '{product_id}' with status code '{usage_req.status_code}'")
+            continue
 
-#         # Create the embeddings and store in Pinecone
-#         embeddings = openai.Embedding.create(
-#             input=body,
-#             model="text-embedding-ada-002"
-#         )["data"][0]["embedding"]
+        # Retrieve the text and store it in S3
+        obj_res = s3_client.get_object(Bucket=temp_storage_bucket, Key=key)
+        body = obj_res["Body"].read().decode("utf-8")
 
-#         index.upsert([
-#             (key, embeddings, {"userId": user_id})
-#         ])
+        s3_client.put_object(Bucket=document_bucket, Key=document_table, Body=body)
 
-#         # Update the resource
-#         dynamodb_client.put_item(
-#             TableName=document_table,
-#             Item={
-#                 "documentId": {"S": key},
-#                 "status": {"S": "success"},
-#                 "timestamp": {"N": str(timestamp)},
-#                 "embedding": {"S": json.dumps(embeddings)}
-#             },
-#         )
+        # Create the embeddings and store in Pinecone
+        embeddings = openai.Embedding.create(
+            input=body,
+            model="text-embedding-ada-002"
+        )["data"][0]["embedding"]
 
-#     return {
-#         "statusCode": 200,
-#         "headers": {
-#             "Access-Control-Allow-Origin": "*",
-#         },
-#     }
+        index.upsert([
+            (key, embeddings, {"userId": user_id, "collectionId": collection_id})
+        ])
+
+        # Update the resource
+        dynamodb_client.put_item(
+            TableName=document_table,
+            Item={
+                "documentId": {"S": key},
+                "status": {"S": "success"},
+                "timestamp": {"N": str(timestamp)},
+                "embedding": {"S": json.dumps(embeddings)},
+                "collectionId": {"S": collection_id}
+            },
+        )
+
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Access-Control-Allow-Origin": "*",
+        },
+    }
 
