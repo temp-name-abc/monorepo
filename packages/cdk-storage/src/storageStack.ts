@@ -82,25 +82,25 @@ export class StorageStack extends cdk.NestedStack {
             },
         });
 
-        // const processFn = new lambda.Function(this, "processFn", {
-        //     runtime: lambda.Runtime.PYTHON_3_8,
-        //     code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "process"), {
-        //         bundling: {
-        //             image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-        //             command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-        //         },
-        //     }),
-        //     handler: "index.lambda_handler",
-        //     environment: {
-        //         PINECONE_SECRET: pineconeSecrets.secretName,
-        //         OPENAI_SECRET: openAISecrets.secretName,
-        //         UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
-        //         DOCUMENT_TABLE: documentTable.tableName,
-        //         DOCUMENT_BUCKET: documentBucket.bucketName,
-        //         BILLING_API: props.billingApi.url,
-        //     },
-        //     timeout: cdk.Duration.minutes(15),
-        // });
+        const processFn = new lambda.Function(this, "processFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "process"), {
+                bundling: {
+                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+                },
+            }),
+            handler: "index.lambda_handler",
+            environment: {
+                PINECONE_SECRET: pineconeSecrets.secretName,
+                OPENAI_SECRET: openAISecrets.secretName,
+                UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
+                DOCUMENT_TABLE: documentTable.tableName,
+                DOCUMENT_BUCKET: documentBucket.bucketName,
+                // BILLING_API: props.billingApi.url,
+            },
+            timeout: cdk.Duration.minutes(15),
+        });
 
         // pineconeSecrets.grantRead(processFn);
         // openAISecrets.grantRead(processFn);
