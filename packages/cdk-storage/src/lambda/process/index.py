@@ -97,13 +97,18 @@ def lambda_handler(event, context):
         if not active_req.ok or not active_req.json()["active"]:
             logger.info(f"User '{user_id}' has not subscribed to product '{product_id}' with status code '{active_req.status_code}'")
             continue
+        
+        # Retrieve document text
+        obj_res = s3_client.get_object(Bucket=bucket_name, Key=key)
+        body = obj_res["Body"].read().decode("utf-8")
 
         # Record usage for user
         usage_url = f"{api_url}/billing/iam/usage"
         usage_request = make_request(usage_url, "POST", {
             "userId": user_id,
             "timestamp": timestamp,
-            "productId": product_id
+            "productId": product_id,
+            "quantity": len(body.split(" "))
         })
         usage_req = requests.post(
             usage_url,
@@ -115,12 +120,6 @@ def lambda_handler(event, context):
             logger.info(f"Unable to record usage for user '{user_id}' with product '{product_id}' with status code '{usage_req.status_code}'")
             continue
 
-        # Retrieve the text and store it in S3
-        obj_res = s3_client.get_object(Bucket=bucket_name, Key=key)
-        body = obj_res["Body"].read().decode("utf-8")
-
-        s3_client.put_object(Bucket=document_bucket, Key=document_table, Body=body)
-
         # Create the embeddings and store in Pinecone
         embeddings = openai.Embedding.create(
             input=body,
@@ -131,16 +130,19 @@ def lambda_handler(event, context):
             (key, embeddings, {"userId": user_id, "collectionId": collection_id})
         ])
 
+        # Upload text to S3
+        s3_client.put_object(Bucket=document_bucket, Key=document_table, Body=body)
+
         # Update the resource
         dynamodb_client.put_item(
             TableName=document_table,
             Item={
                 "documentId": {"S": key},
+                "collectionId": {"S": collection_id},
                 "status": {"S": "success"},
                 "timestamp": {"N": str(timestamp)},
                 "embedding": {"S": json.dumps(embeddings)},
-                "collectionId": {"S": collection_id}
-            },
+            }
         )
 
     return {
