@@ -110,7 +110,7 @@ def lambda_handler(event, context):
             "userId": user_id,
             "timestamp": timestamp,
             "productId": product_id,
-            "quantity": len(body.split(" "))
+            "quantity": len(body) // 4
         }))
         usage_req = requests.post(
             usage_url,
