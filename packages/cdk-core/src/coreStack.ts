@@ -12,10 +12,11 @@ interface IStackProps extends cdk.NestedStackProps {
 
 export class CoreStack extends cdk.NestedStack {
     public readonly userPool: cognito.UserPool;
-    public readonly api: apigw.RestApi;
     public readonly apiAuth: apigw.CognitoUserPoolsAuthorizer;
     public readonly pineconeSecrets: secretsmanager.Secret;
     public readonly openAISecrets: secretsmanager.Secret;
+    public readonly billingAuthorizer: apigw.CognitoUserPoolsAuthorizer;
+    public readonly storageAuthorizer: apigw.CognitoUserPoolsAuthorizer;
 
     constructor(scope: Construct, id: string, props: IStackProps) {
         super(scope, id, props);
@@ -52,17 +53,14 @@ export class CoreStack extends cdk.NestedStack {
             },
         });
 
-        // Create the REST API
-        this.api = new apigw.RestApi(this, "restApi", {
-            restApiName: "monorepoRestApi",
-            defaultCorsPreflightOptions: {
-                allowOrigins: apigw.Cors.ALL_ORIGINS,
-            },
-        });
+        // Create API authorizers
+        // this.billingAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, "billingAuthorizer", {
+        //     cognitoUserPools: [this.userPool],
+        // });
 
-        this.apiAuth = new apigw.CognitoUserPoolsAuthorizer(this, "apiAuth", {
-            cognitoUserPools: [this.userPool],
-        });
+        // this.storageAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, "storageAuthorizer", {
+        //     cognitoUserPools: [this.userPool],
+        // });
 
         // Store secrets
         this.pineconeSecrets = new secretsmanager.Secret(this, "pineconeSecrets");

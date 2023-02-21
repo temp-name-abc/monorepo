@@ -11,10 +11,9 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 
 interface IStackProps extends cdk.NestedStackProps {
-    api: apigw.RestApi;
-    apiAuth: apigw.CognitoUserPoolsAuthorizer;
     userPool: cognito.UserPool;
     homeUrl: string;
+    authorizer: apigw.CognitoUserPoolsAuthorizer;
 }
 
 export class BillingStack extends cdk.NestedStack {
@@ -24,11 +23,16 @@ export class BillingStack extends cdk.NestedStack {
         // Create Stripe secrets storage
         const stripeSecrets = new secretsmanager.Secret(this, "stripeSecrets");
 
-        // Create API resources
-        const billingResource = props.api.root.addResource("billing");
+        // Create the REST API
+        const api = new apigw.RestApi(this, "billingApi", {
+            restApiName: "billingApi",
+            defaultCorsPreflightOptions: {
+                allowOrigins: apigw.Cors.ALL_ORIGINS,
+            },
+        });
 
-        const portalResource = billingResource.addResource("portal");
-        const iamResource = billingResource.addResource("iam");
+        const portalResource = api.root.addResource("portal");
+        const iamResource = api.root.addResource("iam");
 
         const statusResource = iamResource.addResource("status");
         const usageResource = iamResource.addResource("usage");
@@ -89,8 +93,8 @@ export class BillingStack extends cdk.NestedStack {
         productsTable.grantReadData(portalFn);
 
         portalResource.addMethod("GET", new apigw.LambdaIntegration(portalFn), {
-            authorizer: props.apiAuth,
-            authorizationType: apigw.AuthorizationType.COGNITO,
+            // authorizer: props.authorizer,
+            // authorizationType: apigw.AuthorizationType.COGNITO,
         });
 
         // Create account status function

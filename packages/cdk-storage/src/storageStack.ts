@@ -5,26 +5,31 @@ import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
 
 interface IStackProps extends cdk.NestedStackProps {
-    api: apigw.RestApi;
-    apiAuth: apigw.CognitoUserPoolsAuthorizer;
     pineconeSecrets: secretsmanager.Secret;
     openAISecrets: secretsmanager.Secret;
+    authorizer: apigw.CognitoUserPoolsAuthorizer;
 }
 
 export class StorageStack extends cdk.NestedStack {
     constructor(scope: Construct, id: string, props: IStackProps) {
         super(scope, id, props);
 
-        // Create resources
-        const storageResource = props.api.root.addResource("storage");
+        // Create the REST API
+        const api = new apigw.RestApi(this, "storageApi", {
+            restApiName: "storageApi",
+            defaultCorsPreflightOptions: {
+                allowOrigins: apigw.Cors.ALL_ORIGINS,
+            },
+        });
 
-        const documentResource = storageResource.addResource("document");
-        const iamResource = storageResource.addResource("iam");
+        const documentResource = api.root.addResource("document");
+        const iamResource = api.root.addResource("iam");
 
         const searchResource = iamResource.addResource("search");
 
@@ -62,8 +67,8 @@ export class StorageStack extends cdk.NestedStack {
         tempStorageBucket.grantWrite(uploadFn);
 
         documentResource.addMethod("POST", new apigw.LambdaIntegration(uploadFn), {
-            authorizer: props.apiAuth,
-            authorizationType: apigw.AuthorizationType.COGNITO,
+            // authorizer: props.authorizer,
+            // authorizationType: apigw.AuthorizationType.COGNITO,
         });
 
         // Create object processing function
@@ -95,7 +100,7 @@ export class StorageStack extends cdk.NestedStack {
                 UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
                 DOCUMENT_TABLE: documentTable.tableName,
                 DOCUMENT_BUCKET: documentBucket.bucketName,
-                API_DOMAIN: props.api.url,
+                // API_DOMAIN: props.api.url,
             },
             timeout: cdk.Duration.minutes(15),
         });
