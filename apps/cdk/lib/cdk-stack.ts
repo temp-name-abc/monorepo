@@ -12,6 +12,7 @@ const env = cdkEnv.parse({
     googleClientId: process.env.GOOGLE_CLIENT_ID,
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
     homeUrl: process.env.HOME_URL,
+    apiUrl: process.env.API_URL,
 });
 
 export class CdkStack extends cdk.Stack {
@@ -25,16 +26,16 @@ export class CdkStack extends cdk.Stack {
         });
 
         new BillingStack(this, "billingStack", {
-            api: coreStack.billingApi,
-            authorizer: coreStack.billingAuthorizer,
+            api: coreStack.api,
+            authorizer: coreStack.authorizer,
             userPool: coreStack.userPool,
             homeUrl: env.homeUrl,
         });
 
         new StorageStack(this, "storageStack", {
-            api: coreStack.storageApi,
-            authorizer: coreStack.storageAuthorizer,
-            billingApi: coreStack.billingApi,
+            api: coreStack.api,
+            authorizer: coreStack.authorizer,
+            apiUrl: env.apiUrl,
         });
     }
 }

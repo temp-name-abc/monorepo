@@ -1,12 +1,12 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as path from "path";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as apigw from "aws-cdk-lib/aws-apigateway";
 import * as sqs from "aws-cdk-lib/aws-sqs";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 
@@ -21,12 +21,14 @@ export class BillingStack extends cdk.NestedStack {
     constructor(scope: Construct, id: string, props: IStackProps) {
         super(scope, id, props);
 
-        // Create Stripe secrets storage
-        const stripeSecrets = new secretsmanager.Secret(this, "billingStripeSecrets");
+        // Create secret
+        const stripeSecret = new secretsmanager.Secret(this, "billingStripeSecret");
 
         // Create the REST API
-        const portalResource = props.api.root.addResource("portal");
-        const iamResource = props.api.root.addResource("iam");
+        const billingResource = props.api.root.addResource("billing");
+
+        const portalResource = billingResource.addResource("portal");
+        const iamResource = billingResource.addResource("iam");
 
         const statusResource = iamResource.addResource("status");
         const usageResource = iamResource.addResource("usage");
@@ -47,14 +49,14 @@ export class BillingStack extends cdk.NestedStack {
             }),
             handler: "index.lambda_handler",
             environment: {
-                STRIPE_SECRET: stripeSecrets.secretName,
+                STRIPE_SECRET: stripeSecret.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
             },
             timeout: cdk.Duration.seconds(30),
         });
 
         userBillingTable.grantWriteData(setupFn);
-        stripeSecrets.grantRead(setupFn);
+        stripeSecret.grantRead(setupFn);
 
         props.userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, setupFn);
 
@@ -74,7 +76,7 @@ export class BillingStack extends cdk.NestedStack {
             }),
             handler: "index.lambda_handler",
             environment: {
-                STRIPE_SECRET: stripeSecrets.secretName,
+                STRIPE_SECRET: stripeSecret.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
                 PRODUCTS_TABLE: productsTable.tableName,
                 HOME_URL: props.homeUrl,
@@ -82,7 +84,7 @@ export class BillingStack extends cdk.NestedStack {
             timeout: cdk.Duration.seconds(30),
         });
 
-        stripeSecrets.grantRead(portalFn);
+        stripeSecret.grantRead(portalFn);
         userBillingTable.grantReadData(portalFn);
         productsTable.grantReadData(portalFn);
 
@@ -102,14 +104,14 @@ export class BillingStack extends cdk.NestedStack {
             }),
             handler: "index.lambda_handler",
             environment: {
-                STRIPE_SECRET: stripeSecrets.secretName,
+                STRIPE_SECRET: stripeSecret.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
                 PRODUCTS_TABLE: productsTable.tableName,
             },
             timeout: cdk.Duration.seconds(30),
         });
 
-        stripeSecrets.grantRead(statusFn);
+        stripeSecret.grantRead(statusFn);
         userBillingTable.grantReadData(statusFn);
         productsTable.grantReadData(statusFn);
 
@@ -135,7 +137,7 @@ export class BillingStack extends cdk.NestedStack {
             }),
             handler: "index.lambda_handler",
             environment: {
-                STRIPE_SECRET: stripeSecrets.secretName,
+                STRIPE_SECRET: stripeSecret.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
                 PRODUCTS_TABLE: productsTable.tableName,
                 USAGE_TABLE: usageTable.tableName,
@@ -143,7 +145,7 @@ export class BillingStack extends cdk.NestedStack {
             timeout: usageFnTimeout,
         });
 
-        stripeSecrets.grantRead(usageFn);
+        stripeSecret.grantRead(usageFn);
         userBillingTable.grantReadData(usageFn);
         productsTable.grantReadData(usageFn);
         usageTable.grantWriteData(usageFn);

@@ -19,7 +19,7 @@ def lambda_handler(event, context):
     temp_storage_bucket = os.getenv("TEMP_STORAGE_BUCKET")
     document_table = os.getenv("DOCUMENT_TABLE")
     document_bucket = os.getenv("DOCUMENT_BUCKET")
-    api_domain = os.getenv("API_DOMAIN")
+    api_url = os.getenv("API_URL")
 
     return {
         "statusCode": 200,

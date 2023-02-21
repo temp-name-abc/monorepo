@@ -1,11 +1,10 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as apigw from "aws-cdk-lib/aws-apigateway";
-import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as cognito from "aws-cdk-lib/aws-cognito";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
@@ -13,20 +12,22 @@ import * as path from "path";
 interface IStackProps extends cdk.NestedStackProps {
     api: apigw.RestApi;
     authorizer: apigw.CognitoUserPoolsAuthorizer;
-    billingApi: apigw.RestApi;
+    apiUrl: string;
 }
 
 export class StorageStack extends cdk.NestedStack {
     constructor(scope: Construct, id: string, props: IStackProps) {
         super(scope, id, props);
 
-        // Store secrets
-        const pineconeSecrets = new secretsmanager.Secret(this, "storagePineconeSecrets");
-        const openAISecrets = new secretsmanager.Secret(this, "storageOpenAISecrets");
+        // Store secret
+        const pineconeSecret = new secretsmanager.Secret(this, "storagePineconeSecret");
+        const openAISecret = new secretsmanager.Secret(this, "storageOpenAISecret");
 
         // Create the REST API
-        const documentResource = props.api.root.addResource("document");
-        const iamResource = props.api.root.addResource("iam");
+        const storageResource = props.api.root.addResource("storage");
+
+        const documentResource = storageResource.addResource("document");
+        const iamResource = storageResource.addResource("iam");
 
         const searchResource = iamResource.addResource("search");
 
@@ -92,34 +93,34 @@ export class StorageStack extends cdk.NestedStack {
             }),
             handler: "index.lambda_handler",
             environment: {
-                PINECONE_SECRET: pineconeSecrets.secretName,
-                OPENAI_SECRET: openAISecrets.secretName,
+                PINECONE_SECRET: pineconeSecret.secretName,
+                OPENAI_SECRET: openAISecret.secretName,
                 UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
                 DOCUMENT_TABLE: documentTable.tableName,
                 DOCUMENT_BUCKET: documentBucket.bucketName,
-                // BILLING_API: props.billingApi.url,
+                API_URL: props.apiUrl,
             },
             timeout: cdk.Duration.minutes(15),
         });
 
-        // pineconeSecrets.grantRead(processFn);
-        // openAISecrets.grantRead(processFn);
-        // tempStorageBucket.grantRead(processFn);
-        // uploadRecordsTable.grantReadData(processFn);
-        // documentTable.grantWriteData(processFn);
-        // documentBucket.grantWrite(processFn);
-        // processFn.addToRolePolicy(
-        //     new iam.PolicyStatement({
-        //         effect: iam.Effect.ALLOW,
-        //         actions: ["execute-api:Invoke"],
-        //         resources: ["*"],
-        //     })
-        // );
+        pineconeSecret.grantRead(processFn);
+        openAISecret.grantRead(processFn);
+        tempStorageBucket.grantRead(processFn);
+        uploadRecordsTable.grantReadData(processFn);
+        documentTable.grantWriteData(processFn);
+        documentBucket.grantWrite(processFn);
+        processFn.addToRolePolicy(
+            new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: ["execute-api:Invoke"],
+                resources: ["*"],
+            })
+        );
 
-        // processFn.addEventSource(
-        //     new lambdaEventSources.S3EventSource(tempStorageBucket, {
-        //         events: [s3.EventType.OBJECT_CREATED_PUT],
-        //     })
-        // );
+        processFn.addEventSource(
+            new lambdaEventSources.S3EventSource(tempStorageBucket, {
+                events: [s3.EventType.OBJECT_CREATED_PUT],
+            })
+        );
     }
 }
