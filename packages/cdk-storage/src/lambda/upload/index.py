@@ -34,18 +34,15 @@ def lambda_handler(event, context):
         Item={
             "uploadId": {"S": key},
             "userId": {"S": user_id},
-            "ttl": {"N": str(ttl_seconds)}
+            "ttl": {"N": str(ttl_seconds)},
         },
         ConditionExpression="attribute_not_exists(uploadId)"
     )
 
     # Create a presigned PUT URL
-    url = s3_client.generate_presigned_url(
-        ClientMethod="put_object",
-        Params={
-            "Bucket": temp_storage_bucket,
-            "Key": key
-        },
+    response = s3_client.generate_presigned_post(
+        Bucket=temp_storage_bucket,
+        Key=key,
         ExpiresIn=86400
     )
 
@@ -56,6 +53,6 @@ def lambda_handler(event, context):
         "headers": {
             "Access-Control-Allow-Origin": "*",
         },
-        "body": url
+        "body": json.dumps(response)
     }
 
