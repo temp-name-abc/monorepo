@@ -11,25 +11,22 @@ import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
 
 interface IStackProps extends cdk.NestedStackProps {
-    pineconeSecrets: secretsmanager.Secret;
-    openAISecrets: secretsmanager.Secret;
+    api: apigw.RestApi;
     authorizer: apigw.CognitoUserPoolsAuthorizer;
+    billingApi: apigw.RestApi;
 }
 
 export class StorageStack extends cdk.NestedStack {
     constructor(scope: Construct, id: string, props: IStackProps) {
         super(scope, id, props);
 
-        // Create the REST API
-        const api = new apigw.RestApi(this, "storageApi", {
-            restApiName: "storageApi",
-            defaultCorsPreflightOptions: {
-                allowOrigins: apigw.Cors.ALL_ORIGINS,
-            },
-        });
+        // Store secrets
+        const pineconeSecrets = new secretsmanager.Secret(this, "storagePineconeSecrets");
+        const openAISecrets = new secretsmanager.Secret(this, "storageOpenAISecrets");
 
-        const documentResource = api.root.addResource("document");
-        const iamResource = api.root.addResource("iam");
+        // Create the REST API
+        const documentResource = props.api.root.addResource("document");
+        const iamResource = props.api.root.addResource("iam");
 
         const searchResource = iamResource.addResource("search");
 
@@ -67,8 +64,8 @@ export class StorageStack extends cdk.NestedStack {
         tempStorageBucket.grantWrite(uploadFn);
 
         documentResource.addMethod("POST", new apigw.LambdaIntegration(uploadFn), {
-            // authorizer: props.authorizer,
-            // authorizationType: apigw.AuthorizationType.COGNITO,
+            authorizer: props.authorizer,
+            authorizationType: apigw.AuthorizationType.COGNITO,
         });
 
         // Create object processing function
@@ -85,44 +82,44 @@ export class StorageStack extends cdk.NestedStack {
             },
         });
 
-        const processFn = new lambda.Function(this, "processFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "process"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
-            handler: "index.lambda_handler",
-            environment: {
-                PINECONE_SECRET: props.pineconeSecrets.secretName,
-                OPENAI_SECRET: props.openAISecrets.secretName,
-                UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
-                DOCUMENT_TABLE: documentTable.tableName,
-                DOCUMENT_BUCKET: documentBucket.bucketName,
-                // API_DOMAIN: props.api.url,
-            },
-            timeout: cdk.Duration.minutes(15),
-        });
+        // const processFn = new lambda.Function(this, "processFn", {
+        //     runtime: lambda.Runtime.PYTHON_3_8,
+        //     code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "process"), {
+        //         bundling: {
+        //             image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+        //             command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+        //         },
+        //     }),
+        //     handler: "index.lambda_handler",
+        //     environment: {
+        //         PINECONE_SECRET: pineconeSecrets.secretName,
+        //         OPENAI_SECRET: openAISecrets.secretName,
+        //         UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
+        //         DOCUMENT_TABLE: documentTable.tableName,
+        //         DOCUMENT_BUCKET: documentBucket.bucketName,
+        //         BILLING_API: props.billingApi.url,
+        //     },
+        //     timeout: cdk.Duration.minutes(15),
+        // });
 
-        props.pineconeSecrets.grantRead(processFn);
-        props.openAISecrets.grantRead(processFn);
-        tempStorageBucket.grantRead(processFn);
-        uploadRecordsTable.grantReadData(processFn);
-        documentTable.grantWriteData(processFn);
-        documentBucket.grantWrite(processFn);
-        processFn.addToRolePolicy(
-            new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: ["execute-api:Invoke"],
-                resources: ["*"],
-            })
-        );
+        // pineconeSecrets.grantRead(processFn);
+        // openAISecrets.grantRead(processFn);
+        // tempStorageBucket.grantRead(processFn);
+        // uploadRecordsTable.grantReadData(processFn);
+        // documentTable.grantWriteData(processFn);
+        // documentBucket.grantWrite(processFn);
+        // processFn.addToRolePolicy(
+        //     new iam.PolicyStatement({
+        //         effect: iam.Effect.ALLOW,
+        //         actions: ["execute-api:Invoke"],
+        //         resources: ["*"],
+        //     })
+        // );
 
-        processFn.addEventSource(
-            new lambdaEventSources.S3EventSource(tempStorageBucket, {
-                events: [s3.EventType.OBJECT_CREATED_PUT],
-            })
-        );
+        // processFn.addEventSource(
+        //     new lambdaEventSources.S3EventSource(tempStorageBucket, {
+        //         events: [s3.EventType.OBJECT_CREATED_PUT],
+        //     })
+        // );
     }
 }

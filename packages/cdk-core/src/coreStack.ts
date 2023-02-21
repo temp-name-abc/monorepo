@@ -13,9 +13,9 @@ interface IStackProps extends cdk.NestedStackProps {
 export class CoreStack extends cdk.NestedStack {
     public readonly userPool: cognito.UserPool;
     public readonly apiAuth: apigw.CognitoUserPoolsAuthorizer;
-    public readonly pineconeSecrets: secretsmanager.Secret;
-    public readonly openAISecrets: secretsmanager.Secret;
+    public readonly billingApi: apigw.RestApi;
     public readonly billingAuthorizer: apigw.CognitoUserPoolsAuthorizer;
+    public readonly storageApi: apigw.RestApi;
     public readonly storageAuthorizer: apigw.CognitoUserPoolsAuthorizer;
 
     constructor(scope: Construct, id: string, props: IStackProps) {
@@ -53,17 +53,27 @@ export class CoreStack extends cdk.NestedStack {
             },
         });
 
-        // Create API authorizers
-        // this.billingAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, "billingAuthorizer", {
-        //     cognitoUserPools: [this.userPool],
-        // });
+        // Create API and authorizer
+        this.billingApi = new apigw.RestApi(this, "billingApi", {
+            restApiName: "billingApi",
+            defaultCorsPreflightOptions: {
+                allowOrigins: apigw.Cors.ALL_ORIGINS,
+            },
+        });
 
-        // this.storageAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, "storageAuthorizer", {
-        //     cognitoUserPools: [this.userPool],
-        // });
+        this.billingAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, "billingAuthorizer", {
+            cognitoUserPools: [this.userPool],
+        });
 
-        // Store secrets
-        this.pineconeSecrets = new secretsmanager.Secret(this, "pineconeSecrets");
-        this.openAISecrets = new secretsmanager.Secret(this, "openAISecrets");
+        this.storageApi = new apigw.RestApi(this, "storageApi", {
+            restApiName: "storageApi",
+            defaultCorsPreflightOptions: {
+                allowOrigins: apigw.Cors.ALL_ORIGINS,
+            },
+        });
+
+        this.storageAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, "storageAuthorizer", {
+            cognitoUserPools: [this.userPool],
+        });
     }
 }

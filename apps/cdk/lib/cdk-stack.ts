@@ -25,15 +25,16 @@ export class CdkStack extends cdk.Stack {
         });
 
         new BillingStack(this, "billingStack", {
+            api: coreStack.billingApi,
+            authorizer: coreStack.billingAuthorizer,
             userPool: coreStack.userPool,
             homeUrl: env.homeUrl,
-            authorizer: coreStack.billingAuthorizer,
         });
 
         new StorageStack(this, "storageStack", {
-            pineconeSecrets: coreStack.pineconeSecrets,
-            openAISecrets: coreStack.openAISecrets,
+            api: coreStack.storageApi,
             authorizer: coreStack.storageAuthorizer,
+            billingApi: coreStack.billingApi,
         });
     }
 }
