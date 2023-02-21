@@ -6,6 +6,8 @@ import logging
 # import pinecone
 # import requests
 from datetime import datetime, timedelta
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -15,7 +17,25 @@ dynamodb_client = boto3.client("dynamodb")
 secrets_manager_client = boto3.client("secretsmanager")
 
 def lambda_handler(event, context):
-    pass
+    session = boto3.session.Session()
+    credentials = session.get_credentials()
+    region = os.getenv("AWS_REGION")
+    service = "execute-api"
+    
+    api_url = os.getenv("API_URL")
+    
+    request_url = f"{api_url}/billing/iam/status?userId=07343b80-f256-4d60-a412-36dec0a4ea40&productId=storage.document.process.text"
+    
+    print(request_url)
+    
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    
+    http_request = AWSRequest(method='GET', url=request_url, headers=headers)
+    SigV4Auth(credentials, service, region).add_auth(http_request)
+    
+    print(http_request.headers)
 
 # def lambda_handler(event, context):
 #     logger.info(f"Processing files for '{event}'")
