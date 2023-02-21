@@ -45,10 +45,10 @@ def lambda_handler(event, context):
     # Process records
     for record in event["Records"]:
         key = record["s3"]["object"]["key"]
-        timestamp = int(now.timestamp())
 
         # Create a record to lock the resource temporarily
         now = datetime.utcnow()
+        timestamp = int(now.timestamp())
         expiry_time = now + timedelta(minutes=15)
         ttl_seconds = int(expiry_time.timestamp())
 
