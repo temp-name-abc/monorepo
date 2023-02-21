@@ -24,7 +24,6 @@ def lambda_handler(event, context):
 
     pinecone_secret = os.getenv("PINECONE_SECRET")
     openai_secret = os.getenv("OPENAI_SECRET")
-    document_table = os.getenv("DOCUMENT_TABLE")
     document_bucket = os.getenv("DOCUMENT_BUCKET")
     pinecone_env = os.getenv("PINECONE_ENV")
     pinecone_index = os.getenv("PINECONE_INDEX")
@@ -34,7 +33,7 @@ def lambda_handler(event, context):
     query = query_params["query"]
     user_id = query_params["userId"]
     collection_id = query_params["collectionId"]
-    num_results = query_params["numResults"]
+    num_results = int(query_params["numResults"])
 
     # Load the OpenAI API key
     openai.api_key = secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"]
@@ -64,6 +63,26 @@ def lambda_handler(event, context):
         }
     )
 
-    print(response)
-
     # Return a list of documents with their metadata
+    documents = []
+
+    for match in response["matches"]:
+        document = {}
+
+        document["id"] = match["id"]
+        document["score"] = match["score"]
+
+        obj_res = s3_client.get_object(Bucket=document_bucket, Key=match["id"])
+        body = obj_res["Body"].read().decode("utf-8")
+
+        document["body"] = body
+
+        documents.append(document)
+
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Access-Control-Allow-Origin": "*",
+        },
+        "body": json.dumps(documents)
+    }

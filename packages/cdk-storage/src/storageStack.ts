@@ -129,7 +129,6 @@ export class StorageStack extends cdk.NestedStack {
             environment: {
                 PINECONE_SECRET: pineconeSecret.secretName,
                 OPENAI_SECRET: openAISecret.secretName,
-                DOCUMENT_TABLE: documentTable.tableName,
                 DOCUMENT_BUCKET: documentBucket.bucketName,
                 PINECONE_ENV: props.pineconeEnv,
                 PINECONE_INDEX: props.pineconeIndex,
@@ -139,7 +138,6 @@ export class StorageStack extends cdk.NestedStack {
 
         pineconeSecret.grantRead(searchFn);
         openAISecret.grantRead(searchFn);
-        documentTable.grantReadData(searchFn);
         documentBucket.grantRead(searchFn);
 
         searchResource.addMethod("GET", new apigw.LambdaIntegration(searchFn), {
