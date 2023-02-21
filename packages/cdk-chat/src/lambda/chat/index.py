@@ -44,7 +44,7 @@ def lambda_handler(event, context):
 
     # Load and validate parameters
     prev_chat_id = body["previousChatId"] if "previousChatId" in body else None
-    collection_id = body["previousChatId"] if "previousChatId" in body else None
+    collection_id = body["collectionId"] if "collectionId" in body else None
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     question = body["question"]
 
