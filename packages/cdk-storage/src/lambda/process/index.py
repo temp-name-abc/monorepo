@@ -104,24 +104,6 @@ def lambda_handler(event, context):
         obj_res = s3_client.get_object(Bucket=bucket_name, Key=key)
         body = obj_res["Body"].read().decode("utf-8")
 
-        # Record usage for user
-        usage_url = f"{api_url}/billing/iam/usage"
-        usage_request = make_request(usage_url, "POST", json.dumps({
-            "userId": user_id,
-            "timestamp": timestamp,
-            "productId": product_id,
-            "quantity": len(body) // 4
-        }))
-        usage_req = requests.post(
-            usage_url,
-            headers=usage_request.headers,
-            data=usage_request.data
-        )
-
-        if not usage_req.ok:
-            logger.info(f"Unable to record usage for user '{user_id}' with product '{product_id}' with status code '{usage_req.status_code}'")
-            continue
-
         # Create the embeddings and store in Pinecone
         embeddings = openai.Embedding.create(
             input=body,
@@ -147,5 +129,23 @@ def lambda_handler(event, context):
                 "embedding": {"S": json.dumps(embeddings)},
             }
         )
+
+        # Record usage for user
+        usage_url = f"{api_url}/billing/iam/usage"
+        usage_request = make_request(usage_url, "POST", json.dumps({
+            "userId": user_id,
+            "timestamp": timestamp,
+            "productId": product_id,
+            "quantity": len(body) // 4
+        }))
+        usage_req = requests.post(
+            usage_url,
+            headers=usage_request.headers,
+            data=usage_request.data
+        )
+
+        if not usage_req.ok:
+            logger.info(f"Unable to record usage for user '{user_id}' with product '{product_id}' with status code '{usage_req.status_code}'")
+            continue
 
         logger.info(f"Processed file with key '{key}'")

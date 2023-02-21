@@ -38,6 +38,7 @@ export class ChatStack extends cdk.NestedStack {
                 OPENAI_SECRET: openAISecret.secretName,
                 CONVERSATIONS_TABLE: conversationsTable.tableName,
                 API_URL: props.apiUrl,
+                PRODUCT_ID: props.productId,
             },
             timeout: cdk.Duration.minutes(1),
         });
