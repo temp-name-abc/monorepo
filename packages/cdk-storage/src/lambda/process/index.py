@@ -26,6 +26,7 @@ def lambda_handler(event, context):
     document_bucket = os.getenv("DOCUMENT_BUCKET")
     api_url = os.getenv("API_URL")
     pinecone_env = os.getenv("PINECONE_ENV")
+    pinecone_index = os.getenv("PINECONE_INDEX")
     product_id = os.getenv("PRODUCT_ID")
 
     # Load the OpenAI API key
@@ -38,6 +39,8 @@ def lambda_handler(event, context):
         api_key=pinecone_api_key,
         environment=pinecone_env
     )
+
+    index = pinecone.Index(pinecone_index)
 
     # Process records
     for record in event["Records"]:
@@ -87,11 +90,17 @@ def lambda_handler(event, context):
         obj_res = s3_client.get_object(Bucket=temp_storage_bucket, Key=key)
         body = obj_res["Body"].read().decode("utf-8")
 
+        s3_client.put_object(Bucket=document_bucket, Key=document_table, Body=body)
+
         # Create the embeddings and store in Pinecone
         embeddings = openai.Embedding.create(
             input=body,
             model="text-embedding-ada-002"
         )["data"][0]["embedding"]
+
+        index.upsert([
+            (key, embeddings)
+        ])
 
         # Update the resource
         dynamodb_client.put_item(
