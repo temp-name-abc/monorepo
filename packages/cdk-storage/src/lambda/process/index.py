@@ -104,12 +104,12 @@ def lambda_handler(event, context):
 
         # Record usage for user
         usage_url = f"{api_url}/billing/iam/usage"
-        usage_request = make_request(usage_url, "POST", {
+        usage_request = make_request(usage_url, "POST", json.dumps({
             "userId": user_id,
             "timestamp": timestamp,
             "productId": product_id,
             "quantity": len(body.split(" "))
-        })
+        }))
         usage_req = requests.post(
             usage_url,
             headers=usage_request.headers,
