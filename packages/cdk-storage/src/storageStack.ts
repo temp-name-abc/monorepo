@@ -13,6 +13,7 @@ interface IStackProps extends cdk.NestedStackProps {
     api: apigw.RestApi;
     authorizer: apigw.CognitoUserPoolsAuthorizer;
     apiUrl: string;
+    pineconeEnv: string;
 }
 
 export class StorageStack extends cdk.NestedStack {
@@ -99,6 +100,7 @@ export class StorageStack extends cdk.NestedStack {
                 DOCUMENT_TABLE: documentTable.tableName,
                 DOCUMENT_BUCKET: documentBucket.bucketName,
                 API_URL: props.apiUrl,
+                PINECONE_ENV: props.pineconeEnv,
             },
             timeout: cdk.Duration.minutes(15),
         });

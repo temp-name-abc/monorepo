@@ -13,6 +13,7 @@ const env = cdkEnv.parse({
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
     homeUrl: process.env.HOME_URL,
     apiUrl: process.env.API_URL,
+    pineconeEnv: process.env.PINECONE_ENV,
 });
 
 export class CdkStack extends cdk.Stack {
@@ -36,6 +37,7 @@ export class CdkStack extends cdk.Stack {
             api: coreStack.api,
             authorizer: coreStack.authorizer,
             apiUrl: env.apiUrl,
+            pineconeEnv: env.pineconeEnv,
         });
     }
 }
