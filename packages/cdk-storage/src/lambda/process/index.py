@@ -70,16 +70,6 @@ def lambda_handler(event, context):
         expiry_time = now + timedelta(minutes=15)
         ttl_seconds = int(expiry_time.timestamp())
 
-        dynamodb_client.put_item(
-            TableName=document_table,
-            Item={
-                "documentId": {"S": key},
-                "ttl": {"N": str(ttl_seconds)},
-                "status": {"S": "in_progress"}
-            },
-            ConditionExpression="attribute_not_exists(documentId)"
-        )
-
         # Get the upload data
         upload_data = dynamodb_client.get_item(
             TableName=upload_records_table,
@@ -88,6 +78,18 @@ def lambda_handler(event, context):
 
         user_id = upload_data["userId"]["S"]
         collection_id = upload_data["collectionId"]["S"]
+
+        dynamodb_client.put_item(
+            TableName=document_table,
+            Item={
+                "documentId": {"S": key},
+                "collectionId": {"S": collection_id},
+                "userId": {"S": user_id},
+                "status": {"S": "in_progress"},
+                "ttl": {"N": str(ttl_seconds)}
+            },
+            ConditionExpression="attribute_not_exists(documentId)"
+        )
 
         # Check if the user has subscribed
         active_url = f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
@@ -139,6 +141,7 @@ def lambda_handler(event, context):
             Item={
                 "documentId": {"S": key},
                 "collectionId": {"S": collection_id},
+                "userId": {"S": user_id},
                 "status": {"S": "success"},
                 "timestamp": {"N": str(timestamp)},
                 "embedding": {"S": json.dumps(embeddings)},
