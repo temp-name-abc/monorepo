@@ -87,10 +87,8 @@ export class StorageStack extends cdk.NestedStack {
             },
         });
 
-        const processFn = new lambda.Function(this, "processFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromDockerBuild(path.join(__dirname, "lambda", "process")),
-            handler: "index.lambda_handler",
+        const processFn = new lambda.DockerImageFunction(this, "processFn", {
+            code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "process")),
             environment: {
                 PINECONE_SECRET: pineconeSecret.secretName,
                 OPENAI_SECRET: openAISecret.secretName,
@@ -126,10 +124,8 @@ export class StorageStack extends cdk.NestedStack {
         );
 
         // Create search function
-        const searchFn = new lambda.Function(this, "searchFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromDockerBuild(path.join(__dirname, "lambda", "search")),
-            handler: "index.lambda_handler",
+        const searchFn = new lambda.DockerImageFunction(this, "searchFn", {
+            code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "search")),
             environment: {
                 PINECONE_SECRET: pineconeSecret.secretName,
                 OPENAI_SECRET: openAISecret.secretName,
@@ -141,10 +137,10 @@ export class StorageStack extends cdk.NestedStack {
             timeout: cdk.Duration.minutes(1),
         });
 
-        pineconeSecret.grantRead(processFn);
-        openAISecret.grantRead(processFn);
-        documentTable.grantReadData(processFn);
-        documentBucket.grantRead(processFn);
+        pineconeSecret.grantRead(searchFn);
+        openAISecret.grantRead(searchFn);
+        documentTable.grantReadData(searchFn);
+        documentBucket.grantRead(searchFn);
 
         searchResource.addMethod("GET", new apigw.LambdaIntegration(searchFn), {
             authorizationType: apigw.AuthorizationType.IAM,
