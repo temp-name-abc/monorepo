@@ -49,7 +49,7 @@ def lambda_handler(event, context):
     collection_id = body["collectionId"] if "collectionId" in body else None
     question = body["question"]
 
-    if prev_chat_id != None or collection_id != None:
+    if prev_chat_id != None and collection_id != None:
         return {
             "statusCode": 400,
             "headers": {
