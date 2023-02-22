@@ -158,7 +158,8 @@ AI: {chat["ai"]}"""
     initial_text_prompt = initial_text_prompt_template.format(conversation)
     enough_information_prompt = enough_information_prompt_template.format(question, initial_text_prompt)
 
-    enough_information = openai.Completion.create(prompt=enough_information_prompt, **model_settings)["choices"][0]["text"]
+    enough_information_response = openai.Completion.create(prompt=enough_information_prompt, **model_settings)
+    enough_information = enough_information_response["choices"][0]["text"].strip().lower()
 
     total_chars += len(enough_information_prompt) + len(enough_information)
     logging.info(f"Enough information response '{enough_information_prompt + enough_information}'")
@@ -166,15 +167,16 @@ AI: {chat["ai"]}"""
     # Enrich the response
     additional_context = []
 
-    if enough_information.strip().lower() != "yes":
+    if enough_information != "yes":
         query_prompt = query_prompt_template.format(question, initial_text_prompt)
 
-        query = openai.Completion.create(prompt=query_prompt, **model_settings)["choices"][0]["text"]
+        query_response = openai.Completion.create(prompt=query_prompt, **model_settings)
+        query = query_response["choices"][0]["text"].strip()
 
         total_chars += len(query_prompt) + len(query)
         logging.info(f"Query response '{query_prompt + query}'")
 
-        query_encoded = urllib.parse.quote(query.strip())
+        query_encoded = urllib.parse.quote(query)
 
         documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults=1&query={query_encoded}"
         documents_request = make_request(documents_url, "GET")
@@ -193,12 +195,13 @@ AI: {chat["ai"]}"""
 
             summary_prompt = summary_prompt_template.format(question, document["body"])
 
-            summary = openai.Completion.create(prompt=summary_prompt, **model_settings)["choices"][0]["text"]
+            summary_response = openai.Completion.create(prompt=summary_prompt, **model_settings)
+            summary = summary_response["choices"][0]["text"].strip()
 
             total_chars += len(summary_prompt) + len(summary)
             logger.info(f"Summary response '{summary_prompt + summary}'")
 
-            additional_context.append({"summary": summary.strip(), "documentId": document["id"]})
+            additional_context.append({"summary": summary, "documentId": document["id"]})
 
     # Generate the response
     chat_prompt = f"""{initial_text_prompt}
@@ -206,7 +209,8 @@ Human: {question}
 Context: {". ".join([document["summary"] for document in additional_context]) if len(additional_context) > 0 else "N/A"}
 AI:"""
 
-    chat_response = openai.Completion.create(prompt=chat_prompt, **model_settings)["choices"][0]["text"]
+    chat_response = openai.Completion.create(prompt=chat_prompt, **model_settings)
+    chat = chat_response["choices"][0]["text"].strip()
 
     total_chars += len(chat_prompt) + len(chat_response)
     logger.info(f"Chat response '{chat_prompt + chat_response}'")
@@ -217,7 +221,7 @@ AI:"""
     context.append({
         "human": question,
         "context": additional_context,
-        "ai": chat_response.strip()
+        "ai": chat
     })
     context = context[len(context) - memory_size:len(context)]
 
@@ -227,7 +231,7 @@ AI:"""
         "collectionId": {"S": collection_id},
         "timestamp": {"N": str(timestamp)},
         "question": {"S": question},
-        "response": {"S": chat_response.strip()},
+        "response": {"S": chat},
         "prompt": {"S": chat_prompt},
         "tokens": {"N": str(tokens)},
         "context": {"S": json.dumps(context)}
@@ -270,7 +274,7 @@ AI:"""
             "collectionId": collection_id,
             "timestamp": timestamp,
             "question": question,
-            "response": chat_response.strip(),
+            "response": chat,
             "prompt": chat_prompt,
             "tokens": tokens,
             "context": context,
