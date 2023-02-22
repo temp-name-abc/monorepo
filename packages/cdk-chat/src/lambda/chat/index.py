@@ -62,7 +62,7 @@ def lambda_handler(event, context):
     now = datetime.utcnow()
     timestamp = int(now.timestamp())
 
-    if prev_chat_id != None:
+    if conversation_id != None and prev_chat_id != None:
         prev_chat_data = dynamodb_client.get_item(
             TableName=conversations_table,
             Key={
