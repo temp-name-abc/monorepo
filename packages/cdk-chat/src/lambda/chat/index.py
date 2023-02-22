@@ -8,6 +8,7 @@ from datetime import datetime
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 import uuid
+import urllib.parse
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -15,53 +16,7 @@ logger.setLevel(logging.INFO)
 dynamodb_client = boto3.client("dynamodb")
 secrets_manager_client = boto3.client("secretsmanager")
 
-MAX_DOCUMENT_FETCH = 1
 MEMORY_LENGTH = 5
-
-
-def generate_prompt(context, question):
-    initial_text_prompt_template = """The following is a friendly conversation between a human and an AI.
-    The AI is talkative and provides lots of specific details from its context.
-    If the AI does not know the answer to a question, it truthfully says it does not know.
-    
-    Current conversation:
-    {}""" 
-
-    enough_information_prompt_template = """The following answers whether the context provided in the following 'prompt' is sufficient to answer the 'question'.
-    The only responses can be 'yes' or 'no'.
-
-    Question:
-    {}
-    
-    Prompt:
-    {}"""
-
-    conversation = "\n".join([
-        f"""Human: {chat["human"]}
-        Context: {". ".join([document["summary"] for document in chat["context"]]) if "context" in chat else "N/A"}
-        AI: {chat["ai"]}
-        """
-    ] for chat in context)
-
-    initial_text_prompt = initial_text_prompt_template.format(question, conversation)
-
-    response = openai.Completion.create(
-        model="text-davinci-003",
-        prompt=enough_information_prompt_template.format(initial_text_prompt),
-        temperature=0.7
-    )["choices"][0]["text"]
-
-    # Enrich the response
-    additional_context = []
-
-    if response == "yes":
-        pass
-
-    else:
-        # Retrieve additional documents for the context
-        pass
-
-    # **** We need to record the amount of tokens used for this as well for billing...
 
 
 def make_request(url, method, data = None):
@@ -149,4 +104,129 @@ def lambda_handler(event, context):
             "body": msg
         }
 
-    # Ge the response
+    # Create prompts and initialize token usage
+    total_chars = 0
+
+    initial_text_prompt_template = """The following is a friendly conversation between a human and an AI.
+    The AI is talkative and provides lots of specific details from its context.
+    If the AI does not know the answer to a question, it truthfully says it does not know.
+    
+    Current conversation:
+    {}""" 
+
+    enough_information_prompt_template = """The following answers whether the context provided in the following 'Prompt' is sufficient to answer the 'Question'.
+    The only responses can be 'yes' or 'no'.
+
+    Question:
+    {}
+    
+    Prompt:
+    {}
+    
+    Answer:"""
+
+    chat_context_prompt_template = """The following answers whether the context provided in the following 'Prompt' and 'Context' is sufficient to answer the 'Question'.
+    The only responses can be 'yes' or 'no'.
+    
+    Question:
+    {}
+
+    Context:
+    {}
+    
+    Prompt:
+    {}
+    
+    Answer:"""
+
+    query_prompt_template = """The following provides a 'Query' that can be used to search for additional information for the 'Question' given the existing 'Context'.
+
+    Question:
+    {}
+
+    Context:
+    {}
+    
+    Query:"""
+
+    summary_prompt_template = """Create a summary for the following 'Document' that contains all the information required to answer the 'Question' given the 'Prompt'.
+
+    Question:
+    {}
+
+    Prompt:
+    {}
+
+    Document:
+    {}
+
+    Summary:"""
+
+    # Create conversation
+    conversation = "\n".join([
+        f"""Human: {chat["human"]}
+        Context: {". ".join([document["summary"] for document in chat["context"]]) if "context" in chat else "N/A"}
+        AI: {chat["ai"]}
+        """
+    ] for chat in context)
+
+    # Check if there is enough information in the given response to answer the question
+    initial_text_prompt = initial_text_prompt_template.format(question, conversation)
+    enough_information_prompt = enough_information_prompt_template.format(initial_text_prompt)
+
+    enough_information = openai.Completion.create(
+        model="text-davinci-003",
+        prompt=enough_information_prompt,
+        temperature=0.7
+    )["choices"][0]["text"]
+
+    total_chars += len(enough_information_prompt) + len(enough_information)
+
+    # Enrich the response
+    additional_context = []
+
+    if enough_information != "yes":
+        query_prompt = query_prompt_template.format(question, initial_text_prompt)
+
+        query = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=query_prompt,
+            temperature=0.7
+        )["choices"][0]["text"]
+
+        total_chars += len(query_prompt) + len(query)
+
+        query_params = urllib.parse.urlencode({"query": query, "userId": user_id, "collectionId": collection_id, "numResults": 1})
+        documents_url = f"{api_url}/storage/iam/search?{query_params}"
+        documents_request = make_request(documents_url, "GET")
+        documents_req = requests.get(documents_url, headers=documents_request.headers, data=documents_request.data)
+
+        if not documents_req.ok:
+            logger.error(f"Unable to find documents with status '{documents_req.status_code}'")
+
+            raise Exception("Unable to get search documents")
+
+        # Create summary of document to give additional context
+        document_response = documents_req.json()
+
+        if len(document_response) > 0:        
+            document = document_response[0]
+
+            summary_prompt = summary_prompt_template.format(question, initial_text_prompt, document["body"])
+
+            summary = openai.Completion.create(
+                model="text-davinci-003",
+                prompt=summary_prompt,
+                temperature=0.7
+            )["choices"][0]["text"]
+
+            total_chars += len(summary_prompt) + len(summary)
+
+            additional_context.append({"summary": summary, "documentId": document["id"]})
+
+            # Check if we now have enough context
+
+    # Check if the new prompt with the context can match the query
+
+    # **** Make sure that we also update the previous data with the new question, context, and response
+    # **** We need to record the amount of tokens used for this as well for billing...
