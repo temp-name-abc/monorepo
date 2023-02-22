@@ -4,8 +4,6 @@ import boto3
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 
-model_settings = {"max_tokens": 2048, "model": "text-davinci-003"}
-
 
 def make_request(url, method, data = None):
     session = boto3.session.Session()
@@ -28,7 +26,7 @@ def set_openai_api_key(api_key):
 
 
 def generate_text(prompt, temperature = 0.5):
-    response = openai.Completion.create(prompt=prompt, temperature=temperature)
+    response = openai.Completion.create(prompt=prompt, temperature=temperature, max_tokens=2048, model="text-davinci-003")
     output = response["choices"][0]["text"].strip()
     tokens = response["usage"]["total_tokens"]
 
