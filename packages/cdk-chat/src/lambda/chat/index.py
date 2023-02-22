@@ -101,7 +101,7 @@ def lambda_handler(event, context):
 
     # Check if there is enough context
     enough_info_prompt = utils.prompt_enough_info(context_text, conversation_text, question)
-    enough_info, enough_info_tokens = utils.generate_text(enough_info_prompt)
+    enough_info, enough_info_tokens = utils.generate_text(enough_info_prompt, 0.2)
 
     enough_info = enough_info.lower()
     tokens += enough_info_tokens
@@ -110,7 +110,7 @@ def lambda_handler(event, context):
     if enough_info != "yes":
         # Figure out what needs requesting
         query_prompt = utils.prompt_query(conversation_text, question)
-        query, query_tokens = utils.generate_text(query_prompt)
+        query, query_tokens = utils.generate_text(query_prompt, 0.7)
 
         tokens += query_tokens
         logger.info(f"Query prompt = '{query_prompt}', response = '{query}'")
@@ -139,12 +139,13 @@ def lambda_handler(event, context):
     context_text = utils.create_context(context)
 
     chat_prompt = utils.prompt_chat(context_text, conversation_text, question)
-    chat, chat_tokens = utils.generate_text(chat_prompt)
+    chat, chat_tokens = utils.generate_text(chat_prompt, 0.7)
 
     tokens += chat_tokens
     logger.info(f"Chat prompt = '{chat_prompt}', response = '{chat}'")
 
     history.append({"human": question, "ai": chat, "chatId": chat_id})
+    history = history[len(history) - memory_size:]
 
     # Store the data
     dynamodb_client.put_item(
@@ -188,6 +189,7 @@ def lambda_handler(event, context):
             "chatId": chat_id,
             "collectionId": collection_id,
             "question": question,
-            "response": chat
+            "response": chat,
+            "context": context
         })
     }
