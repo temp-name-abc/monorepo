@@ -20,6 +20,22 @@ MEMORY_LENGTH = 5
 
 
 def generate_prompt(context, question):
+    initial_text_prompt_template = """The following is a friendly conversation between a human and an AI.
+    The AI is talkative and provides lots of specific details from its context.
+    If the AI does not know the answer to a question, it truthfully says it does not know.
+    
+    Current conversation:
+    {}""" 
+
+    enough_information_prompt_template = """The following answers whether the context provided in the following 'prompt' is sufficient to answer the 'question'.
+    The only responses can be 'yes' or 'no'.
+
+    Question:
+    {}
+    
+    Prompt:
+    {}"""
+
     conversation = "\n".join([
         f"""Human: {chat["human"]}
         Context: {". ".join([document["summary"] for document in chat["context"]]) if "context" in chat else "N/A"}
@@ -27,20 +43,23 @@ def generate_prompt(context, question):
         """
     ] for chat in context)
 
-    initial_text_prompt = f"""The following is a friendly conversation between a human and an AI.
-        The AI is talkative and provides lots of specific details from its context.
-        If the AI does not know the answer to a question, it truthfully says it does not know.
-        
-        Current conversation:
-        {conversation}""" 
+    initial_text_prompt = initial_text_prompt_template.format(question, conversation)
 
-    enough_information_prompt = """Is the context provided in the following text sufficient to answer the question 'Where' with a 'yes' or 'no' response?
-    
-    Prompt:
-    {}"""
+    response = openai.Completion.create(
+        model="text-davinci-003",
+        prompt=enough_information_prompt_template.format(initial_text_prompt),
+        temperature=0.7
+    )["choices"][0]["text"]
 
-    for i in range(MAX_DOCUMENT_FETCH):
-        pass 
+    # Enrich the response
+    additional_context = []
+
+    if response == "yes":
+        pass
+
+    else:
+        # Retrieve additional documents for the context
+        pass
 
     # **** We need to record the amount of tokens used for this as well for billing...
 
