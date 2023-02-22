@@ -52,7 +52,7 @@ Answer:"""
 def prompt_query(conversation, question):
     return f"""the following outputs the question that can be used to find the information required to answer the most recent question.
 
-current conversation:
+Current conversation:
 {conversation}
 Human: {question}
 

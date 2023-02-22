@@ -101,7 +101,7 @@ def lambda_handler(event, context):
 
     # Check if there is enough context
     enough_info_prompt = utils.prompt_enough_info(context_text, conversation_text, question)
-    enough_info, enough_info_tokens = utils.generate_text(enough_info_prompt, 0.2)
+    enough_info, enough_info_tokens = utils.generate_text(enough_info_prompt, 0.4)
 
     tokens += enough_info_tokens
     logger.info(f"Enough info prompt = '{enough_info_prompt}', response = '{enough_info}'")
