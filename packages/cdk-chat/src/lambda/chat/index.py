@@ -122,7 +122,7 @@ Question:
 Prompt:
 {}
 
-Answer: """
+Answer:"""
 
     query_prompt_template = """The following provides a 'Query' that can be used to search for additional information for the 'Question' given the existing 'Context'.
 
@@ -132,7 +132,7 @@ Question:
 Context:
 {}
 
-Query: """
+Query:"""
 
     summary_prompt_template = """The following takes a 'Document' and returns a summary that contains all relevant information for the 'Question' using only information in 'Document'.
 If there is no information in 'Document' relevant to 'Question', then there should be no summary.
@@ -143,7 +143,7 @@ Question:
 Document:
 {}
 
-Summary: """
+Summary:"""
 
     # Create conversation
     conversation = "\n".join(
@@ -217,7 +217,7 @@ AI: {chat["ai"]}"""
     chat_prompt = f"""{initial_text_prompt}
 Human: {question}
 Context: {". ".join([document["summary"] for document in additional_context]) if len(additional_context) > 0 else "N/A"}
-AI: """
+AI:"""
 
     chat_response = openai.Completion.create(
         model="text-davinci-003",
