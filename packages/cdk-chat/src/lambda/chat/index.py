@@ -99,21 +99,21 @@ def lambda_handler(event, context):
     conversation_text = utils.create_conversation(history)
     context_text = utils.create_context(context)
 
+    # Figure out the question
+    query_prompt = utils.prompt_query(conversation_text, question)
+    query, query_tokens = utils.generate_text(query_prompt)
+
+    tokens += query_tokens
+    logger.info(f"Query prompt = '{query_prompt}', response = '{query}'")
+
     # Check if there is enough context
-    enough_info_prompt = utils.prompt_enough_info(context_text, conversation_text, question)
+    enough_info_prompt = utils.prompt_enough_info(context_text, query)
     enough_info, enough_info_tokens = utils.generate_text(enough_info_prompt)
 
     tokens += enough_info_tokens
     logger.info(f"Enough info prompt = '{enough_info_prompt}', response = '{enough_info}'")
 
     if "yes" not in enough_info.lower():
-        # Figure out what needs requesting
-        query_prompt = utils.prompt_query(conversation_text, question)
-        query, query_tokens = utils.generate_text(query_prompt)
-
-        tokens += query_tokens
-        logger.info(f"Query prompt = '{query_prompt}', response = '{query}'")
-
         # Retrieve query
         query_encoded = urllib.parse.quote(query)
         documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults=1&query={query_encoded}"
@@ -130,13 +130,12 @@ def lambda_handler(event, context):
             document = documents_req.json()[0]
 
             context.append({"body": document["body"], "id": document["id"]})
+            context_text = utils.create_context(context) # First context document could contain the information
             context = context[len(context) - memory_size:]
 
             logger.info(f"Retrieved context document '{document['id']}'")
 
     # Update the context, generate the response, and update the history
-    context_text = utils.create_context(context)
-
     chat_prompt = utils.prompt_chat(context_text, conversation_text, question)
     chat, chat_tokens = utils.generate_text(chat_prompt)
 
@@ -176,6 +175,8 @@ def lambda_handler(event, context):
 
     if not usage_req.ok:
         logger.warning(f"Unable to record usage for user '{user_id}' with product '{product_id}' with status code '{usage_req.status_code}'")
+
+    logger.info(f"Generated chat '{chat_id}' for conversation '{conversation_id}' for user '{user_id}'")
 
     # Return the data
     return {

@@ -33,15 +33,12 @@ def generate_text(prompt, temperature = 0.7):
     return output, tokens
 
 
-def prompt_enough_info(context, conversation, question):
+def prompt_enough_info(context, question):
     return f"""The following answers whether the context provided in the following context is sufficient to answer the question.
-If there is enough context provided to answer the question, the answer is 'yes', otherwise, the answer is 'no'.
+If there is enough context provided to answer the question, the answer is 'yes', otherwise, the answer should be 'no'.
 
 Context:
 {context}
-
-Current conversation:
-{conversation}
 
 Question:
 {question}
