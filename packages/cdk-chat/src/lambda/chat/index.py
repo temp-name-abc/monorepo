@@ -5,10 +5,9 @@ import logging
 import openai
 import requests
 from datetime import datetime
-from botocore.auth import SigV4Auth
-from botocore.awsrequest import AWSRequest
 import uuid
 import urllib.parse
+import utils
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -17,22 +16,6 @@ dynamodb_client = boto3.client("dynamodb")
 secrets_manager_client = boto3.client("secretsmanager")
 
 model_settings = {"max_tokens": 2048, "temperature": 0.5, "model": "text-davinci-003"}
-
-
-def make_request(url, method, data = None):
-    session = boto3.session.Session()
-    credentials = session.get_credentials()
-    region = os.getenv("AWS_REGION")
-    service = "execute-api"
-
-    headers = {
-        "Content-Type": "application/json"
-    }
-
-    http_request = AWSRequest(method=method, url=url, headers=headers, data=data)
-    SigV4Auth(credentials, service, region).add_auth(http_request)
-
-    return http_request
 
 
 def lambda_handler(event, context):
@@ -49,12 +32,13 @@ def lambda_handler(event, context):
     body = json.loads(event["body"])
 
     # Load and validate parameters
-    prev_chat_id = body["previousChatId"] if "previousChatId" in body else None
+    conversation_id = body["conversationId"] if "conversationId" in body else None
+    prev_chat_id = body["chatId"] if "chatId" in body else None
     collection_id = body["collectionId"] if "collectionId" in body else None
     question = body["question"]
 
-    if prev_chat_id == None and collection_id == None:
-        msg = "Requires at least one of 'previousChatId' or 'collectionId'"
+    if not (prev_chat_id != None or (conversation_id != None and prev_chat_id != None)):
+        msg = "Requires at least one of 'collectionId' or 'conversationId' and 'chatId'"
 
         logger.error(msg)
 
@@ -67,11 +51,12 @@ def lambda_handler(event, context):
         }
 
     # Load the OpenAI API key
-    openai.api_key = secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"]
+    utils.set_openai_api_key(secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"])
 
     # Load the chat data
+    conversation_id = str(uuid.uuid4()) if conversation_id is None else conversation_id
     chat_id = str(uuid.uuid4())
-    conversation_id = str(uuid.uuid4())
+    history = []
     context = []
 
     now = datetime.utcnow()
@@ -80,16 +65,19 @@ def lambda_handler(event, context):
     if prev_chat_id != None:
         prev_chat_data = dynamodb_client.get_item(
             TableName=conversations_table,
-            Key={"chatId": {"S": prev_chat_id}}
+            Key={
+                "conversationId": {"S": conversation_id},
+                "chatId": {"S": prev_chat_id}
+                }
         )["Item"]
 
         collection_id = prev_chat_data["collectionId"]["S"]
-        conversation_id = prev_chat_data["conversationId"]["S"]
+        history = json.loads(prev_chat_data["history"]["S"])
         context = json.loads(prev_chat_data["context"]["S"])
 
     # Check the user can be billed bill
     active_url = f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
-    active_request = make_request(active_url, "GET")
+    active_request = utils.make_request(active_url, "GET")
     active_req = requests.get(active_url, headers=active_request.headers)
 
     if not active_req.ok or not active_req.json()["active"]:
@@ -105,147 +93,76 @@ def lambda_handler(event, context):
             "body": msg
         }
 
-    # Create prompts and initialize token usage
+    # Get the conversation
     tokens = 0
 
-    initial_text_prompt_template = """The following is a friendly conversation between a human and an AI.
-The AI is talkative and provides lots of specific details from its context.
-If the AI does not know the answer to a question, it truthfully says it does not know.
+    conversation_text = utils.create_conversation(history)
+    context_text = utils.create_context(context)
 
-Current conversation:
-{}""" 
+    # Check if there is enough context
+    enough_info_prompt = utils.prompt_enough_info(context_text, conversation_text, question)
+    enough_info, enough_info_tokens = utils.generate_text(enough_info_prompt)
 
-    enough_information_prompt_template = """The following answers whether the context provided in the following 'Prompt' is sufficient to answer the 'Question'.
-The only responses can be 'yes' or 'no'.
+    enough_info = enough_info.lower()
+    tokens += enough_info_tokens
+    logger.info(f"Enough info prompt = '{enough_info_prompt}', response = '{enough_info}'")
 
-Question:
-{}
+    if enough_info != "yes":
+        # Figure out what needs requesting
+        query_prompt = utils.prompt_query(conversation_text, question)
+        query, query_tokens = utils.generate_text(query_prompt)
 
-Prompt:
-{}
+        tokens += query_tokens
+        logger.info(f"Query prompt = '{query_prompt}', response = '{query}'")
 
-Answer:"""
-
-    query_prompt_template = """The following provides a 'Query' that can be used to search for additional information for the 'Question' given the existing 'Context'.
-
-Question:
-{}
-
-Context:
-{}
-
-Query:"""
-
-    summary_prompt_template = """The following takes a 'Document' and returns a summary that contains all relevant information for the 'Question' using only information in 'Document'.
-If there is no information in 'Document' relevant to 'Question', then there should be no summary.
-
-Question:
-{}
-
-Document:
-{}
-
-Summary:"""
-
-    # Create conversation
-    conversation = "\n".join(
-        f"""Human: {chat["human"]}
-Context: {". ".join([document["summary"] for document in chat["context"]]) if len(chat["context"]) > 0 else "N/A"}
-AI: {chat["ai"]}"""
-    for chat in context)
-
-    # Check if there is enough information in the given response to answer the question
-    initial_text_prompt = initial_text_prompt_template.format(conversation)
-    enough_information_prompt = enough_information_prompt_template.format(question, initial_text_prompt)
-
-    enough_information_response = openai.Completion.create(prompt=enough_information_prompt, **model_settings)
-    enough_information = enough_information_response["choices"][0]["text"].strip().lower()
-
-    tokens += enough_information_response["usage"]["total_tokens"]
-    logging.info(f"Enough information prompt = '{enough_information_prompt}', response = '{enough_information}'")
-
-    # Enrich the response
-    additional_context = []
-
-    if enough_information != "yes":
-        query_prompt = query_prompt_template.format(question, initial_text_prompt)
-
-        query_response = openai.Completion.create(prompt=query_prompt, **model_settings)
-        query = query_response["choices"][0]["text"].strip()
-
-        tokens += query_response["usage"]["total_tokens"]
-        logging.info(f"Query prompt = '{query_prompt}', response = '{query}'")
-
+        # Retrieve query
         query_encoded = urllib.parse.quote(query)
-
         documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults=1&query={query_encoded}"
-        documents_request = make_request(documents_url, "GET")
+        documents_request = utils.make_request(documents_url, "GET")
         documents_req = requests.get(documents_url, headers=documents_request.headers)
 
         if not documents_req.ok:
             logger.error(f"Unable to find documents with status '{documents_req.status_code}'")
         
         elif len(documents_req.json()) == 0:
-            logger.error(f"No documents found")
+            logger.warning(f"No documents found")
         
         else:
-            document_response = documents_req.json()
+            document = documents_req.json()[0]
 
-            document = document_response[0]
+            context.append({"body": document["body"], "id": document["id"]})
+            context = context[len(context) - memory_size:]
 
-            summary_prompt = summary_prompt_template.format(question, document["body"])
+            logger.info(f"Retrieved context document '{document['id']}'")
 
-            summary_response = openai.Completion.create(prompt=summary_prompt, **model_settings)
-            summary = summary_response["choices"][0]["text"].strip()
+    # Update the context, generate the response, and update the history
+    context_text = utils.create_context(context)
 
-            tokens += summary_response["usage"]["total_tokens"]
-            logger.info(f"Summary prompt = '{summary_prompt}', response = '{summary}'")
+    chat_prompt = utils.prompt_chat(context_text, conversation_text, question)
+    chat, chat_tokens = utils.generate_text(chat_prompt)
 
-            additional_context.append({"summary": summary, "documentId": document["id"]})
-
-    # Generate the response
-    chat_prompt = f"""{initial_text_prompt}
-Human: {question}
-Context: {". ".join([document["summary"] for document in additional_context]) if len(additional_context) > 0 else "N/A"}
-AI:"""
-
-    chat_response = openai.Completion.create(prompt=chat_prompt, **model_settings)
-    chat = chat_response["choices"][0]["text"].strip()
-
-    tokens += chat_response["usage"]["total_tokens"]
+    tokens += chat_tokens
     logger.info(f"Chat prompt = '{chat_prompt}', response = '{chat}'")
 
+    history.append({"human": question, "ai": chat, "chatId": chat_id})
+
     # Store the data
-    context.append({
-        "human": question,
-        "context": additional_context,
-        "ai": chat
-    })
-    context = context[len(context) - memory_size:len(context)]
-
-    item = {
-        "conversationId": {"S": conversation_id},
-        "chatId": {"S": chat_id},
-        "collectionId": {"S": collection_id},
-        "timestamp": {"N": str(timestamp)},
-        "question": {"S": question},
-        "response": {"S": chat},
-        "prompt": {"S": chat_prompt},
-        "tokens": {"N": str(tokens)},
-        "context": {"S": json.dumps(context)}
-    }
-
-    if prev_chat_id is not None:
-        item["previousChatId"] = {"S": prev_chat_id}
-
     dynamodb_client.put_item(
         TableName=conversations_table,
-        Item=item
+        Item={
+            "conversationId": {"S": conversation_id},
+            "chatId": {"S": chat_id},
+            "collectionId": {"S": collection_id},
+            "userId": {"S": user_id},
+            "timestamp": {"N": str(timestamp)},
+            "history": {"S": json.dumps(history)},
+            "context": {"S": json.dumps(context)}
+        }
     )
 
     # Record the usage
     usage_url = f"{api_url}/billing/iam/usage"
-    usage_request = make_request(usage_url, "POST", json.dumps({
+    usage_request = utils.make_request(usage_url, "POST", json.dumps({
         "userId": user_id,
         "timestamp": timestamp,
         "productId": product_id,
@@ -270,10 +187,7 @@ AI:"""
             "conversationId": conversation_id,
             "chatId": chat_id,
             "collectionId": collection_id,
-            "timestamp": timestamp,
             "question": question,
-            "response": chat,
-            "context": context,
-            "previousChatId": prev_chat_id
+            "response": chat
         })
     }
