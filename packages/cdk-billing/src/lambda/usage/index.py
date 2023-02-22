@@ -53,7 +53,8 @@ def lambda_handler(event, context):
                 ConditionExpression="attribute_not_exists(id)"
             )
         except dynamodb_client.exceptions.ConditionalCheckFailedException:
-            logger.info(f"Already reported usage for key '{key}'")
+            logger.error(f"Already reported usage for key '{key}'")
+
             continue
 
         customer = stripe.Customer.retrieve(user_data["stripeCustomerId"]["S"], expand=["subscriptions"])

@@ -97,7 +97,8 @@ def lambda_handler(event, context):
         active_req = requests.get(active_url, headers=active_request.headers)
 
         if not active_req.ok or not active_req.json()["active"]:
-            logger.info(f"User '{user_id}' has not subscribed to product '{product_id}' with status code '{active_req.status_code}'")
+            logger.error(f"User '{user_id}' has not subscribed to product '{product_id}' with status code '{active_req.status_code}'")
+
             continue
         
         # Retrieve document text
@@ -145,7 +146,8 @@ def lambda_handler(event, context):
         )
 
         if not usage_req.ok:
-            logger.info(f"Unable to record usage for user '{user_id}' with product '{product_id}' with status code '{usage_req.status_code}'")
+            logger.error(f"Unable to record usage for user '{user_id}' with product '{product_id}' with status code '{usage_req.status_code}'")
+
             continue
 
         logger.info(f"Processed file with key '{key}'")

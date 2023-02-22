@@ -48,6 +48,7 @@ export class ChatStack extends cdk.NestedStack {
             timeout: cdk.Duration.minutes(1),
         });
 
+        openAISecret.grantRead(chatFn);
         conversationsTable.grantReadWriteData(chatFn);
         chatFn.addToRolePolicy(
             new iam.PolicyStatement({

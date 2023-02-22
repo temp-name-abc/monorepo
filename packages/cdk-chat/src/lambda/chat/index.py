@@ -15,6 +15,9 @@ logger.setLevel(logging.INFO)
 dynamodb_client = boto3.client("dynamodb")
 secrets_manager_client = boto3.client("secretsmanager")
 
+MAX_RETRIES = 2
+CHAT_LENGTH = 5
+
 
 def make_request(url, method, data = None):
     session = boto3.session.Session()
@@ -50,12 +53,16 @@ def lambda_handler(event, context):
     question = body["question"]
 
     if prev_chat_id != None and collection_id != None:
+        msg = "Requires at least one of 'previousChatId' or 'collectionId'"
+
+        logger.error(msg)
+
         return {
             "statusCode": 400,
             "headers": {
                 "Access-Control-Allow-Origin": "*",
             },
-            "body": "Requires at least one of 'previousChatId' or 'collectionId'"
+            "body": msg
         }
 
     # Load the OpenAI API key
@@ -87,7 +94,7 @@ def lambda_handler(event, context):
     if not active_req.ok or not active_req.json()["active"]:
         msg = f"User '{user_id}' has not subscribed to product '{product_id}' with status code '{active_req.status_code}'"
 
-        logger.info(msg)
+        logger.error(msg)
 
         return {
             "statusCode": 400,
@@ -98,5 +105,6 @@ def lambda_handler(event, context):
         }
 
     # Begin the prompt loop
+    retries = 0
 
-    
+    prompt = f"" 
