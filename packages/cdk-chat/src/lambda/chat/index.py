@@ -135,12 +135,9 @@ def lambda_handler(event, context):
     
     Query:"""
 
-    summary_prompt_template = """Create a summary for the following 'Document' that contains all the information required to answer the 'Question' given the 'Prompt'.
+    summary_prompt_template = """Create a summary for the following 'Document' that contains all relevant information for the 'Question'.
 
     Question:
-    {}
-
-    Prompt:
     {}
 
     Document:
@@ -172,7 +169,7 @@ def lambda_handler(event, context):
     # Enrich the response
     additional_context = []
 
-    if enough_information.strip() != "yes":
+    if enough_information.strip().lower() != "yes":
         query_prompt = query_prompt_template.format(question, initial_text_prompt)
 
         query = openai.Completion.create(
@@ -184,10 +181,11 @@ def lambda_handler(event, context):
         total_chars += len(query_prompt) + len(query)
         logging.info(f"Query response '{query_prompt + query}'")
 
-        query_params = urllib.parse.urlencode({"query": query, "userId": user_id, "collectionId": collection_id, "numResults": 1})
-        documents_url = f"{api_url}/storage/iam/search?{query_params}"
+        query_encoded = urllib.parse.quote(query.strip())
+
+        documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults=1&query={query_encoded}"
         documents_request = make_request(documents_url, "GET")
-        documents_req = requests.get(documents_url, headers=documents_request.headers, data=documents_request.data)
+        documents_req = requests.get(documents_url, headers=documents_request.headers)
 
         if not documents_req.ok:
             logger.error(f"Unable to find documents with status '{documents_req.status_code}'")
@@ -200,7 +198,7 @@ def lambda_handler(event, context):
 
             document = document_response[0]
 
-            summary_prompt = summary_prompt_template.format(question, initial_text_prompt, document["body"])
+            summary_prompt = summary_prompt_template.format(question, document["body"])
 
             summary = openai.Completion.create(
                 model="text-davinci-003",
@@ -211,7 +209,7 @@ def lambda_handler(event, context):
             total_chars += len(summary_prompt) + len(summary)
             logger.info(f"Summary response '{summary_prompt + summary}'")
 
-            additional_context.append({"summary": summary, "documentId": document["id"]})
+            additional_context.append({"summary": summary.strip(), "documentId": document["id"]})
 
     # Generate the response
     chat_prompt = f"""{initial_text_prompt}
@@ -234,8 +232,9 @@ def lambda_handler(event, context):
     context.append({
         "human": question,
         "context": additional_context,
-        "ai": chat_response
+        "ai": chat_response.strip()
     })
+    context = context[len(context) - MEMORY_LENGTH:len(context)]
 
     item = {
         "chatId": {"S": chat_id},
@@ -243,7 +242,7 @@ def lambda_handler(event, context):
         "collectionId": {"S": collection_id},
         "timestamp": {"N": str(timestamp)},
         "question": {"S": question},
-        "response": {"S": chat_response},
+        "response": {"S": chat_response.strip()},
         "prompt": {"S": chat_prompt},
         "tokens": {"N": str(tokens)},
         "context": {"S": json.dumps(context)}
