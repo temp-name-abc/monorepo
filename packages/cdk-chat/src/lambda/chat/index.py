@@ -103,11 +103,10 @@ def lambda_handler(event, context):
     enough_info_prompt = utils.prompt_enough_info(context_text, conversation_text, question)
     enough_info, enough_info_tokens = utils.generate_text(enough_info_prompt, 0.2)
 
-    enough_info = enough_info.lower()
     tokens += enough_info_tokens
     logger.info(f"Enough info prompt = '{enough_info_prompt}', response = '{enough_info}'")
 
-    if enough_info != "yes":
+    if "yes" not in enough_info.lower():
         # Figure out what needs requesting
         query_prompt = utils.prompt_query(conversation_text, question)
         query, query_tokens = utils.generate_text(query_prompt, 0.7)
