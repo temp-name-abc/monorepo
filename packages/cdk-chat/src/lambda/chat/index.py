@@ -101,7 +101,7 @@ def lambda_handler(event, context):
 
     # Check if there is enough context
     enough_info_prompt = utils.prompt_enough_info(context_text, conversation_text, question)
-    enough_info, enough_info_tokens = utils.generate_text(enough_info_prompt, 0.4)
+    enough_info, enough_info_tokens = utils.generate_text(enough_info_prompt)
 
     tokens += enough_info_tokens
     logger.info(f"Enough info prompt = '{enough_info_prompt}', response = '{enough_info}'")
@@ -109,7 +109,7 @@ def lambda_handler(event, context):
     if "yes" not in enough_info.lower():
         # Figure out what needs requesting
         query_prompt = utils.prompt_query(conversation_text, question)
-        query, query_tokens = utils.generate_text(query_prompt, 0.7)
+        query, query_tokens = utils.generate_text(query_prompt)
 
         tokens += query_tokens
         logger.info(f"Query prompt = '{query_prompt}', response = '{query}'")
@@ -138,7 +138,7 @@ def lambda_handler(event, context):
     context_text = utils.create_context(context)
 
     chat_prompt = utils.prompt_chat(context_text, conversation_text, question)
-    chat, chat_tokens = utils.generate_text(chat_prompt, 0.7)
+    chat, chat_tokens = utils.generate_text(chat_prompt)
 
     tokens += chat_tokens
     logger.info(f"Chat prompt = '{chat_prompt}', response = '{chat}'")

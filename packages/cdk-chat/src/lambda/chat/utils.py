@@ -25,7 +25,7 @@ def set_openai_api_key(api_key):
     openai.api_key = api_key
 
 
-def generate_text(prompt, temperature = 0.5):
+def generate_text(prompt, temperature = 0.7):
     response = openai.Completion.create(prompt=prompt, temperature=temperature, max_tokens=2048, model="text-davinci-003")
     output = response["choices"][0]["text"].strip()
     tokens = response["usage"]["total_tokens"]
@@ -35,7 +35,7 @@ def generate_text(prompt, temperature = 0.5):
 
 def prompt_enough_info(context, conversation, question):
     return f"""The following answers whether the context provided in the following context is sufficient to answer the question.
-The only answers can be yes or no.
+If there is enough context provided to answer the question, the answer is 'yes', otherwise, the answer is 'no'.
 
 Context:
 {context}
