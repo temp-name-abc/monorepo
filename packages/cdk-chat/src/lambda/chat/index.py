@@ -125,20 +125,6 @@ def lambda_handler(event, context):
     
     Answer:"""
 
-    chat_context_prompt_template = """The following answers whether the context provided in the following 'Prompt' and 'Context' is sufficient to answer the 'Question'.
-    The only responses can be 'yes' or 'no'.
-    
-    Question:
-    {}
-
-    Context:
-    {}
-    
-    Prompt:
-    {}
-    
-    Answer:"""
-
     query_prompt_template = """The following provides a 'Query' that can be used to search for additional information for the 'Question' given the existing 'Context'.
 
     Question:
@@ -165,7 +151,7 @@ def lambda_handler(event, context):
     # Create conversation
     conversation = "\n".join([
         f"""Human: {chat["human"]}
-        Context: {". ".join([document["summary"] for document in chat["context"]]) if "context" in chat else "N/A"}
+        Context: {". ".join([document["summary"] for document in chat["context"]]) if len(chat["context"]) > 0 else "N/A"}
         AI: {chat["ai"]}
         """
     ] for chat in context)
@@ -181,11 +167,12 @@ def lambda_handler(event, context):
     )["choices"][0]["text"]
 
     total_chars += len(enough_information_prompt) + len(enough_information)
+    logging.info(f"Enough information response '{enough_information_prompt + enough_information}'")
 
     # Enrich the response
     additional_context = []
 
-    if enough_information != "yes":
+    if enough_information.strip() != "yes":
         query_prompt = query_prompt_template.format(question, initial_text_prompt)
 
         query = openai.Completion.create(
@@ -195,6 +182,7 @@ def lambda_handler(event, context):
         )["choices"][0]["text"]
 
         total_chars += len(query_prompt) + len(query)
+        logging.info(f"Query response '{query_prompt + query}'")
 
         query_params = urllib.parse.urlencode({"query": query, "userId": user_id, "collectionId": collection_id, "numResults": 1})
         documents_url = f"{api_url}/storage/iam/search?{query_params}"
@@ -203,13 +191,13 @@ def lambda_handler(event, context):
 
         if not documents_req.ok:
             logger.error(f"Unable to find documents with status '{documents_req.status_code}'")
+        
+        elif len(documents_req.json()) == 0:
+            logger.error(f"No documents found")
+        
+        else:
+            document_response = documents_req.json()
 
-            raise Exception("Unable to get search documents")
-
-        # Create summary of document to give additional context
-        document_response = documents_req.json()
-
-        if len(document_response) > 0:        
             document = document_response[0]
 
             summary_prompt = summary_prompt_template.format(question, initial_text_prompt, document["body"])
@@ -221,12 +209,76 @@ def lambda_handler(event, context):
             )["choices"][0]["text"]
 
             total_chars += len(summary_prompt) + len(summary)
+            logger.info(f"Summary response '{summary_prompt + summary}'")
 
             additional_context.append({"summary": summary, "documentId": document["id"]})
 
-            # Check if we now have enough context
+    # Generate the response
+    chat_prompt = f"""{initial_text_prompt}
+    Human: {question}
+    Context: {". ".join([document["summary"] for document in additional_context]) if len(additional_context) > 0 else "N/A"}
+    AI: """
 
-    # Check if the new prompt with the context can match the query
+    chat_response = openai.Completion.create(
+        model="text-davinci-003",
+        prompt=chat_prompt,
+        temperature=0.7
+    )["choices"][0]["text"]
 
-    # **** Make sure that we also update the previous data with the new question, context, and response
-    # **** We need to record the amount of tokens used for this as well for billing...
+    total_chars += len(chat_prompt) + len(chat_response)
+    logger.info(f"Chat response '{chat_prompt + chat_response}'")
+
+    # Store the data
+    tokens = total_chars // 4
+
+    context.append({
+        "human": question,
+        "context": additional_context,
+        "ai": chat_response
+    })
+
+    item = {
+        "chatId": {"S": chat_id},
+        "conversationId": {"S": conversation_id},
+        "collectionId": {"S": collection_id},
+        "timestamp": {"N": str(timestamp)},
+        "question": {"S": question},
+        "response": {"S": chat_response},
+        "prompt": {"S": chat_prompt},
+        "tokens": {"N": str(tokens)},
+        "context": {"S": json.dumps(context)}
+    }
+
+    if prev_chat_id is not None:
+        item["previousChatId"] = {"S": prev_chat_id}
+
+    dynamodb_client.put_item(
+        TableName=conversations_table,
+        Item=item
+    )
+
+    # Record the usage
+    usage_url = f"{api_url}/billing/iam/usage"
+    usage_request = make_request(usage_url, "POST", json.dumps({
+        "userId": user_id,
+        "timestamp": timestamp,
+        "productId": product_id,
+        "quantity": tokens
+    }))
+    usage_req = requests.post(
+        usage_url,
+        headers=usage_request.headers,
+        data=usage_request.data
+    )
+
+    if not usage_req.ok:
+        logger.warning(f"Unable to record usage for user '{user_id}' with product '{product_id}' with status code '{usage_req.status_code}'")
+
+    # Return the data
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Access-Control-Allow-Origin": "*",
+        },
+        "body": json.dumps(item)
+    }
