@@ -107,7 +107,7 @@ def lambda_handler(event, context):
         
         # Retrieve document text
         obj_res = s3_client.get_object(Bucket=bucket_name, Key=key)
-        body = obj_res["Body"].read().decode("utf-8")
+        body = obj_res["Body"].read().decode("utf-8", errors="ignore")
 
         # Break the document into chunks
         words = body.split(" ")
