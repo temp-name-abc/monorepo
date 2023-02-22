@@ -157,8 +157,8 @@ def lambda_handler(event, context):
     ] for chat in context)
 
     # Check if there is enough information in the given response to answer the question
-    initial_text_prompt = initial_text_prompt_template.format(question, conversation)
-    enough_information_prompt = enough_information_prompt_template.format(initial_text_prompt)
+    initial_text_prompt = initial_text_prompt_template.format(conversation)
+    enough_information_prompt = enough_information_prompt_template.format(question, initial_text_prompt)
 
     enough_information = openai.Completion.create(
         model="text-davinci-003",
