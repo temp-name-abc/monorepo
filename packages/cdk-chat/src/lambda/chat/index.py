@@ -161,8 +161,8 @@ AI: {chat["ai"]}"""
     enough_information_response = openai.Completion.create(prompt=enough_information_prompt, **model_settings)
     enough_information = enough_information_response["choices"][0]["text"].strip().lower()
 
-    total_chars += len(enough_information_prompt) + len(enough_information)
-    logging.info(f"Enough information response '{enough_information_prompt + enough_information}'")
+    total_chars += enough_information_response["usage"]["total_tokens"]
+    logging.info(f"Enough information prompt = '{enough_information_prompt}', response = '{enough_information}'")
 
     # Enrich the response
     additional_context = []
@@ -173,8 +173,8 @@ AI: {chat["ai"]}"""
         query_response = openai.Completion.create(prompt=query_prompt, **model_settings)
         query = query_response["choices"][0]["text"].strip()
 
-        total_chars += len(query_prompt) + len(query)
-        logging.info(f"Query response '{query_prompt + query}'")
+        total_chars += query_response["usage"]["total_tokens"]
+        logging.info(f"Query prompt = '{query_prompt}', response = '{query}'")
 
         query_encoded = urllib.parse.quote(query)
 
@@ -198,8 +198,8 @@ AI: {chat["ai"]}"""
             summary_response = openai.Completion.create(prompt=summary_prompt, **model_settings)
             summary = summary_response["choices"][0]["text"].strip()
 
-            total_chars += len(summary_prompt) + len(summary)
-            logger.info(f"Summary response '{summary_prompt + summary}'")
+            total_chars += summary_response["usage"]["total_tokens"]
+            logger.info(f"Summary prompt = '{summary_prompt}', response = '{summary}'")
 
             additional_context.append({"summary": summary, "documentId": document["id"]})
 
@@ -212,8 +212,8 @@ AI:"""
     chat_response = openai.Completion.create(prompt=chat_prompt, **model_settings)
     chat = chat_response["choices"][0]["text"].strip()
 
-    total_chars += len(chat_prompt) + len(chat_response)
-    logger.info(f"Chat response '{chat_prompt + chat_response}'")
+    total_chars += chat_response["usage"]["total_tokens"]
+    logger.info(f"Chat prompt = '{chat_prompt}', response = '{chat}'")
 
     # Store the data
     tokens = total_chars // 4
