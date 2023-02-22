@@ -123,7 +123,7 @@ def lambda_handler(event, context):
     Prompt:
     {}
     
-    Answer:"""
+    Answer: """
 
     query_prompt_template = """The following provides a 'Query' that can be used to search for additional information for the 'Question' given the existing 'Context'.
 
@@ -133,9 +133,10 @@ def lambda_handler(event, context):
     Context:
     {}
     
-    Query:"""
+    Query: """
 
-    summary_prompt_template = """Create a summary for the following 'Document' that contains all relevant information for the 'Question'.
+    summary_prompt_template = """The following takes a 'Document' and returns a summary that contains all relevant information for the 'Question' using only information in 'Document'.
+    If there is no information in 'Document' relevant to 'Question', then there should be no summary.
 
     Question:
     {}
@@ -143,7 +144,7 @@ def lambda_handler(event, context):
     Document:
     {}
 
-    Summary:"""
+    Summary: """
 
     # Create conversation
     conversation = "\n".join([
