@@ -16,6 +16,8 @@ s3_client = boto3.client("s3")
 dynamodb_client = boto3.client("dynamodb")
 secrets_manager_client = boto3.client("secretsmanager")
 
+model_settings = {"model": "text-embedding-ada-002"}
+
 
 def make_request(url, method, data = None):
     session = boto3.session.Session()
@@ -106,10 +108,8 @@ def lambda_handler(event, context):
         body = obj_res["Body"].read().decode("utf-8")
 
         # Create the embeddings and store in Pinecone
-        embeddings = openai.Embedding.create(
-            input=body,
-            model="text-embedding-ada-002"
-        )["data"][0]["embedding"]
+        embeddings_response = openai.Embedding.create(input=body, **model_settings)
+        embeddings = embeddings_response["data"][0]["embeddings"]
 
         index.upsert([
             (key, embeddings, {"userId": user_id, "collectionId": collection_id})
@@ -137,7 +137,7 @@ def lambda_handler(event, context):
             "userId": user_id,
             "timestamp": timestamp,
             "productId": product_id,
-            "quantity": len(body) // 4
+            "quantity": embeddings_response["usage"]["total_tokens"]
         }))
         usage_req = requests.post(
             usage_url,

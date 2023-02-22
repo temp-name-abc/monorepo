@@ -106,7 +106,7 @@ def lambda_handler(event, context):
         }
 
     # Create prompts and initialize token usage
-    total_chars = 0
+    tokens = 0
 
     initial_text_prompt_template = """The following is a friendly conversation between a human and an AI.
 The AI is talkative and provides lots of specific details from its context.
@@ -161,7 +161,7 @@ AI: {chat["ai"]}"""
     enough_information_response = openai.Completion.create(prompt=enough_information_prompt, **model_settings)
     enough_information = enough_information_response["choices"][0]["text"].strip().lower()
 
-    total_chars += enough_information_response["usage"]["total_tokens"]
+    tokens += enough_information_response["usage"]["total_tokens"]
     logging.info(f"Enough information prompt = '{enough_information_prompt}', response = '{enough_information}'")
 
     # Enrich the response
@@ -173,7 +173,7 @@ AI: {chat["ai"]}"""
         query_response = openai.Completion.create(prompt=query_prompt, **model_settings)
         query = query_response["choices"][0]["text"].strip()
 
-        total_chars += query_response["usage"]["total_tokens"]
+        tokens += query_response["usage"]["total_tokens"]
         logging.info(f"Query prompt = '{query_prompt}', response = '{query}'")
 
         query_encoded = urllib.parse.quote(query)
@@ -198,7 +198,7 @@ AI: {chat["ai"]}"""
             summary_response = openai.Completion.create(prompt=summary_prompt, **model_settings)
             summary = summary_response["choices"][0]["text"].strip()
 
-            total_chars += summary_response["usage"]["total_tokens"]
+            tokens += summary_response["usage"]["total_tokens"]
             logger.info(f"Summary prompt = '{summary_prompt}', response = '{summary}'")
 
             additional_context.append({"summary": summary, "documentId": document["id"]})
@@ -212,12 +212,10 @@ AI:"""
     chat_response = openai.Completion.create(prompt=chat_prompt, **model_settings)
     chat = chat_response["choices"][0]["text"].strip()
 
-    total_chars += chat_response["usage"]["total_tokens"]
+    tokens += chat_response["usage"]["total_tokens"]
     logger.info(f"Chat prompt = '{chat_prompt}', response = '{chat}'")
 
     # Store the data
-    tokens = total_chars // 4
-
     context.append({
         "human": question,
         "context": additional_context,
