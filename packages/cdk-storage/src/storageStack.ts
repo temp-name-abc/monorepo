@@ -80,7 +80,6 @@ export class StorageStack extends cdk.NestedStack {
 
         const documentTable = new dynamodb.Table(this, "documentTable", {
             partitionKey: { name: "documentId", type: dynamodb.AttributeType.STRING },
-            sortKey: { name: "chunkId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
         });
 
@@ -106,6 +105,7 @@ export class StorageStack extends cdk.NestedStack {
                 PINECONE_ENV: props.pineconeEnv,
                 PINECONE_INDEX: props.pineconeIndex,
                 PRODUCT_ID: props.productId,
+                CHUNK_SIZE: "200",
             },
             timeout: cdk.Duration.minutes(15),
         });

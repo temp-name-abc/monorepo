@@ -5,6 +5,7 @@ import logging
 import openai
 import pinecone
 import requests
+import uuid
 from datetime import datetime, timedelta
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
@@ -41,12 +42,14 @@ def lambda_handler(event, context):
     pinecone_secret = os.getenv("PINECONE_SECRET")
     openai_secret = os.getenv("OPENAI_SECRET")
     upload_records_table = os.getenv("UPLOAD_RECORDS_TABLE")
+    upload_lock_table = os.getenv("UPLOAD_LOCK_TABLE")
     document_table = os.getenv("DOCUMENT_TABLE")
     document_bucket = os.getenv("DOCUMENT_BUCKET")
     api_url = os.getenv("API_URL")
     pinecone_env = os.getenv("PINECONE_ENV")
     pinecone_index = os.getenv("PINECONE_INDEX")
     product_id = os.getenv("PRODUCT_ID")
+    chunk_size = int(os.getenv("CHUNK_SIZE"))
 
     # Load the OpenAI API key
     openai.api_key = secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"]
@@ -66,31 +69,19 @@ def lambda_handler(event, context):
         key = record["s3"]["object"]["key"]
         bucket_name = record["s3"]["bucket"]["name"]
 
-        # Create a record to lock the resource temporarily
+        # Lock the upload temporarily
         now = datetime.utcnow()
         timestamp = int(now.timestamp())
         expiry_time = now + timedelta(minutes=15)
         ttl_seconds = int(expiry_time.timestamp())
 
-        # Get the upload data
-        upload_data = dynamodb_client.get_item(
-            TableName=upload_records_table,
-            Key={"uploadId": {"S": key}}
-        )["Item"]
-
-        user_id = upload_data["userId"]["S"]
-        collection_id = upload_data["collectionId"]["S"]
-
         dynamodb_client.put_item(
-            TableName=document_table,
+            TableName=upload_lock_table,
             Item={
-                "documentId": {"S": key},
-                "collectionId": {"S": collection_id},
-                "userId": {"S": user_id},
-                "status": {"S": "in_progress"},
+                "uploadId": {"S": key},
                 "ttl": {"N": str(ttl_seconds)}
             },
-            ConditionExpression="attribute_not_exists(documentId)"
+            ConditionExpression="attribute_not_exists(uploadId)"
         )
 
         # Check if the user has subscribed
@@ -102,34 +93,60 @@ def lambda_handler(event, context):
             logger.error(f"User '{user_id}' has not subscribed to product '{product_id}' with status code '{active_req.status_code}'")
 
             continue
+
+        # Get the upload document
+        upload_data = dynamodb_client.get_item(
+            TableName=upload_records_table,
+            Key={
+                "uploadId": {"S": key}
+            }
+        )["Item"]
+
+        user_id = upload_data["userId"]["S"]
+        collection_id = upload_data["collectionId"]["S"]
         
         # Retrieve document text
         obj_res = s3_client.get_object(Bucket=bucket_name, Key=key)
         body = obj_res["Body"].read().decode("utf-8")
 
-        # Create the embeddings and store in Pinecone
-        embeddings_response = openai.Embedding.create(input=body, **model_settings)
-        embeddings = embeddings_response["data"][0]["embedding"]
+        # Break the document into chunks
+        words = body.split(" ")
+        tokens = 0
+        chunk_num = 0
 
-        index.upsert([
-            (key, embeddings, {"userId": user_id, "collectionId": collection_id})
-        ])
+        while len(words) > 0:
+            document_id = str(uuid.uuid4())
+            chunk = " ".join(words[:chunk_size])
 
-        # Upload text to S3
-        s3_client.put_object(Bucket=document_bucket, Key=key, Body=body)
+            # Create the embeddings
+            embeddings_response = openai.Embedding.create(input=chunk, **model_settings)
+            embeddings = embeddings_response["data"][0]["embedding"]
+            tokens += embeddings_response["usage"]["total_tokens"]
 
-        # Update the resource
-        dynamodb_client.put_item(
-            TableName=document_table,
-            Item={
-                "documentId": {"S": key},
-                "collectionId": {"S": collection_id},
-                "userId": {"S": user_id},
-                "status": {"S": "success"},
-                "timestamp": {"N": str(timestamp)},
-                "embedding": {"S": json.dumps(embeddings)},
-            }
-        )
+            # Store pinecone embeddings with a composite key
+            index.upsert([
+                (document_id, embeddings, {"userId": user_id, "collectionId": collection_id})
+            ])
+
+            # Upload text to S3
+            s3_client.put_object(Bucket=document_bucket, Key=document_id, Body=chunk)
+
+            # Update the resource
+            dynamodb_client.put_item(
+                TableName=document_table,
+                Item={
+                    "documentId": {"S": document_id},
+                    "uploadId": {"S": key},
+                    "chunkNum": {"N": str(chunk_num)},
+                    "userId": {"S": user_id},
+                    "collectionId": {"S": collection_id},
+                    "embedding": {"S": json.dumps(embeddings)},
+                    "timestamp": {"N": str(timestamp)}
+                }
+            )
+
+            words = words[chunk_size:]
+            chunk_num += 1
 
         # Record usage for user
         usage_url = f"{api_url}/billing/iam/usage"
@@ -137,7 +154,7 @@ def lambda_handler(event, context):
             "userId": user_id,
             "timestamp": timestamp,
             "productId": product_id,
-            "quantity": embeddings_response["usage"]["total_tokens"]
+            "quantity": tokens
         }))
         usage_req = requests.post(
             usage_url,
