@@ -2,7 +2,6 @@ import boto3
 import json
 import os
 import logging
-import openai
 import requests
 from datetime import datetime
 import uuid
@@ -37,7 +36,7 @@ def lambda_handler(event, context):
     collection_id = body["collectionId"] if "collectionId" in body else None
     question = body["question"]
 
-    if not (prev_chat_id != None or (conversation_id != None and prev_chat_id != None)):
+    if not (collection_id != None or (conversation_id != None and prev_chat_id != None)):
         msg = "Requires at least one of 'collectionId' or 'conversationId' and 'chatId'"
 
         logger.error(msg)
