@@ -16,8 +16,6 @@ logger.setLevel(logging.INFO)
 dynamodb_client = boto3.client("dynamodb")
 secrets_manager_client = boto3.client("secretsmanager")
 
-MEMORY_LENGTH = 5
-
 
 def make_request(url, method, data = None):
     session = boto3.session.Session()
@@ -42,6 +40,7 @@ def lambda_handler(event, context):
     conversations_table = os.getenv("CONVERSATIONS_TABLE")
     api_url = os.getenv("API_URL")
     product_id = os.getenv("PRODUCT_ID")
+    memory_size = int(os.getenv("MEMORY_SIZE"))
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
 
@@ -108,51 +107,50 @@ def lambda_handler(event, context):
     total_chars = 0
 
     initial_text_prompt_template = """The following is a friendly conversation between a human and an AI.
-    The AI is talkative and provides lots of specific details from its context.
-    If the AI does not know the answer to a question, it truthfully says it does not know.
-    
-    Current conversation:
-    {}""" 
+The AI is talkative and provides lots of specific details from its context.
+If the AI does not know the answer to a question, it truthfully says it does not know.
+
+Current conversation:
+{}""" 
 
     enough_information_prompt_template = """The following answers whether the context provided in the following 'Prompt' is sufficient to answer the 'Question'.
-    The only responses can be 'yes' or 'no'.
+The only responses can be 'yes' or 'no'.
 
-    Question:
-    {}
-    
-    Prompt:
-    {}
-    
-    Answer: """
+Question:
+{}
+
+Prompt:
+{}
+
+Answer: """
 
     query_prompt_template = """The following provides a 'Query' that can be used to search for additional information for the 'Question' given the existing 'Context'.
 
-    Question:
-    {}
+Question:
+{}
 
-    Context:
-    {}
-    
-    Query: """
+Context:
+{}
+
+Query: """
 
     summary_prompt_template = """The following takes a 'Document' and returns a summary that contains all relevant information for the 'Question' using only information in 'Document'.
-    If there is no information in 'Document' relevant to 'Question', then there should be no summary.
+If there is no information in 'Document' relevant to 'Question', then there should be no summary.
 
-    Question:
-    {}
+Question:
+{}
 
-    Document:
-    {}
+Document:
+{}
 
-    Summary: """
+Summary: """
 
     # Create conversation
-    conversation = "\n".join([
+    conversation = "\n".join(
         f"""Human: {chat["human"]}
-        Context: {". ".join([document["summary"] for document in chat["context"]]) if len(chat["context"]) > 0 else "N/A"}
-        AI: {chat["ai"]}
-        """
-    ] for chat in context)
+Context: {". ".join([document["summary"] for document in chat["context"]]) if len(chat["context"]) > 0 else "N/A"}
+AI: {chat["ai"]}"""
+    for chat in context)
 
     # Check if there is enough information in the given response to answer the question
     initial_text_prompt = initial_text_prompt_template.format(conversation)
@@ -217,9 +215,9 @@ def lambda_handler(event, context):
 
     # Generate the response
     chat_prompt = f"""{initial_text_prompt}
-    Human: {question}
-    Context: {". ".join([document["summary"] for document in additional_context]) if len(additional_context) > 0 else "N/A"}
-    AI: """
+Human: {question}
+Context: {". ".join([document["summary"] for document in additional_context]) if len(additional_context) > 0 else "N/A"}
+AI: """
 
     chat_response = openai.Completion.create(
         model="text-davinci-003",
@@ -238,7 +236,7 @@ def lambda_handler(event, context):
         "context": additional_context,
         "ai": chat_response.strip()
     })
-    context = context[len(context) - MEMORY_LENGTH:len(context)]
+    context = context[len(context) - memory_size:len(context)]
 
     item = {
         "chatId": {"S": chat_id},
@@ -283,5 +281,16 @@ def lambda_handler(event, context):
         "headers": {
             "Access-Control-Allow-Origin": "*",
         },
-        "body": json.dumps(item)
+        "body": json.dumps({
+            "chatId": chat_id,
+            "conversationId": conversation_id,
+            "collectionId": collection_id,
+            "timestamp": timestamp,
+            "question": question,
+            "response": chat_response.strip(),
+            "prompt": chat_prompt,
+            "tokens": tokens,
+            "context": context,
+            "previousChatId": prev_chat_id
+        })
     }

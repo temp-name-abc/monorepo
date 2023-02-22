@@ -44,6 +44,7 @@ export class ChatStack extends cdk.NestedStack {
                 CONVERSATIONS_TABLE: conversationsTable.tableName,
                 API_URL: props.apiUrl,
                 PRODUCT_ID: props.productId,
+                MEMORY_SIZE: "5",
             },
             timeout: cdk.Duration.minutes(1),
         });
