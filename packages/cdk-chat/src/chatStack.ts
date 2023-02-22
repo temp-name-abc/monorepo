@@ -26,7 +26,8 @@ export class ChatStack extends cdk.NestedStack {
 
         // Create upload function
         const conversationsTable = new dynamodb.Table(this, "conversationsTable", {
-            partitionKey: { name: "chatId", type: dynamodb.AttributeType.STRING },
+            partitionKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
+            sortKey: { name: "chatId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
         });
 

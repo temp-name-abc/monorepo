@@ -224,8 +224,8 @@ AI:"""
     context = context[len(context) - memory_size:len(context)]
 
     item = {
-        "chatId": {"S": chat_id},
         "conversationId": {"S": conversation_id},
+        "chatId": {"S": chat_id},
         "collectionId": {"S": collection_id},
         "timestamp": {"N": str(timestamp)},
         "question": {"S": question},
@@ -267,14 +267,12 @@ AI:"""
             "Access-Control-Allow-Origin": "*",
         },
         "body": json.dumps({
-            "chatId": chat_id,
             "conversationId": conversation_id,
+            "chatId": chat_id,
             "collectionId": collection_id,
             "timestamp": timestamp,
             "question": question,
             "response": chat,
-            "prompt": chat_prompt,
-            "tokens": tokens,
             "context": context,
             "previousChatId": prev_chat_id
         })
