@@ -16,6 +16,8 @@ logger.setLevel(logging.INFO)
 dynamodb_client = boto3.client("dynamodb")
 secrets_manager_client = boto3.client("secretsmanager")
 
+model_settings = {"max_tokens": 2048, "temperature": 0.5, "model": "text-davinci-003"}
+
 
 def make_request(url, method, data = None):
     session = boto3.session.Session()
@@ -156,12 +158,7 @@ AI: {chat["ai"]}"""
     initial_text_prompt = initial_text_prompt_template.format(conversation)
     enough_information_prompt = enough_information_prompt_template.format(question, initial_text_prompt)
 
-    enough_information = openai.Completion.create(
-        model="text-davinci-003",
-        prompt=enough_information_prompt,
-        temperature=0.3,
-        max_tokens=2048
-    )["choices"][0]["text"]
+    enough_information = openai.Completion.create(prompt=enough_information_prompt, **model_settings)["choices"][0]["text"]
 
     total_chars += len(enough_information_prompt) + len(enough_information)
     logging.info(f"Enough information response '{enough_information_prompt + enough_information}'")
@@ -172,12 +169,7 @@ AI: {chat["ai"]}"""
     if enough_information.strip().lower() != "yes":
         query_prompt = query_prompt_template.format(question, initial_text_prompt)
 
-        query = openai.Completion.create(
-            model="text-davinci-003",
-            prompt=query_prompt,
-            temperature=0.7,
-            max_tokens=2048
-        )["choices"][0]["text"]
+        query = openai.Completion.create(prompt=query_prompt, **model_settings)["choices"][0]["text"]
 
         total_chars += len(query_prompt) + len(query)
         logging.info(f"Query response '{query_prompt + query}'")
@@ -201,12 +193,7 @@ AI: {chat["ai"]}"""
 
             summary_prompt = summary_prompt_template.format(question, document["body"])
 
-            summary = openai.Completion.create(
-                model="text-davinci-003",
-                prompt=summary_prompt,
-                temperature=0.7,
-                max_tokens=2048
-            )["choices"][0]["text"]
+            summary = openai.Completion.create(prompt=summary_prompt, **model_settings)["choices"][0]["text"]
 
             total_chars += len(summary_prompt) + len(summary)
             logger.info(f"Summary response '{summary_prompt + summary}'")
@@ -219,11 +206,7 @@ Human: {question}
 Context: {". ".join([document["summary"] for document in additional_context]) if len(additional_context) > 0 else "N/A"}
 AI:"""
 
-    chat_response = openai.Completion.create(
-        model="text-davinci-003",
-        prompt=chat_prompt,
-        temperature=0.7
-    )["choices"][0]["text"]
+    chat_response = openai.Completion.create(prompt=chat_prompt, **model_settings)["choices"][0]["text"]
 
     total_chars += len(chat_prompt) + len(chat_response)
     logger.info(f"Chat response '{chat_prompt + chat_response}'")
