@@ -161,7 +161,8 @@ def lambda_handler(event, context):
     enough_information = openai.Completion.create(
         model="text-davinci-003",
         prompt=enough_information_prompt,
-        temperature=0.7
+        temperature=0.7,
+        max_tokens=2048
     )["choices"][0]["text"]
 
     total_chars += len(enough_information_prompt) + len(enough_information)
@@ -176,7 +177,8 @@ def lambda_handler(event, context):
         query = openai.Completion.create(
             model="text-davinci-003",
             prompt=query_prompt,
-            temperature=0.7
+            temperature=0.7,
+            max_tokens=2048
         )["choices"][0]["text"]
 
         total_chars += len(query_prompt) + len(query)
@@ -204,7 +206,8 @@ def lambda_handler(event, context):
             summary = openai.Completion.create(
                 model="text-davinci-003",
                 prompt=summary_prompt,
-                temperature=0.7
+                temperature=0.7,
+                max_tokens=2048
             )["choices"][0]["text"]
 
             total_chars += len(summary_prompt) + len(summary)

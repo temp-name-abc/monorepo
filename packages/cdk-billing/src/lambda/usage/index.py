@@ -35,6 +35,10 @@ def lambda_handler(event, context):
 
         key = hashlib.sha256(f"{user_id}:{timestamp}:{product_id}:{quantity}".encode()).hexdigest()
 
+        # Don't bill in some cases
+        if quantity == 0:
+            continue
+
         # Retrieve user and product data
         user_data = dynamodb_client.get_item(TableName=user_billing_table, Key={"userId": {"S": user_id}})["Item"]
         product_data = dynamodb_client.get_item(TableName=products_table, Key={"productId": {"S": product_id}})["Item"]
