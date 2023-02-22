@@ -15,8 +15,34 @@ logger.setLevel(logging.INFO)
 dynamodb_client = boto3.client("dynamodb")
 secrets_manager_client = boto3.client("secretsmanager")
 
-MAX_RETRIES = 2
-CHAT_LENGTH = 5
+MAX_DOCUMENT_FETCH = 1
+MEMORY_LENGTH = 5
+
+
+def generate_prompt(context, question):
+    conversation = "\n".join([
+        f"""Human: {chat["human"]}
+        Context: {". ".join([document["summary"] for document in chat["context"]]) if "context" in chat else "N/A"}
+        AI: {chat["ai"]}
+        """
+    ] for chat in context)
+
+    initial_text_prompt = f"""The following is a friendly conversation between a human and an AI.
+        The AI is talkative and provides lots of specific details from its context.
+        If the AI does not know the answer to a question, it truthfully says it does not know.
+        
+        Current conversation:
+        {conversation}""" 
+
+    enough_information_prompt = """Is the context provided in the following text sufficient to answer the question 'Where' with a 'yes' or 'no' response?
+    
+    Prompt:
+    {}"""
+
+    for i in range(MAX_DOCUMENT_FETCH):
+        pass 
+
+    # **** We need to record the amount of tokens used for this as well for billing...
 
 
 def make_request(url, method, data = None):
@@ -104,7 +130,4 @@ def lambda_handler(event, context):
             "body": msg
         }
 
-    # Begin the prompt loop
-    retries = 0
-
-    prompt = f"" 
+    # Ge the response
