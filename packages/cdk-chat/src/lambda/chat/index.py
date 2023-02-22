@@ -7,6 +7,7 @@ from datetime import datetime
 import uuid
 import urllib.parse
 import utils
+import openai
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

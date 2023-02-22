@@ -34,6 +34,20 @@ def lambda_handler(event, context):
 
     customer_id = user_data["stripeCustomerId"]["S"]
 
+    # Always active in some cases
+    if "sandbox" in user_data and user_data["sandbox"]["BOOL"]:
+        logger.info(f"User '{user_id}' is on sandbox mode")
+
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+            },
+            "body": json.dumps({
+                "active": True
+            })
+        }
+
     # Retrieve the product id
     product_data = dynamodb_client.get_item(
         TableName=products_table,
