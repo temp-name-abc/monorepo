@@ -73,9 +73,14 @@ export class StorageStack extends cdk.NestedStack {
         });
 
         // Create object processing function
+        const uploadLockTable = new dynamodb.Table(this, "uploadLockTable", {
+            partitionKey: { name: "uploadId", type: dynamodb.AttributeType.STRING },
+            timeToLiveAttribute: "ttl",
+        });
+
         const documentTable = new dynamodb.Table(this, "documentTable", {
             partitionKey: { name: "documentId", type: dynamodb.AttributeType.STRING },
-            timeToLiveAttribute: "ttl",
+            sortKey: { name: "chunkId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
         });
 
@@ -94,6 +99,7 @@ export class StorageStack extends cdk.NestedStack {
                 PINECONE_SECRET: pineconeSecret.secretName,
                 OPENAI_SECRET: openAISecret.secretName,
                 UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
+                UPLOAD_LOCK_TABLE: uploadLockTable.tableName,
                 DOCUMENT_TABLE: documentTable.tableName,
                 DOCUMENT_BUCKET: documentBucket.bucketName,
                 API_URL: props.apiUrl,
@@ -108,6 +114,7 @@ export class StorageStack extends cdk.NestedStack {
         openAISecret.grantRead(processFn);
         tempStorageBucket.grantRead(processFn);
         uploadRecordsTable.grantReadData(processFn);
+        uploadLockTable.grantWriteData(processFn);
         documentTable.grantWriteData(processFn);
         documentBucket.grantWrite(processFn);
         processFn.addToRolePolicy(
