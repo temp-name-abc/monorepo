@@ -51,7 +51,7 @@ def lambda_handler(event, context):
     collection_id = body["collectionId"] if "collectionId" in body else None
     question = body["question"]
 
-    if prev_chat_id != None and collection_id != None:
+    if prev_chat_id == None and collection_id == None:
         msg = "Requires at least one of 'previousChatId' or 'collectionId'"
 
         logger.error(msg)
@@ -159,7 +159,7 @@ AI: {chat["ai"]}"""
     enough_information = openai.Completion.create(
         model="text-davinci-003",
         prompt=enough_information_prompt,
-        temperature=0.7,
+        temperature=0.3,
         max_tokens=2048
     )["choices"][0]["text"]
 
