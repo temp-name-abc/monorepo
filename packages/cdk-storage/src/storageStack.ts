@@ -105,7 +105,7 @@ export class StorageStack extends cdk.NestedStack {
                 PINECONE_ENV: props.pineconeEnv,
                 PINECONE_INDEX: props.pineconeIndex,
                 PRODUCT_ID: props.productId,
-                CHUNK_SIZE: "200",
+                CHUNK_SIZE: "150",
             },
             timeout: cdk.Duration.minutes(15),
         });
