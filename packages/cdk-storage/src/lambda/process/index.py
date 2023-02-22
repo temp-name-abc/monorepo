@@ -84,16 +84,6 @@ def lambda_handler(event, context):
             ConditionExpression="attribute_not_exists(uploadId)"
         )
 
-        # Check if the user has subscribed
-        active_url = f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
-        active_request = make_request(active_url, "GET")
-        active_req = requests.get(active_url, headers=active_request.headers)
-
-        if not active_req.ok or not active_req.json()["active"]:
-            logger.error(f"User '{user_id}' has not subscribed to product '{product_id}' with status code '{active_req.status_code}'")
-
-            continue
-
         # Get the upload document
         upload_data = dynamodb_client.get_item(
             TableName=upload_records_table,
@@ -104,6 +94,16 @@ def lambda_handler(event, context):
 
         user_id = upload_data["userId"]["S"]
         collection_id = upload_data["collectionId"]["S"]
+
+        # Check if the user has subscribed
+        active_url = f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
+        active_request = make_request(active_url, "GET")
+        active_req = requests.get(active_url, headers=active_request.headers)
+
+        if not active_req.ok or not active_req.json()["active"]:
+            logger.error(f"User '{user_id}' has not subscribed to product '{product_id}' with status code '{active_req.status_code}'")
+
+            continue
         
         # Retrieve document text
         obj_res = s3_client.get_object(Bucket=bucket_name, Key=key)
@@ -147,6 +147,8 @@ def lambda_handler(event, context):
 
             words = words[chunk_size:]
             chunk_num += 1
+
+            logger.info(f"Stored chunk '{chunk_num}' of upload id '{key}' with key '{document_id}'")
 
         # Record usage for user
         usage_url = f"{api_url}/billing/iam/usage"
