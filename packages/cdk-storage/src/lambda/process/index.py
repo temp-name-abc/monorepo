@@ -109,7 +109,7 @@ def lambda_handler(event, context):
 
         # Create the embeddings and store in Pinecone
         embeddings_response = openai.Embedding.create(input=body, **model_settings)
-        embeddings = embeddings_response["data"][0]["embeddings"]
+        embeddings = embeddings_response["data"][0]["embedding"]
 
         index.upsert([
             (key, embeddings, {"userId": user_id, "collectionId": collection_id})
