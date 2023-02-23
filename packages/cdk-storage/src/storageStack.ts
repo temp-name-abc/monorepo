@@ -32,8 +32,8 @@ export class StorageStack extends cdk.NestedStack {
         const iamResource = storageResource.addResource("iam");
         const searchResource = iamResource.addResource("search");
 
-        const collectionResource = props.api.root.addResource("collection");
-        const collectionIdResource = props.api.root.addResource("{collectionId}");
+        const collectionResource = storageResource.addResource("collection");
+        const collectionIdResource = collectionResource.addResource("{collectionId}");
         const documentResource = collectionIdResource.addResource("document");
         const documentIdResource = collectionIdResource.addResource("{documentId}");
 
