@@ -160,67 +160,67 @@ export class StorageStack extends cdk.NestedStack {
             authorizationType: apigw.AuthorizationType.COGNITO,
         });
 
-        // // Create upload function
-        // const uploadFn = new lambda.Function(this, "uploadFn", {
-        //     runtime: lambda.Runtime.PYTHON_3_8,
-        //     code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "upload")),
-        //     handler: "index.lambda_handler",
-        //     environment: {
-        //         UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
-        //         DOCUMENT_BUCKET: documentBucket.bucketName,
-        //     },
-        //     timeout: cdk.Duration.seconds(30),
-        // });
+        // Create upload function
+        const uploadFn = new lambda.Function(this, "uploadFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "upload")),
+            handler: "index.lambda_handler",
+            environment: {
+                UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
+                DOCUMENT_BUCKET: documentBucket.bucketName,
+            },
+            timeout: cdk.Duration.seconds(30),
+        });
 
-        // uploadRecordsTable.grantWriteData(uploadFn);
-        // documentBucket.grantWrite(uploadFn);
+        uploadRecordsTable.grantWriteData(uploadFn);
+        documentBucket.grantWrite(uploadFn);
 
-        // documentResource.addMethod("POST", new apigw.LambdaIntegration(uploadFn), {
-        //     authorizer: props.authorizer,
-        //     authorizationType: apigw.AuthorizationType.COGNITO,
-        // });
+        documentResource.addMethod("POST", new apigw.LambdaIntegration(uploadFn), {
+            authorizer: props.authorizer,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
 
-        // // Create object processing function
-        // const processFn = new lambda.DockerImageFunction(this, "processFn", {
-        //     code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "process")),
-        //     environment: {
-        //         PINECONE_SECRET: pineconeSecret.secretName,
-        //         OPENAI_SECRET: openAISecret.secretName,
-        //         UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
-        //         UPLOAD_LOCK_TABLE: uploadLockTable.tableName,
-        //         DOCUMENT_TABLE: documentTable.tableName,
-        //         CHUNK_TABLE: chunkTable.tableName,
-        //         CHUNK_BUCKET: chunkBucket.bucketName,
-        //         API_URL: props.apiUrl,
-        //         PINECONE_ENV: props.pineconeEnv,
-        //         PINECONE_INDEX: props.pineconeIndex,
-        //         PRODUCT_ID: props.productId,
-        //         CHUNK_SIZE: "150",
-        //     },
-        //     timeout: cdk.Duration.minutes(15),
-        // });
+        // Create object processing function
+        const processFn = new lambda.DockerImageFunction(this, "processFn", {
+            code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "process")),
+            environment: {
+                PINECONE_SECRET: pineconeSecret.secretName,
+                OPENAI_SECRET: openAISecret.secretName,
+                UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
+                UPLOAD_LOCK_TABLE: uploadLockTable.tableName,
+                DOCUMENT_TABLE: documentTable.tableName,
+                CHUNK_TABLE: chunkTable.tableName,
+                CHUNK_BUCKET: chunkBucket.bucketName,
+                API_URL: props.apiUrl,
+                PINECONE_ENV: props.pineconeEnv,
+                PINECONE_INDEX: props.pineconeIndex,
+                PRODUCT_ID: props.productId,
+                CHUNK_SIZE: "150",
+            },
+            timeout: cdk.Duration.minutes(15),
+        });
 
-        // pineconeSecret.grantRead(processFn);
-        // openAISecret.grantRead(processFn);
-        // uploadRecordsTable.grantReadData(processFn);
-        // uploadLockTable.grantWriteData(processFn);
-        // documentTable.grantWriteData(processFn);
-        // documentBucket.grantRead(processFn);
-        // chunkTable.grantWriteData(processFn);
-        // chunkBucket.grantWrite(processFn);
-        // processFn.addToRolePolicy(
-        //     new iam.PolicyStatement({
-        //         effect: iam.Effect.ALLOW,
-        //         actions: ["execute-api:Invoke"],
-        //         resources: ["*"],
-        //     })
-        // );
+        pineconeSecret.grantRead(processFn);
+        openAISecret.grantRead(processFn);
+        uploadRecordsTable.grantReadData(processFn);
+        uploadLockTable.grantWriteData(processFn);
+        documentTable.grantWriteData(processFn);
+        documentBucket.grantRead(processFn);
+        chunkTable.grantWriteData(processFn);
+        chunkBucket.grantWrite(processFn);
+        processFn.addToRolePolicy(
+            new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: ["execute-api:Invoke"],
+                resources: ["*"],
+            })
+        );
 
-        // processFn.addEventSource(
-        //     new lambdaEventSources.S3EventSource(documentBucket, {
-        //         events: [s3.EventType.OBJECT_CREATED_POST],
-        //     })
-        // );
+        processFn.addEventSource(
+            new lambdaEventSources.S3EventSource(documentBucket, {
+                events: [s3.EventType.OBJECT_CREATED_POST],
+            })
+        );
 
         // // ==== Search ====
         // // Create search function
