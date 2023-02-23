@@ -19,7 +19,7 @@ export class ChatStack extends cdk.NestedStack {
         super(scope, id, props);
 
         // Store secret
-        const openAISecret = new secretsmanager.Secret(this, "chatOpenAISecret");
+        const openAISecret = new secretsmanager.Secret(this, "openAISecret");
 
         // Create the REST API
         const chatResource = props.api.root.addResource("chat");

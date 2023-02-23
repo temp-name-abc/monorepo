@@ -20,8 +20,8 @@ def lambda_handler(event, context):
     ttl_expiry = os.getenv("TTL_EXPIRY")
 
     body = json.loads(event["body"])
-
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
+
     collection_id = body["collectionId"]
 
     # Create a new key for the request

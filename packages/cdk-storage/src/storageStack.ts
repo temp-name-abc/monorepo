@@ -23,16 +23,50 @@ export class StorageStack extends cdk.NestedStack {
         super(scope, id, props);
 
         // Store secret
-        const pineconeSecret = new secretsmanager.Secret(this, "storagePineconeSecret");
-        const openAISecret = new secretsmanager.Secret(this, "storageOpenAISecret");
+        const pineconeSecret = new secretsmanager.Secret(this, "pineconeSecret");
+        const openAISecret = new secretsmanager.Secret(this, "openAISecret");
 
         // Create the REST API
         const storageResource = props.api.root.addResource("storage");
 
-        const documentResource = storageResource.addResource("document");
         const iamResource = storageResource.addResource("iam");
-
         const searchResource = iamResource.addResource("search");
+
+        const collectionResource = props.api.root.addResource("collection");
+        const collectionIdResource = props.api.root.addResource("{collectionId}");
+        const documentResource = collectionIdResource.addResource("document");
+        const documentIdResource = collectionIdResource.addResource("{documentId}");
+
+        // ==== Collections ====
+        const collectionsTable = new dynamodb.Table(this, "collectionsTable", {
+            partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+            sortKey: { name: "collectionId", type: dynamodb.AttributeType.STRING },
+            pointInTimeRecovery: true,
+        });
+
+        // Create collection function
+        const createCollectionFn = new lambda.Function(this, "createCollectionFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "createCollection")),
+            handler: "index.lambda_handler",
+            environment: {
+                COLLECTIONS_TABLE: collectionsTable.tableName,
+            },
+            timeout: cdk.Duration.seconds(30),
+        });
+
+        collectionsTable.grantWriteData(createCollectionFn);
+
+        collectionResource.addMethod("POST", new apigw.LambdaIntegration(createCollectionFn), {
+            authorizer: props.authorizer,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
+
+        // Retrieve collections function
+
+        // Delete collection function
+
+        // ==== Documents ====
 
         // Create upload function
         const uploadRecordsTable = new dynamodb.Table(this, "uploadRecordsTable", {

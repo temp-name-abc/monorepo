@@ -22,7 +22,7 @@ export class BillingStack extends cdk.NestedStack {
         super(scope, id, props);
 
         // Create secret
-        const stripeSecret = new secretsmanager.Secret(this, "billingStripeSecret");
+        const stripeSecret = new secretsmanager.Secret(this, "stripeSecret");
 
         // Create the REST API
         const billingResource = props.api.root.addResource("billing");
