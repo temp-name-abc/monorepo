@@ -19,7 +19,10 @@ def lambda_handler(event, context):
     # Get a list of user collections
     response = dynamodb_client.scan(
         TableName=collection_table,
-        Item={"userId": {"S": user_id}}
+        FilterExpression="userId = :userId",
+        ExpressionAttributeValues={
+            ":userId": user_id
+        }
     )
 
     collections = []
