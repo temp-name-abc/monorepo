@@ -19,8 +19,6 @@ def lambda_handler(event, context):
     body = json.loads(event["body"])
     collection_id = event["pathParameters"]["collectionId"]
 
-    collection_name = body["name"]
-
     # Verify the collection
     collection_response = dynamodb_client.get_item(
         TableName=collection_table,
@@ -46,7 +44,10 @@ def lambda_handler(event, context):
     # Retrieve the documents for the user
     document_response = dynamodb_client.scan(
         TableName=document_table,
-        Item={"collectionId": {"S": collection_id}}
+        FilterExpression="collectionId = :collectionId",
+        ExpressionAttributeValues={
+            ":collectionId": {"S": collection_id}
+        }
     )
 
     documents = []

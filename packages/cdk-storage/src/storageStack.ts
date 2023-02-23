@@ -80,65 +80,65 @@ export class StorageStack extends cdk.NestedStack {
             authorizationType: apigw.AuthorizationType.COGNITO,
         });
 
-        // // ==== Documents ====
-        // const documentTable = new dynamodb.Table(this, "documentTable", {
-        //     partitionKey: { name: "collectionId", type: dynamodb.AttributeType.STRING },
-        //     sortKey: { name: "documentId", type: dynamodb.AttributeType.STRING },
-        //     pointInTimeRecovery: true,
-        // });
+        // ==== Documents ====
+        const documentTable = new dynamodb.Table(this, "documentTable", {
+            partitionKey: { name: "collectionId", type: dynamodb.AttributeType.STRING },
+            sortKey: { name: "documentId", type: dynamodb.AttributeType.STRING },
+            pointInTimeRecovery: true,
+        });
 
-        // const uploadRecordsTable = new dynamodb.Table(this, "uploadRecordsTable", {
-        //     partitionKey: { name: "uploadId", type: dynamodb.AttributeType.STRING },
-        //     timeToLiveAttribute: "ttl",
-        // });
+        const uploadRecordsTable = new dynamodb.Table(this, "uploadRecordsTable", {
+            partitionKey: { name: "uploadId", type: dynamodb.AttributeType.STRING },
+            timeToLiveAttribute: "ttl",
+        });
 
-        // const uploadLockTable = new dynamodb.Table(this, "uploadLockTable", {
-        //     partitionKey: { name: "uploadId", type: dynamodb.AttributeType.STRING },
-        //     timeToLiveAttribute: "ttl",
-        // });
+        const uploadLockTable = new dynamodb.Table(this, "uploadLockTable", {
+            partitionKey: { name: "uploadId", type: dynamodb.AttributeType.STRING },
+            timeToLiveAttribute: "ttl",
+        });
 
-        // const documentBucket = new s3.Bucket(this, "documentBucket", {
-        //     blockPublicAccess: {
-        //         blockPublicAcls: true,
-        //         blockPublicPolicy: true,
-        //         ignorePublicAcls: true,
-        //         restrictPublicBuckets: true,
-        //     },
-        // });
+        const documentBucket = new s3.Bucket(this, "documentBucket", {
+            blockPublicAccess: {
+                blockPublicAcls: true,
+                blockPublicPolicy: true,
+                ignorePublicAcls: true,
+                restrictPublicBuckets: true,
+            },
+        });
 
-        // const chunkTable = new dynamodb.Table(this, "chunkTable", {
-        //     partitionKey: { name: "chunkId", type: dynamodb.AttributeType.STRING },
-        //     pointInTimeRecovery: true,
-        // });
+        const chunkTable = new dynamodb.Table(this, "chunkTable", {
+            partitionKey: { name: "chunkId", type: dynamodb.AttributeType.STRING },
+            pointInTimeRecovery: true,
+        });
 
-        // const chunkBucket = new s3.Bucket(this, "chunkBucket", {
-        //     blockPublicAccess: {
-        //         blockPublicAcls: true,
-        //         blockPublicPolicy: true,
-        //         ignorePublicAcls: true,
-        //         restrictPublicBuckets: true,
-        //     },
-        // });
+        const chunkBucket = new s3.Bucket(this, "chunkBucket", {
+            blockPublicAccess: {
+                blockPublicAcls: true,
+                blockPublicPolicy: true,
+                ignorePublicAcls: true,
+                restrictPublicBuckets: true,
+            },
+        });
 
-        // // Retrieve collection documents
-        // const collectionDocumentsFn = new lambda.Function(this, "collectionDocumentsFn", {
-        //     runtime: lambda.Runtime.PYTHON_3_8,
-        //     code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "collectionDocuments")),
-        //     handler: "index.lambda_handler",
-        //     environment: {
-        //         COLLECTION_TABLE: collectionTable.tableName,
-        //         DOCUMENT_TABLE: documentTable.tableName,
-        //     },
-        //     timeout: cdk.Duration.seconds(30),
-        // });
+        // Retrieve collection documents
+        const collectionDocumentsFn = new lambda.Function(this, "collectionDocumentsFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "collectionDocuments")),
+            handler: "index.lambda_handler",
+            environment: {
+                COLLECTION_TABLE: collectionTable.tableName,
+                DOCUMENT_TABLE: documentTable.tableName,
+            },
+            timeout: cdk.Duration.seconds(30),
+        });
 
-        // collectionTable.grantReadData(collectionDocumentsFn);
-        // documentTable.grantReadData(collectionDocumentsFn);
+        collectionTable.grantReadData(collectionDocumentsFn);
+        documentTable.grantReadData(collectionDocumentsFn);
 
-        // documentResource.addMethod("GET", new apigw.LambdaIntegration(collectionDocumentsFn), {
-        //     authorizer: props.authorizer,
-        //     authorizationType: apigw.AuthorizationType.COGNITO,
-        // });
+        documentResource.addMethod("GET", new apigw.LambdaIntegration(collectionDocumentsFn), {
+            authorizer: props.authorizer,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
 
         // // Retrieve document
         // const getDocumentFn = new lambda.Function(this, "getDocumentFn", {
