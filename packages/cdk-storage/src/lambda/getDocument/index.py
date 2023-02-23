@@ -1,9 +1,6 @@
 import boto3
-import json
 import os
 import logging
-from datetime import datetime
-import uuid
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -25,7 +22,7 @@ def lambda_handler(event, context):
     # Verify the document
     response = dynamodb_client.get_item(
         TableName=document_table,
-        Item={
+        Key={
             "collectionId": {"S": collection_id},
             "documentId": {"S": document_id}
         }

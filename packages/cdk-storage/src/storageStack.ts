@@ -140,25 +140,25 @@ export class StorageStack extends cdk.NestedStack {
             authorizationType: apigw.AuthorizationType.COGNITO,
         });
 
-        // // Retrieve document
-        // const getDocumentFn = new lambda.Function(this, "getDocumentFn", {
-        //     runtime: lambda.Runtime.PYTHON_3_8,
-        //     code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "getDocument")),
-        //     handler: "index.lambda_handler",
-        //     environment: {
-        //         DOCUMENT_TABLE: documentTable.tableName,
-        //         DOCUMENT_BUCKET: documentBucket.bucketName,
-        //     },
-        //     timeout: cdk.Duration.seconds(30),
-        // });
+        // Retrieve document
+        const getDocumentFn = new lambda.Function(this, "getDocumentFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "getDocument")),
+            handler: "index.lambda_handler",
+            environment: {
+                DOCUMENT_TABLE: documentTable.tableName,
+                DOCUMENT_BUCKET: documentBucket.bucketName,
+            },
+            timeout: cdk.Duration.seconds(30),
+        });
 
-        // documentTable.grantReadData(getDocumentFn);
-        // documentBucket.grantRead(getDocumentFn);
+        documentTable.grantReadData(getDocumentFn);
+        documentBucket.grantRead(getDocumentFn);
 
-        // documentIdResource.addMethod("GET", new apigw.LambdaIntegration(getDocumentFn), {
-        //     authorizer: props.authorizer,
-        //     authorizationType: apigw.AuthorizationType.COGNITO,
-        // });
+        documentIdResource.addMethod("GET", new apigw.LambdaIntegration(getDocumentFn), {
+            authorizer: props.authorizer,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
 
         // // Create upload function
         // const uploadFn = new lambda.Function(this, "uploadFn", {
