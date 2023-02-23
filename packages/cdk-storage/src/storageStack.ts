@@ -230,7 +230,7 @@ export class StorageStack extends cdk.NestedStack {
             environment: {
                 PINECONE_SECRET: pineconeSecret.secretName,
                 OPENAI_SECRET: openAISecret.secretName,
-                CHUNK_BUCKET: documentBucket.bucketName,
+                CHUNK_BUCKET: chunkBucket.bucketName,
                 PINECONE_ENV: props.pineconeEnv,
                 PINECONE_INDEX: props.pineconeIndex,
             },
