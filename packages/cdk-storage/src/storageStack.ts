@@ -87,6 +87,39 @@ export class StorageStack extends cdk.NestedStack {
             pointInTimeRecovery: true,
         });
 
+        const uploadRecordsTable = new dynamodb.Table(this, "uploadRecordsTable", {
+            partitionKey: { name: "uploadId", type: dynamodb.AttributeType.STRING },
+            timeToLiveAttribute: "ttl",
+        });
+
+        const uploadLockTable = new dynamodb.Table(this, "uploadLockTable", {
+            partitionKey: { name: "uploadId", type: dynamodb.AttributeType.STRING },
+            timeToLiveAttribute: "ttl",
+        });
+
+        const documentBucket = new s3.Bucket(this, "documentBucket", {
+            blockPublicAccess: {
+                blockPublicAcls: true,
+                blockPublicPolicy: true,
+                ignorePublicAcls: true,
+                restrictPublicBuckets: true,
+            },
+        });
+
+        const chunkTable = new dynamodb.Table(this, "chunkTable", {
+            partitionKey: { name: "chunkId", type: dynamodb.AttributeType.STRING },
+            pointInTimeRecovery: true,
+        });
+
+        const chunkBucket = new s3.Bucket(this, "chunkBucket", {
+            blockPublicAccess: {
+                blockPublicAcls: true,
+                blockPublicPolicy: true,
+                ignorePublicAcls: true,
+                restrictPublicBuckets: true,
+            },
+        });
+
         // Retrieve collection documents
         const collectionDocumentsFn = new lambda.Function(this, "collectionDocumentsFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
@@ -108,106 +141,72 @@ export class StorageStack extends cdk.NestedStack {
         });
 
         // Retrieve document
+        // **** This needs the bucket used to store the objects
+        // **** It needs read permissions to be able to generate the presigned get url
 
-        // // Create upload function
-        // const uploadRecordsTable = new dynamodb.Table(this, "uploadRecordsTable", {
-        //     partitionKey: { name: "uploadId", type: dynamodb.AttributeType.STRING },
-        //     timeToLiveAttribute: "ttl",
-        // });
+        // Create upload function
+        const uploadFn = new lambda.Function(this, "uploadFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "upload")),
+            handler: "index.lambda_handler",
+            environment: {
+                UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
+                DOCUMENT_BUCKET: documentBucket.bucketName,
+            },
+            timeout: cdk.Duration.seconds(30),
+        });
 
-        // const ttlExpiry = cdk.Duration.days(1);
+        uploadRecordsTable.grantWriteData(uploadFn);
+        documentBucket.grantWrite(uploadFn);
 
-        // const tempStorageBucket = new s3.Bucket(this, "tempStorageBucket", {
-        //     blockPublicAccess: {
-        //         blockPublicAcls: true,
-        //         blockPublicPolicy: true,
-        //         ignorePublicAcls: true,
-        //         restrictPublicBuckets: true,
-        //     },
-        //     lifecycleRules: [{ expiration: ttlExpiry, enabled: true }],
-        // });
+        documentResource.addMethod("POST", new apigw.LambdaIntegration(uploadFn), {
+            authorizer: props.authorizer,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
 
-        // const uploadFn = new lambda.Function(this, "uploadFn", {
-        //     runtime: lambda.Runtime.PYTHON_3_8,
-        //     code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "upload")),
-        //     handler: "index.lambda_handler",
-        //     environment: {
-        //         UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
-        //         TEMP_STORAGE_BUCKET: tempStorageBucket.bucketName,
-        //         TTL_EXPIRY: ttlExpiry.toSeconds().toString(),
-        //     },
-        //     timeout: cdk.Duration.seconds(30),
-        // });
+        // Create object processing function
+        const processFn = new lambda.DockerImageFunction(this, "processFn", {
+            code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "process")),
+            environment: {
+                PINECONE_SECRET: pineconeSecret.secretName,
+                OPENAI_SECRET: openAISecret.secretName,
+                UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
+                UPLOAD_LOCK_TABLE: uploadLockTable.tableName,
+                DOCUMENT_TABLE: documentTable.tableName,
+                CHUNK_TABLE: chunkTable.tableName,
+                CHUNK_BUCKET: chunkBucket.bucketName,
+                API_URL: props.apiUrl,
+                PINECONE_ENV: props.pineconeEnv,
+                PINECONE_INDEX: props.pineconeIndex,
+                PRODUCT_ID: props.productId,
+                CHUNK_SIZE: "150",
+            },
+            timeout: cdk.Duration.minutes(15),
+        });
 
-        // uploadRecordsTable.grantWriteData(uploadFn);
-        // tempStorageBucket.grantWrite(uploadFn);
+        pineconeSecret.grantRead(processFn);
+        openAISecret.grantRead(processFn);
+        uploadRecordsTable.grantReadData(processFn);
+        uploadLockTable.grantWriteData(processFn);
+        documentTable.grantWriteData(processFn);
+        documentBucket.grantRead(processFn);
+        chunkTable.grantWriteData(processFn);
+        chunkBucket.grantWrite(processFn);
+        processFn.addToRolePolicy(
+            new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: ["execute-api:Invoke"],
+                resources: ["*"],
+            })
+        );
 
-        // documentResource.addMethod("POST", new apigw.LambdaIntegration(uploadFn), {
-        //     authorizer: props.authorizer,
-        //     authorizationType: apigw.AuthorizationType.COGNITO,
-        // });
-
-        // // Create object processing function
-        // const uploadLockTable = new dynamodb.Table(this, "uploadLockTable", {
-        //     partitionKey: { name: "uploadId", type: dynamodb.AttributeType.STRING },
-        //     timeToLiveAttribute: "ttl",
-        // });
-
-        // const documentTable = new dynamodb.Table(this, "documentTable", {
-        //     partitionKey: { name: "documentId", type: dynamodb.AttributeType.STRING },
-        //     pointInTimeRecovery: true,
-        // });
-
-        // const documentBucket = new s3.Bucket(this, "documentBucket", {
-        //     blockPublicAccess: {
-        //         blockPublicAcls: true,
-        //         blockPublicPolicy: true,
-        //         ignorePublicAcls: true,
-        //         restrictPublicBuckets: true,
-        //     },
-        // });
-
-        // const processFn = new lambda.DockerImageFunction(this, "processFn", {
-        //     code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "process")),
-        //     environment: {
-        //         PINECONE_SECRET: pineconeSecret.secretName,
-        //         OPENAI_SECRET: openAISecret.secretName,
-        //         UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
-        //         UPLOAD_LOCK_TABLE: uploadLockTable.tableName,
-        //         DOCUMENT_TABLE: documentTable.tableName,
-        //         DOCUMENT_BUCKET: documentBucket.bucketName,
-        //         API_URL: props.apiUrl,
-        //         PINECONE_ENV: props.pineconeEnv,
-        //         PINECONE_INDEX: props.pineconeIndex,
-        //         PRODUCT_ID: props.productId,
-        //         CHUNK_SIZE: "150",
-        //     },
-        //     timeout: cdk.Duration.minutes(15),
-        // });
-
-        // pineconeSecret.grantRead(processFn);
-        // openAISecret.grantRead(processFn);
-        // tempStorageBucket.grantRead(processFn);
-        // uploadRecordsTable.grantReadData(processFn);
-        // uploadLockTable.grantWriteData(processFn);
-        // documentTable.grantWriteData(processFn);
-        // documentBucket.grantWrite(processFn);
-        // processFn.addToRolePolicy(
-        //     new iam.PolicyStatement({
-        //         effect: iam.Effect.ALLOW,
-        //         actions: ["execute-api:Invoke"],
-        //         resources: ["*"],
-        //     })
-        // );
-
-        // processFn.addEventSource(
-        //     new lambdaEventSources.S3EventSource(tempStorageBucket, {
-        //         events: [s3.EventType.OBJECT_CREATED_POST],
-        //     })
-        // );
+        processFn.addEventSource(
+            new lambdaEventSources.S3EventSource(documentBucket, {
+                events: [s3.EventType.OBJECT_CREATED_POST],
+            })
+        );
 
         // // ==== Search ====
-
         // // Create search function
         // const searchFn = new lambda.DockerImageFunction(this, "searchFn", {
         //     code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "search")),

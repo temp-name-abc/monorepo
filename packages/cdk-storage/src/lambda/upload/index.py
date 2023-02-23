@@ -16,20 +16,21 @@ def lambda_handler(event, context):
     logger.info(f"Creating file upload request for '{event}'")
 
     upload_records_table = os.getenv("UPLOAD_RECORDS_TABLE")
-    temp_storage_bucket = os.getenv("TEMP_STORAGE_BUCKET")
-    ttl_expiry = os.getenv("TTL_EXPIRY")
+    document_bucket = os.getenv("DOCUMENT_BUCKET")
 
-    body = json.loads(event["body"])
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
+    collection_id = event["pathParameters"]["collectionId"]
+    body = json.loads(event["body"])
 
-    collection_id = body["collectionId"]
+    file_type = body["type"]
+    file_name = body["name"]
 
     # Create a new key for the request
     key = str(uuid.uuid4())
 
     # Upload a key with the user id
     now = datetime.utcnow()
-    expiry_time = now + timedelta(seconds=float(ttl_expiry))
+    expiry_time = now + timedelta(days=1)
     ttl_seconds = int(expiry_time.timestamp())
 
     dynamodb_client.put_item(
@@ -37,15 +38,17 @@ def lambda_handler(event, context):
         Item={
             "uploadId": {"S": key},
             "userId": {"S": user_id},
-            "ttl": {"N": str(ttl_seconds)},
-            "collectionId": {"S": collection_id}
+            "collectionId": {"S": collection_id},
+            "name": {"S": file_name},
+            "type": {"S": file_type},
+            "ttl": {"N": str(ttl_seconds)}
         },
         ConditionExpression="attribute_not_exists(uploadId)"
     )
 
     # Create a presigned PUT URL
     response = s3_client.generate_presigned_post(
-        Bucket=temp_storage_bucket,
+        Bucket=document_bucket,
         Key=key,
         ExpiresIn=86400
     )

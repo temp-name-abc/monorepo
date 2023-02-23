@@ -44,7 +44,8 @@ def lambda_handler(event, context):
     upload_records_table = os.getenv("UPLOAD_RECORDS_TABLE")
     upload_lock_table = os.getenv("UPLOAD_LOCK_TABLE")
     document_table = os.getenv("DOCUMENT_TABLE")
-    document_bucket = os.getenv("DOCUMENT_BUCKET")
+    chunk_table = os.getenv("CHUNK_TABLE")
+    chunk_bucket = os.getenv("CHUNK_BUCKET")
     api_url = os.getenv("API_URL")
     pinecone_env = os.getenv("PINECONE_ENV")
     pinecone_index = os.getenv("PINECONE_INDEX")
@@ -66,19 +67,19 @@ def lambda_handler(event, context):
 
     # Process records
     for record in event["Records"]:
-        key = record["s3"]["object"]["key"]
+        document_id = record["s3"]["object"]["key"]
         bucket_name = record["s3"]["bucket"]["name"]
 
         # Lock the upload temporarily
         now = datetime.utcnow()
         timestamp = int(now.timestamp())
-        expiry_time = now + timedelta(minutes=15)
+        expiry_time = now + timedelta(minutes=10)
         ttl_seconds = int(expiry_time.timestamp())
 
         dynamodb_client.put_item(
             TableName=upload_lock_table,
             Item={
-                "uploadId": {"S": key},
+                "uploadId": {"S": document_id},
                 "ttl": {"N": str(ttl_seconds)}
             },
             ConditionExpression="attribute_not_exists(uploadId)"
@@ -88,12 +89,14 @@ def lambda_handler(event, context):
         upload_data = dynamodb_client.get_item(
             TableName=upload_records_table,
             Key={
-                "uploadId": {"S": key}
+                "uploadId": {"S": document_id}
             }
         )["Item"]
 
         user_id = upload_data["userId"]["S"]
         collection_id = upload_data["collectionId"]["S"]
+        name = upload_data["name"]["S"]
+        file_type = upload_data["type"]["S"]
 
         # Check if the user has subscribed
         active_url = f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
@@ -106,16 +109,28 @@ def lambda_handler(event, context):
             continue
         
         # Retrieve document text
-        obj_res = s3_client.get_object(Bucket=bucket_name, Key=key)
+        obj_res = s3_client.get_object(Bucket=bucket_name, Key=document_id)
         body = obj_res["Body"].read().decode("utf-8", errors="ignore")
 
-        # Break the document into chunks
+        # Write the uploaded document to the document table
+        dynamodb_client.put_item(
+            TableName=document_table,
+            Item={
+                "collectionId": {"S": collection_id},
+                "documentId": {"S": document_id},
+                "userId": {"S": user_id},
+                "name": {"S": name},
+                "type": {"S": file_type},
+                "timestamp": {"S": str(timestamp)} 
+            }
+        )
+
+        # Record the chunks of the document for indexing
         words = body.split(" ")
         tokens = 0
-        chunk_num = 0
 
         while len(words) > 0:
-            document_id = str(uuid.uuid4())
+            chunk_id = str(uuid.uuid4())
             chunk = " ".join(words[:chunk_size])
 
             # Create the embeddings
@@ -125,30 +140,28 @@ def lambda_handler(event, context):
 
             # Store pinecone embeddings with a composite key
             index.upsert([
-                (document_id, embeddings, {"userId": user_id, "collectionId": collection_id})
+                (chunk_id, embeddings, {"userId": user_id, "collectionId": collection_id, "documentId": document_id})
             ])
 
             # Upload text to S3
-            s3_client.put_object(Bucket=document_bucket, Key=document_id, Body=chunk)
+            s3_client.put_object(Bucket=chunk_bucket, Key=chunk_id, Body=chunk)
 
             # Update the resource
             dynamodb_client.put_item(
-                TableName=document_table,
+                TableName=chunk_table,
                 Item={
-                    "documentId": {"S": document_id},
-                    "uploadId": {"S": key},
-                    "chunkNum": {"N": str(chunk_num)},
-                    "userId": {"S": user_id},
+                    "chunkId": {"S": chunk_id},
                     "collectionId": {"S": collection_id},
+                    "documentId": {"S": document_id},
+                    "userId": {"S": user_id},
                     "embedding": {"S": json.dumps(embeddings)},
                     "timestamp": {"N": str(timestamp)}
                 }
             )
 
             words = words[chunk_size:]
-            chunk_num += 1
 
-            logger.info(f"Stored chunk '{chunk_num}' of upload id '{key}' with key '{document_id}'")
+            logger.info(f"Stored chunk '{chunk_id}' of document '{document_id}' in collection '{collection_id}'")
 
         # Record usage for user
         usage_url = f"{api_url}/billing/iam/usage"
@@ -167,4 +180,4 @@ def lambda_handler(event, context):
         if not usage_req.ok:
             logger.warning(f"Unable to record usage for user '{user_id}' with product '{product_id}' with status code '{usage_req.status_code}'")
 
-        logger.info(f"Processed file with key '{key}'")
+        logger.info(f"Processed file with key '{document_id}'")
