@@ -21,7 +21,7 @@ def lambda_handler(event, context):
         TableName=collection_table,
         FilterExpression="userId = :userId",
         ExpressionAttributeValues={
-            ":userId": user_id
+            ":userId": {"S": user_id}
         }
     )
 
