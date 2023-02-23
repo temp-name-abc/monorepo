@@ -222,26 +222,27 @@ export class StorageStack extends cdk.NestedStack {
             })
         );
 
-        // // ==== Search ====
-        // // Create search function
-        // const searchFn = new lambda.DockerImageFunction(this, "searchFn", {
-        //     code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "search")),
-        //     environment: {
-        //         PINECONE_SECRET: pineconeSecret.secretName,
-        //         OPENAI_SECRET: openAISecret.secretName,
-        //         CHUNK_BUCKET: documentBucket.bucketName,
-        //         PINECONE_ENV: props.pineconeEnv,
-        //         PINECONE_INDEX: props.pineconeIndex,
-        //     },
-        //     timeout: cdk.Duration.minutes(1),
-        // });
+        // ==== Search ====
 
-        // pineconeSecret.grantRead(searchFn);
-        // openAISecret.grantRead(searchFn);
-        // chunkBucket.grantRead(searchFn);
+        // Create search function
+        const searchFn = new lambda.DockerImageFunction(this, "searchFn", {
+            code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "search")),
+            environment: {
+                PINECONE_SECRET: pineconeSecret.secretName,
+                OPENAI_SECRET: openAISecret.secretName,
+                CHUNK_BUCKET: documentBucket.bucketName,
+                PINECONE_ENV: props.pineconeEnv,
+                PINECONE_INDEX: props.pineconeIndex,
+            },
+            timeout: cdk.Duration.minutes(1),
+        });
 
-        // searchResource.addMethod("GET", new apigw.LambdaIntegration(searchFn), {
-        //     authorizationType: apigw.AuthorizationType.IAM,
-        // });
+        pineconeSecret.grantRead(searchFn);
+        openAISecret.grantRead(searchFn);
+        chunkBucket.grantRead(searchFn);
+
+        searchResource.addMethod("GET", new apigw.LambdaIntegration(searchFn), {
+            authorizationType: apigw.AuthorizationType.IAM,
+        });
     }
 }
