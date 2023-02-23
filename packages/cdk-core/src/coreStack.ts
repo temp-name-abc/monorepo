@@ -43,10 +43,12 @@ export class CoreStack extends cdk.NestedStack {
             },
         });
 
+        const callbackPath = "api/auth/callback/cognito";
+
         this.userPool.addClient("userPoolClient", {
             supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.COGNITO, cognito.UserPoolClientIdentityProvider.GOOGLE],
             oAuth: {
-                callbackUrls: [props.homeUrl, "http://localhost:3000/api/auth/callback/cognito"],
+                callbackUrls: [`${props.homeUrl}/${callbackPath}`, `http://localhost:3000/${callbackPath}`],
             },
         });
 
