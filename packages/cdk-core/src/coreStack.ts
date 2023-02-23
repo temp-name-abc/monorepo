@@ -46,7 +46,7 @@ export class CoreStack extends cdk.NestedStack {
         this.userPool.addClient("userPoolClient", {
             supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.COGNITO, cognito.UserPoolClientIdentityProvider.GOOGLE],
             oAuth: {
-                callbackUrls: [props.homeUrl],
+                callbackUrls: [props.homeUrl, "http://localhost:3000"],
             },
             generateSecret: true,
         });
