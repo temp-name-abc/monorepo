@@ -2,8 +2,6 @@ import boto3
 import json
 import os
 import logging
-from datetime import datetime
-import uuid
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -12,7 +10,7 @@ dynamodb_client = boto3.client("dynamodb")
 
 
 def lambda_handler(event, context):
-    logger.info(f"Creating collection for '{event}'")
+    logger.info(f"Retrieving collections for '{event}'")
 
     collection_table = os.getenv("COLLECTION_TABLE")
 

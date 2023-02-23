@@ -2,24 +2,26 @@ import boto3
 import json
 import os
 import logging
+from datetime import datetime
+import uuid
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+s3_client = boto3.client("s3")
 dynamodb_client = boto3.client("dynamodb")
 
 
 def lambda_handler(event, context):
-    logger.info(f"Retrieving documents for '{event}'")
+    logger.info(f"Retrieving document for '{event}'")
 
     collection_table = os.getenv("COLLECTION_TABLE")
     document_table = os.getenv("DOCUMENT_TABLE")
+    document_bucket = os.getenv("DOCUMENT_BUCKET")
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
-    body = json.loads(event["body"])
     collection_id = event["pathParameters"]["collectionId"]
-
-    collection_name = body["name"]
+    document_id = event["pathParameters"]["documentId"]
 
     # Verify the collection
     collection_response = dynamodb_client.get_item(
@@ -31,7 +33,7 @@ def lambda_handler(event, context):
     )
 
     if "Item" not in collection_response:
-        msg = f"User '{user_id}' tried to retrieve documents for invalid collection '{collection_id}'"
+        msg = f"User '{user_id}' tried to retrieve document for invalid collection '{collection_id}'"
 
         logger.error(msg)
 
@@ -43,28 +45,24 @@ def lambda_handler(event, context):
             "body": msg
         }
 
-    # Retrieve the documents for the user
-    document_response = dynamodb_client.scan(
-        TableName=document_table,
-        Item={"collectionId": {"S": collection_id}}
-    )
+    # Retrieve the document
+    document_response = dynamodb_client.get_item(
+        TableName=document_id,
+        Item={
+            "collectionId": {"S": collection_id},
+            "documentId": {"S": document_id}
+        }
+    )["Item"]
 
-    documents = []
+    # Create signed URL to access document
+    url = s3_client.generate_presigned_url("get_object", Params={"Bucket": document_bucket, "Key": document_id}, ExpiresIn=86400)
 
-    for item in document_response["Items"]:
-        document = {}
-
-        document["documentId"] = item["documentId"]["S"]
-        document["name"] = item["name"]["S"]
-
-    logger.info(f"Retrieved documents '{documents}' for collection '{collection_id}' for user '{user_id}'")
+    logger.info(f"Retrieved document '{document_id}' for collection '{collection_id}' for user '{user_id}'")
 
     return {
-        "statusCode": 200,
+        "statusCode": 302,
         "headers": {
             "Access-Control-Allow-Origin": "*",
+            "Location": url
         },
-        "body": json.dumps({
-            "documents": documents
-        })
     }
