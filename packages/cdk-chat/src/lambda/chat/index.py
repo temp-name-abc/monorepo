@@ -29,13 +29,13 @@ def lambda_handler(event, context):
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
 
-    body = json.loads(event["body"])
-
     # Load and validate parameters
-    conversation_id = body["conversationId"] if "conversationId" in body else None
-    prev_chat_id = body["chatId"] if "chatId" in body else None
-    collection_id = body["collectionId"] if "collectionId" in body else None
-    question = body["question"]
+    query_params = event["queryStringParameters"]
+
+    conversation_id = query_params["conversationId"] if "conversationId" in query_params else None
+    prev_chat_id = query_params["chatId"] if "chatId" in query_params else None
+    collection_id = query_params["collectionId"] if "collectionId" in query_params else None
+    question = query_params["question"]
 
     if not (collection_id != None or (conversation_id != None and prev_chat_id != None)):
         msg = "Requires at least one of 'collectionId' or 'conversationId' and 'chatId'"
