@@ -16,7 +16,6 @@ def lambda_handler(event, context):
     document_table = os.getenv("DOCUMENT_TABLE")
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
-    body = json.loads(event["body"])
     collection_id = event["pathParameters"]["collectionId"]
 
     # Verify the collection
