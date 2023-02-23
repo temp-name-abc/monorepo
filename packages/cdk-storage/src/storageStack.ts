@@ -63,8 +63,22 @@ export class StorageStack extends cdk.NestedStack {
         });
 
         // Retrieve collections function
+        const userCollectionsFn = new lambda.Function(this, "userCollectionsFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "userCollections")),
+            handler: "index.lambda_handler",
+            environment: {
+                COLLECTIONS_TABLE: collectionsTable.tableName,
+            },
+            timeout: cdk.Duration.seconds(30),
+        });
 
-        // Delete collection function
+        collectionsTable.grantReadData(userCollectionsFn);
+
+        collectionResource.addMethod("GET", new apigw.LambdaIntegration(userCollectionsFn), {
+            authorizer: props.authorizer,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
 
         // ==== Documents ====
 
@@ -164,6 +178,8 @@ export class StorageStack extends cdk.NestedStack {
                 events: [s3.EventType.OBJECT_CREATED_POST],
             })
         );
+
+        // ==== Search ====
 
         // Create search function
         const searchFn = new lambda.DockerImageFunction(this, "searchFn", {
