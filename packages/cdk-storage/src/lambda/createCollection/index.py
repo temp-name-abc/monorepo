@@ -14,7 +14,7 @@ dynamodb_client = boto3.client("dynamodb")
 def lambda_handler(event, context):
     logger.info(f"Creating collection for '{event}'")
 
-    collections_table = os.getenv("COLLECTIONS_TABLE")
+    collection_table = os.getenv("COLLECTION_TABLE")
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     body = json.loads(event["body"])
@@ -28,7 +28,7 @@ def lambda_handler(event, context):
     timestamp = int(now.timestamp())
 
     dynamodb_client.put_item(
-        TableName=collections_table,
+        TableName=collection_table,
         Item={
             "userId": {"S": user_id},
             "collectionId": {"S": collection_id},
