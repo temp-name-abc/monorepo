@@ -48,6 +48,7 @@ export class CoreStack extends cdk.NestedStack {
             oAuth: {
                 callbackUrls: [props.homeUrl],
             },
+            generateSecret: true,
         });
 
         // Create API and authorizer
