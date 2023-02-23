@@ -21,7 +21,7 @@ def lambda_handler(event, context):
     # Verify the collection
     collection_response = dynamodb_client.get_item(
         TableName=collection_table,
-        Item={
+        Key={
             "userId": {"S": user_id},
             "collectionId": {"S": collection_id}
         }
