@@ -56,7 +56,8 @@ def lambda_handler(event, context):
         filter={
             "userId": user_id,
             "collectionId": collection_id
-        }
+        },
+        include_metadata=True
     )
 
     # Return a list of documents with their metadata
@@ -65,7 +66,7 @@ def lambda_handler(event, context):
     for match in response["matches"]:
         document = {}
 
-        document["id"] = match["id"]
+        document["id"] = match["metadata"]["documentId"]
         document["score"] = match["score"]
 
         obj_res = s3_client.get_object(Bucket=document_bucket, Key=match["id"])

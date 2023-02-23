@@ -15,7 +15,6 @@ dynamodb_client = boto3.client("dynamodb")
 def lambda_handler(event, context):
     logger.info(f"Retrieving document for '{event}'")
 
-    collection_table = os.getenv("COLLECTION_TABLE")
     document_table = os.getenv("DOCUMENT_TABLE")
     document_bucket = os.getenv("DOCUMENT_BUCKET")
 
@@ -23,16 +22,16 @@ def lambda_handler(event, context):
     collection_id = event["pathParameters"]["collectionId"]
     document_id = event["pathParameters"]["documentId"]
 
-    # Verify the collection
-    collection_response = dynamodb_client.get_item(
-        TableName=collection_table,
+    # Verify the document
+    response = dynamodb_client.get_item(
+        TableName=document_table,
         Item={
-            "userId": {"S": user_id},
-            "collectionId": {"S": collection_id}
+            "collectionId": {"S": collection_id},
+            "documentId": {"S": document_id}
         }
     )
 
-    if "Item" not in collection_response:
+    if "Item" not in response or response["Item"]["userId"]["S"] != user_id:
         msg = f"User '{user_id}' tried to retrieve document for invalid collection '{collection_id}'"
 
         logger.error(msg)
@@ -44,15 +43,6 @@ def lambda_handler(event, context):
             },
             "body": msg
         }
-
-    # Retrieve the document
-    document_response = dynamodb_client.get_item(
-        TableName=document_id,
-        Item={
-            "collectionId": {"S": collection_id},
-            "documentId": {"S": document_id}
-        }
-    )["Item"]
 
     # Create signed URL to access document
     url = s3_client.generate_presigned_url("get_object", Params={"Bucket": document_bucket, "Key": document_id}, ExpiresIn=86400)
