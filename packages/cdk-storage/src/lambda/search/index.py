@@ -20,7 +20,7 @@ def lambda_handler(event, context):
 
     pinecone_secret = os.getenv("PINECONE_SECRET")
     openai_secret = os.getenv("OPENAI_SECRET")
-    document_bucket = os.getenv("DOCUMENT_BUCKET")
+    chunk_bucket = os.getenv("CHUNK_BUCKET")
     pinecone_env = os.getenv("PINECONE_ENV")
     pinecone_index = os.getenv("PINECONE_INDEX")
 
@@ -66,10 +66,11 @@ def lambda_handler(event, context):
     for match in response["matches"]:
         document = {}
 
-        document["id"] = match["metadata"]["documentId"]
+        chunk_id = match["id"]
         document["score"] = match["score"]
+        document["id"] = match["metadata"]["documentId"]
 
-        obj_res = s3_client.get_object(Bucket=document_bucket, Key=match["id"])
+        obj_res = s3_client.get_object(Bucket=chunk_bucket, Key=chunk_id)
         body = obj_res["Body"].read().decode("utf-8")
 
         document["body"] = body
