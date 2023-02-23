@@ -29,7 +29,7 @@ def lambda_handler(event, context):
     )
 
     if "Item" not in response or response["Item"]["userId"]["S"] != user_id:
-        msg = f"User '{user_id}' tried to retrieve document for invalid collection '{collection_id}'"
+        msg = f"User '{user_id}' tried to retrieve invalid document '{document_id}' for collection '{collection_id}'"
 
         logger.error(msg)
 
