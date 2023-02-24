@@ -16,6 +16,7 @@ def lambda_handler(event, context):
     logger.info(f"Creating file upload request for '{event}'")
 
     upload_records_table = os.getenv("UPLOAD_RECORDS_TABLE")
+    collection_table = os.getenv("COLLECTION_TABLE")
     document_bucket = os.getenv("DOCUMENT_BUCKET")
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
@@ -25,10 +26,31 @@ def lambda_handler(event, context):
     file_type = body["type"]
     file_name = body["name"]
 
+    # Check the collection is valid
+    response = dynamodb_client.get_item(
+        TableName=collection_table,
+        Key={
+            "userId": {"S": user_id},
+            "collectionId": {"S": collection_id}
+        }
+    )
+
+    if "Item" not in response:
+        msg = f"User '{user_id}' tried to upload document to invalid collection '{collection_id}'"
+
+        logger.error(msg)
+
+        return {
+            "statusCode": 400,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+            },
+            "body": msg
+        }
+
     # Create a new key for the request
     key = str(uuid.uuid4())
 
-    # Upload a key with the user id
     now = datetime.utcnow()
     expiry_time = now + timedelta(days=1)
     ttl_seconds = int(expiry_time.timestamp())
@@ -46,8 +68,8 @@ def lambda_handler(event, context):
         ConditionExpression="attribute_not_exists(uploadId)"
     )
 
-    # Create a presigned PUT URL
-    response = s3_client.generate_presigned_post(
+    # Create a presigned POST URL
+    obj_response = s3_client.generate_presigned_post(
         Bucket=document_bucket,
         Key=key,
         ExpiresIn=86400
@@ -60,6 +82,6 @@ def lambda_handler(event, context):
         "headers": {
             "Access-Control-Allow-Origin": "*",
         },
-        "body": json.dumps(response)
+        "body": json.dumps(obj_response)
     }
 

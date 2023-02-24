@@ -22,22 +22,34 @@ def lambda_handler(event, context):
 
     openai_secret = os.getenv("OPENAI_SECRET")
     conversation_table = os.getenv("CONVERSATION_TABLE")
+    chat_table = os.getenv("CHAT_TABLE")
     api_url = os.getenv("API_URL")
     product_id = os.getenv("PRODUCT_ID")
     memory_size = int(os.getenv("MEMORY_SIZE"))
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
+    conversation_id = event["pathParameters"]["conversationId"]
 
-    # Load and validate parameters
     query_params = event["queryStringParameters"]
 
-    conversation_id = query_params["conversationId"] if "conversationId" in query_params else None
     prev_chat_id = query_params["chatId"] if "chatId" in query_params else None
     collection_id = query_params["collectionId"] if "collectionId" in query_params else None
     question = query_params["question"]
 
-    if not (collection_id != None or (conversation_id != None and prev_chat_id != None)):
-        msg = "Requires at least one of 'collectionId' or 'conversationId' and 'chatId'"
+    # Load the OpenAI API key
+    utils.set_openai_api_key(secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"])
+
+    # Check the conversation is valid
+    response = dynamodb_client.get_item(
+        TableName=conversation_table,
+        Key={
+            "userId": {"S": user_id},
+            "conversationId": {"S": conversation_id}
+        }
+    )
+
+    if "Item" not in response:
+        msg = f"User '{user_id}' tried to chat to invalid conversation '{collection_id}'"
 
         logger.error(msg)
 
@@ -49,11 +61,7 @@ def lambda_handler(event, context):
             "body": msg
         }
 
-    # Load the OpenAI API key
-    utils.set_openai_api_key(secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"])
-
-    # Load the chat data
-    conversation_id = str(uuid.uuid4()) if conversation_id is None else conversation_id
+    # Load the chat history
     chat_id = str(uuid.uuid4())
     history = []
     context = []
@@ -61,9 +69,9 @@ def lambda_handler(event, context):
     now = datetime.utcnow()
     timestamp = int(now.timestamp())
 
-    if conversation_id != None and prev_chat_id != None:
+    if prev_chat_id != None:
         prev_chat_data = dynamodb_client.get_item(
-            TableName=conversation_table,
+            TableName=chat_table,
             Key={
                 "conversationId": {"S": conversation_id},
                 "chatId": {"S": prev_chat_id}

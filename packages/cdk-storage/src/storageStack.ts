@@ -167,12 +167,14 @@ export class StorageStack extends cdk.NestedStack {
             handler: "index.lambda_handler",
             environment: {
                 UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
+                COLLECTION_TABLE: collectionTable.tableName,
                 DOCUMENT_BUCKET: documentBucket.bucketName,
             },
             timeout: cdk.Duration.seconds(30),
         });
 
         uploadRecordsTable.grantWriteData(uploadFn);
+        collectionTable.grantReadData(uploadFn);
         documentBucket.grantWrite(uploadFn);
 
         documentResource.addMethod("POST", new apigw.LambdaIntegration(uploadFn), {
