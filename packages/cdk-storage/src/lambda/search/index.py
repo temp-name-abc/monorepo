@@ -20,6 +20,7 @@ def lambda_handler(event, context):
 
     pinecone_secret = os.getenv("PINECONE_SECRET")
     openai_secret = os.getenv("OPENAI_SECRET")
+    collection_table = os.getenv("COLLECTION_TABLE")
     chunk_bucket = os.getenv("CHUNK_BUCKET")
     pinecone_env = os.getenv("PINECONE_ENV")
     pinecone_index = os.getenv("PINECONE_INDEX")
@@ -44,13 +45,35 @@ def lambda_handler(event, context):
 
     index = pinecone.Index(pinecone_index)
 
+    # Check that the user owns the collection
+    user_response = dynamodb_client.get_item(
+        TableName=collection_table,
+        Key={
+            "userId": {"S": user_id},
+            "collectionId": {"S": collection_id}
+        }
+    )
+
+    if "Item" not in user_response:
+        msg = f"Invalid collection '{collection_id}' for user '{user_id}'"
+
+        logger.error(msg)
+
+        return {
+            "statusCode": 400,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+            },
+            "body": msg
+        }
+
     # Find matching documents
     embeddings = openai.Embedding.create(
         input=query,
         model="text-embedding-ada-002"
     )["data"][0]["embedding"]
 
-    response = index.query(
+    query_response = index.query(
         vector=embeddings,
         top_k=num_results,
         filter={
@@ -63,7 +86,7 @@ def lambda_handler(event, context):
     # Return a list of documents with their metadata
     documents = []
 
-    for match in response["matches"]:
+    for match in query_response["matches"]:
         document = {}
 
         chunk_id = match["id"]
