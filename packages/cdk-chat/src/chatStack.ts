@@ -40,12 +40,7 @@ export class ChatStack extends cdk.NestedStack {
         // Create conversation
         const createConversationFn = new lambda.Function(this, "createConversationFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "createConversation"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "createConversation")),
             handler: "index.lambda_handler",
             environment: {
                 CONVERSATION_TABLE: conversationTable.tableName,
