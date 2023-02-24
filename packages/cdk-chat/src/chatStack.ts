@@ -30,23 +30,17 @@ export class ChatStack extends cdk.NestedStack {
         const conversationIdResource = conversationResource.addResource("{conversationId}");
         const convChatResource = conversationIdResource.addResource("chat");
 
-        // ==== Chat ====
+        // ==== Conversation ====
         const conversationTable = new dynamodb.Table(this, "conversationTable", {
             partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
             sortKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
         });
 
-        const chatTable = new dynamodb.Table(this, "chatTable", {
-            partitionKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
-            sortKey: { name: "chatId", type: dynamodb.AttributeType.STRING },
-            pointInTimeRecovery: true,
-        });
-
-        // Create answer function
-        const answerFn = new lambda.Function(this, "answerFn", {
+        // Create conversation
+        const createConversationFn = new lambda.Function(this, "createConversationFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "answer"), {
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "createConversation"), {
                 bundling: {
                     image: lambda.Runtime.PYTHON_3_8.bundlingImage,
                     command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
@@ -54,30 +48,66 @@ export class ChatStack extends cdk.NestedStack {
             }),
             handler: "index.lambda_handler",
             environment: {
-                OPENAI_SECRET: openAISecret.secretName,
                 CONVERSATION_TABLE: conversationTable.tableName,
-                CHAT_TABLE: chatTable.tableName,
-                API_URL: props.apiUrl,
-                PRODUCT_ID: props.productId,
-                MEMORY_SIZE: "5",
             },
             timeout: cdk.Duration.minutes(1),
         });
 
-        openAISecret.grantRead(answerFn);
-        conversationTable.grantWriteData(answerFn);
-        chatTable.grantReadWriteData(answerFn);
-        answerFn.addToRolePolicy(
-            new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: ["execute-api:Invoke"],
-                resources: ["*"],
-            })
-        );
+        conversationTable.grantWriteData(createConversationFn);
 
-        answerResource.addMethod("GET", new apigw.LambdaIntegration(answerFn), {
+        conversationResource.addMethod("POST", new apigw.LambdaIntegration(createConversationFn), {
             authorizer: props.authorizer,
             authorizationType: apigw.AuthorizationType.COGNITO,
         });
+
+        // ==== Chat ====
+        // const conversationTable = new dynamodb.Table(this, "conversationTable", {
+        //     partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+        //     sortKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
+        //     pointInTimeRecovery: true,
+        // });
+
+        // const chatTable = new dynamodb.Table(this, "chatTable", {
+        //     partitionKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
+        //     sortKey: { name: "chatId", type: dynamodb.AttributeType.STRING },
+        //     pointInTimeRecovery: true,
+        // });
+
+        // // Create answer function
+        // const answerFn = new lambda.Function(this, "answerFn", {
+        //     runtime: lambda.Runtime.PYTHON_3_8,
+        //     code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "answer"), {
+        //         bundling: {
+        //             image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+        //             command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+        //         },
+        //     }),
+        //     handler: "index.lambda_handler",
+        //     environment: {
+        //         OPENAI_SECRET: openAISecret.secretName,
+        //         CONVERSATION_TABLE: conversationTable.tableName,
+        //         CHAT_TABLE: chatTable.tableName,
+        //         API_URL: props.apiUrl,
+        //         PRODUCT_ID: props.productId,
+        //         MEMORY_SIZE: "5",
+        //     },
+        //     timeout: cdk.Duration.minutes(1),
+        // });
+
+        // openAISecret.grantRead(answerFn);
+        // conversationTable.grantWriteData(answerFn);
+        // chatTable.grantReadWriteData(answerFn);
+        // answerFn.addToRolePolicy(
+        //     new iam.PolicyStatement({
+        //         effect: iam.Effect.ALLOW,
+        //         actions: ["execute-api:Invoke"],
+        //         resources: ["*"],
+        //     })
+        // );
+
+        // answerResource.addMethod("GET", new apigw.LambdaIntegration(answerFn), {
+        //     authorizer: props.authorizer,
+        //     authorizationType: apigw.AuthorizationType.COGNITO,
+        // });
     }
 }
