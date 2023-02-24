@@ -55,6 +55,24 @@ export class ChatStack extends cdk.NestedStack {
             authorizationType: apigw.AuthorizationType.COGNITO,
         });
 
+        // Get user conversations
+        const userConversationsFn = new lambda.Function(this, "userConversationsFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "userConversations")),
+            handler: "index.lambda_handler",
+            environment: {
+                CONVERSATION_TABLE: conversationTable.tableName,
+            },
+            timeout: cdk.Duration.minutes(1),
+        });
+
+        conversationTable.grantReadData(createConversationFn);
+
+        conversationResource.addMethod("GET", new apigw.LambdaIntegration(userConversationsFn), {
+            authorizer: props.authorizer,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
+
         // ==== Chat ====
         // const conversationTable = new dynamodb.Table(this, "conversationTable", {
         //     partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
