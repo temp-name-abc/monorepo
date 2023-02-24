@@ -28,7 +28,7 @@ def lambda_handler(event, context):
     timestamp = int(now.timestamp())
 
     dynamodb_client.put_item(
-        TableName=conversation_name,
+        TableName=conversation_table,
         Item={
             "userId": {"S": user_id},
             "conversationId": {"S": conversation_id},
