@@ -31,7 +31,9 @@ def lambda_handler(event, context):
         ScanIndexForward=False
     )
 
-    if "Items" not in response or response["Items"][0]["userId"]["S"] != user_id:
+    # **** Its better in this case to just retrieve the item from the collection and check it that way
+
+    if "Items" not in response or len(response["Items"]) == 0 or response["Items"][0]["userId"]["S"] != user_id:
         msg = f"User '{user_id}' tried to retrieve invalid chats for conversation '{conversation_id}'"
 
         logger.error(msg)
