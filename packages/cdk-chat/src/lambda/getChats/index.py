@@ -17,14 +17,16 @@ def lambda_handler(event, context):
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     conversation_id = event["pathParameters"]["conversationId"]
+    from_timestamp = event["queryStringParameters"]["fromTimestamp"]
 
     # Verify the document
     response = dynamodb_client.query(
         TableName=chat_table,
         IndexName=timestamp_index_name,
-        KeyConditionExpression="conversationId = :conversationId",
+        KeyConditionExpression="conversationId = :conversationId AND timestamp > :fromTimestamp",
         ExpressionAttributeValues={
-            ":conversationId": {"S": conversation_id}
+            ":conversationId": {"S": conversation_id},
+            ":fromTimestamp": {"N": from_timestamp}
         },
         ScanIndexForward=False
     )

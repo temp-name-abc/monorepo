@@ -156,9 +156,9 @@ def lambda_handler(event, context):
         "conversationId": {"S": conversation_id},
         "chatId": {"S": chat_id},
         "userId": {"S": user_id},
-        "timestamp": {"N": str(timestamp)},
         "history": {"S": json.dumps(history)},
-        "context": {"S": json.dumps(context)}
+        "context": {"S": json.dumps(context)},
+        "timestamp": {"N": str(timestamp)}
     }
 
     if collection_id != None:
@@ -195,9 +195,7 @@ def lambda_handler(event, context):
             "Access-Control-Allow-Origin": "*",
         },
         "body": json.dumps({
-            "conversationId": conversation_id,
             "chatId": chat_id,
-            "collectionId": collection_id,
             "question": question,
             "response": chat,
             "context": context
