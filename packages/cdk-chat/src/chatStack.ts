@@ -66,7 +66,7 @@ export class ChatStack extends cdk.NestedStack {
             timeout: cdk.Duration.minutes(1),
         });
 
-        conversationTable.grantReadData(createConversationFn);
+        conversationTable.grantReadData(userConversationsFn);
 
         conversationResource.addMethod("GET", new apigw.LambdaIntegration(userConversationsFn), {
             authorizer: props.authorizer,
