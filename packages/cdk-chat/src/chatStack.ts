@@ -110,7 +110,7 @@ export class ChatStack extends cdk.NestedStack {
             })
         );
 
-        convChatResource.addMethod("GET", new apigw.LambdaIntegration(chatFn), {
+        convChatResource.addMethod("POST", new apigw.LambdaIntegration(chatFn), {
             authorizer: props.authorizer,
             authorizationType: apigw.AuthorizationType.COGNITO,
         });

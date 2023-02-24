@@ -30,11 +30,11 @@ def lambda_handler(event, context):
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     conversation_id = event["pathParameters"]["conversationId"]
 
-    query_params = event["queryStringParameters"]
+    body = json.loads(event["body"])
 
-    prev_chat_id = query_params["chatId"] if "chatId" in query_params else None
-    collection_id = query_params["collectionId"] if "collectionId" in query_params else None
-    question = query_params["question"]
+    prev_chat_id = body["chatId"] if "chatId" in body else None
+    collection_id = body["collectionId"] if "collectionId" in body else None
+    question = body["question"]
 
     # Load the OpenAI API key
     utils.set_openai_api_key(secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"])
