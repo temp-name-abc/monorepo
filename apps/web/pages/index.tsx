@@ -1,12 +1,5 @@
-import { Nav } from "ui";
+import { AppShell } from "ui";
 
 export default function Web() {
-    return (
-        <>
-            <Nav />
-            <div>
-                <p className="font-bold">Hello world!</p>
-            </div>
-        </>
-    );
+    return <p className="font-bold">Hello world!</p>;
 }
