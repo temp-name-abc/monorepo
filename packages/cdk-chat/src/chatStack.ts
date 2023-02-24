@@ -82,7 +82,7 @@ export class ChatStack extends cdk.NestedStack {
 
         chatTable.addGlobalSecondaryIndex({
             indexName: timestampIndexName,
-            partitionKey: { name: "timestamp", type: dynamodb.AttributeType.STRING },
+            partitionKey: { name: "timestamp", type: dynamodb.AttributeType.NUMBER },
         });
 
         // Create chat function
