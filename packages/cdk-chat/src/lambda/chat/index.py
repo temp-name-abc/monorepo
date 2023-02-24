@@ -7,7 +7,6 @@ from datetime import datetime
 import uuid
 import urllib.parse
 import utils
-import openai
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -71,7 +70,6 @@ def lambda_handler(event, context):
                 }
         )["Item"]
 
-        collection_id = prev_chat_data["collectionId"]["S"]
         history = json.loads(prev_chat_data["history"]["S"])
         context = json.loads(prev_chat_data["context"]["S"])
 
@@ -113,7 +111,7 @@ def lambda_handler(event, context):
     tokens += enough_info_tokens
     logger.info(f"Enough info prompt = '{enough_info_prompt}', response = '{enough_info}'")
 
-    if "yes" not in enough_info.lower():
+    if "yes" not in enough_info.lower() and collection_id != None:
         # Retrieve query
         query_encoded = urllib.parse.quote(query)
         documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults=1&query={query_encoded}"
@@ -146,17 +144,21 @@ def lambda_handler(event, context):
     history = history[len(history) - memory_size:]
 
     # Store the data
+    item = {
+        "conversationId": {"S": conversation_id},
+        "chatId": {"S": chat_id},
+        "userId": {"S": user_id},
+        "timestamp": {"N": str(timestamp)},
+        "history": {"S": json.dumps(history)},
+        "context": {"S": json.dumps(context)}
+    }
+
+    if collection_id != None:
+        item["collectionId"] = {"S": collection_id}
+
     dynamodb_client.put_item(
         TableName=conversations_table,
-        Item={
-            "conversationId": {"S": conversation_id},
-            "chatId": {"S": chat_id},
-            "collectionId": {"S": collection_id},
-            "userId": {"S": user_id},
-            "timestamp": {"N": str(timestamp)},
-            "history": {"S": json.dumps(history)},
-            "context": {"S": json.dumps(context)}
-        }
+        Item=item
     )
 
     # Record the usage
