@@ -18,10 +18,10 @@ model_settings = {"max_tokens": 2048, "temperature": 0.5, "model": "text-davinci
 
 
 def lambda_handler(event, context):
-    logger.info(f"Processing chat for '{event}'")
+    logger.info(f"Processing answer for '{event}'")
 
     openai_secret = os.getenv("OPENAI_SECRET")
-    conversations_table = os.getenv("CONVERSATIONS_TABLE")
+    conversation_table = os.getenv("CONVERSATION_TABLE")
     api_url = os.getenv("API_URL")
     product_id = os.getenv("PRODUCT_ID")
     memory_size = int(os.getenv("MEMORY_SIZE"))
@@ -63,7 +63,7 @@ def lambda_handler(event, context):
 
     if conversation_id != None and prev_chat_id != None:
         prev_chat_data = dynamodb_client.get_item(
-            TableName=conversations_table,
+            TableName=conversation_table,
             Key={
                 "conversationId": {"S": conversation_id},
                 "chatId": {"S": prev_chat_id}
@@ -157,7 +157,7 @@ def lambda_handler(event, context):
         item["collectionId"] = {"S": collection_id}
 
     dynamodb_client.put_item(
-        TableName=conversations_table,
+        TableName=conversation_table,
         Item=item
     )
 

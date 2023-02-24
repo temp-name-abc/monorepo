@@ -24,16 +24,29 @@ export class ChatStack extends cdk.NestedStack {
         // Create the REST API
         const chatResource = props.api.root.addResource("chat");
 
-        // Create upload function
-        const conversationsTable = new dynamodb.Table(this, "conversationsTable", {
+        const answerResource = chatResource.addResource("answer");
+
+        const conversationResource = chatResource.addResource("conversation");
+        const conversationIdResource = conversationResource.addResource("{conversationId}");
+        const convChatResource = conversationIdResource.addResource("chat");
+
+        // ==== Chat ====
+        const conversationTable = new dynamodb.Table(this, "conversationTable", {
+            partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+            sortKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
+            pointInTimeRecovery: true,
+        });
+
+        const chatTable = new dynamodb.Table(this, "chatTable", {
             partitionKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
             sortKey: { name: "chatId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
         });
 
-        const chatFn = new lambda.Function(this, "chatFn", {
+        // Create answer function
+        const answerFn = new lambda.Function(this, "answerFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "chat"), {
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "answer"), {
                 bundling: {
                     image: lambda.Runtime.PYTHON_3_8.bundlingImage,
                     command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
@@ -42,7 +55,8 @@ export class ChatStack extends cdk.NestedStack {
             handler: "index.lambda_handler",
             environment: {
                 OPENAI_SECRET: openAISecret.secretName,
-                CONVERSATIONS_TABLE: conversationsTable.tableName,
+                CONVERSATION_TABLE: conversationTable.tableName,
+                CHAT_TABLE: chatTable.tableName,
                 API_URL: props.apiUrl,
                 PRODUCT_ID: props.productId,
                 MEMORY_SIZE: "5",
@@ -50,9 +64,10 @@ export class ChatStack extends cdk.NestedStack {
             timeout: cdk.Duration.minutes(1),
         });
 
-        openAISecret.grantRead(chatFn);
-        conversationsTable.grantReadWriteData(chatFn);
-        chatFn.addToRolePolicy(
+        openAISecret.grantRead(answerFn);
+        conversationTable.grantWriteData(answerFn);
+        chatTable.grantReadWriteData(answerFn);
+        answerFn.addToRolePolicy(
             new iam.PolicyStatement({
                 effect: iam.Effect.ALLOW,
                 actions: ["execute-api:Invoke"],
@@ -60,7 +75,7 @@ export class ChatStack extends cdk.NestedStack {
             })
         );
 
-        chatResource.addMethod("GET", new apigw.LambdaIntegration(chatFn), {
+        answerResource.addMethod("GET", new apigw.LambdaIntegration(answerFn), {
             authorizer: props.authorizer,
             authorizationType: apigw.AuthorizationType.COGNITO,
         });
