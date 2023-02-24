@@ -78,6 +78,13 @@ export class ChatStack extends cdk.NestedStack {
             pointInTimeRecovery: true,
         });
 
+        const timestampIndexName = "timestampIndex";
+
+        chatTable.addGlobalSecondaryIndex({
+            indexName: timestampIndexName,
+            partitionKey: { name: "timestamp", type: dynamodb.AttributeType.STRING },
+        });
+
         // Create chat function
         const chatFn = new lambda.Function(this, "chatFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
@@ -111,6 +118,25 @@ export class ChatStack extends cdk.NestedStack {
         );
 
         convChatResource.addMethod("POST", new apigw.LambdaIntegration(chatFn), {
+            authorizer: props.authorizer,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
+
+        // Get chats
+        const getChatsFn = new lambda.Function(this, "getChatsFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "getChats")),
+            handler: "index.lambda_handler",
+            environment: {
+                CHAT_TABLE: conversationTable.tableName,
+                TIMESTAMP_INDEX_NAME: timestampIndexName,
+            },
+            timeout: cdk.Duration.minutes(1),
+        });
+
+        chatTable.grantReadData(getChatsFn);
+
+        convChatResource.addMethod("GET", new apigw.LambdaIntegration(getChatsFn), {
             authorizer: props.authorizer,
             authorizationType: apigw.AuthorizationType.COGNITO,
         });
