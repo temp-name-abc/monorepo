@@ -6,7 +6,6 @@ import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-s3_client = boto3.client("s3")
 dynamodb_client = boto3.client("dynamodb")
 
 
@@ -23,9 +22,11 @@ def lambda_handler(event, context):
     response = dynamodb_client.query(
         TableName=chat_table,
         IndexName=timestamp_index_name,
-        Key={
-            "conversationId": {"S": conversation_id},
-        }
+        KeyConditionExpression="conversationId = :conversationId",
+        ExpressionAttributeValues={
+            ":conversationId": {"S": conversation_id}
+        },
+        ScanIndexForward=False
     )
 
     if "Items" not in response or response["Items"][0]["userId"]["S"] != user_id:
@@ -51,8 +52,12 @@ def lambda_handler(event, context):
         chat["context"] = item["context"]["S"]
         chat["timestamp"] = item["timestamp"]["N"]
 
-        history = json.loads(item["history"]["S"])
-        chat["prevChatId"] = history[-1]["chatId"]
+        prev_chat = json.loads(item["history"]["S"])[-1]
+        
+        chat["body"] = {}
+        chat["body"]["chatId"] = prev_chat["chatId"]
+        chat["body"]["human"] = prev_chat["human"]
+        chat["body"]["ai"] = prev_chat["ai"]
 
         chats.append(chat)
 
