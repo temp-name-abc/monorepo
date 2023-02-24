@@ -100,7 +100,7 @@ export class ChatStack extends cdk.NestedStack {
         });
 
         openAISecret.grantRead(chatFn);
-        conversationTable.grantWriteData(chatFn);
+        conversationTable.grantReadData(chatFn);
         chatTable.grantReadWriteData(chatFn);
         chatFn.addToRolePolicy(
             new iam.PolicyStatement({

@@ -165,7 +165,7 @@ def lambda_handler(event, context):
         item["collectionId"] = {"S": collection_id}
 
     dynamodb_client.put_item(
-        TableName=conversation_table,
+        TableName=chat_table,
         Item=item
     )
 
