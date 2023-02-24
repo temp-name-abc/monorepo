@@ -2,6 +2,7 @@ import boto3
 import json
 import os
 import logging
+from datetime import datetime
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -12,29 +13,29 @@ dynamodb_client = boto3.client("dynamodb")
 def lambda_handler(event, context):
     logger.info(f"Retrieving chats for '{event}'")
 
+    conversation_table = os.getenv("CONVERSATION_TABLE")
     chat_table = os.getenv("CHAT_TABLE")
     timestamp_index_name = os.getenv("TIMESTAMP_INDEX_NAME")
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     conversation_id = event["pathParameters"]["conversationId"]
-    from_timestamp = event["queryStringParameters"]["fromTimestamp"]
+    
+    query_params = event["queryStringParameters"]
 
-    # Verify the document
-    response = dynamodb_client.query(
-        TableName=chat_table,
-        IndexName=timestamp_index_name,
-        KeyConditionExpression="conversationId = :conversationId AND timestamp > :fromTimestamp",
-        ExpressionAttributeValues={
-            ":conversationId": {"S": conversation_id},
-            ":fromTimestamp": {"N": from_timestamp}
-        },
-        ScanIndexForward=False
-    )
+    from_timestamp = query_params["fromTimestamp"] if "fromTimestamp" in query_params else "0"
+    to_timestamp = query_params["toTimestamp"] if "toTimestamp" in query_params else str(int(datetime.now().timestamp()))
 
-    # **** Its better in this case to just retrieve the item from the collection and check it that way
+    # Verify the conversation
+    conversation_response = dynamodb_client.get_item(
+        TableName=conversation_table,
+        Key={
+            "userId": {"S": user_id},
+            "conversationId": {"S": conversation_id}
+        }
+    ) 
 
-    if "Items" not in response or len(response["Items"]) == 0 or response["Items"][0]["userId"]["S"] != user_id:
-        msg = f"User '{user_id}' tried to retrieve invalid chats for conversation '{conversation_id}'"
+    if "Item" not in conversation_response:
+        msg = f"User '{user_id}' tried to retrieve chats for invalid conversation '{conversation_id}'"
 
         logger.error(msg)
 
@@ -46,10 +47,26 @@ def lambda_handler(event, context):
             "body": msg
         }
 
+    # Retrieve chats
+    chats_response = dynamodb_client.query(
+        TableName=chat_table,
+        IndexName=timestamp_index_name,
+        KeyConditionExpression="conversationId = :conversationId AND #timestamp BETWEEN :fromTimestamp AND :toTimestamp",
+        ExpressionAttributeNames={
+            "#timestamp": "timestamp"
+        },
+        ExpressionAttributeValues={
+            ":conversationId": {"S": conversation_id},
+            ":fromTimestamp": {"N": from_timestamp},
+            ":toTimestamp": {"N": to_timestamp}
+        },
+        ScanIndexForward=False
+    )
+
     # Create list of chats
     chats = []
 
-    for item in response["Items"]:
+    for item in chats_response["Items"]:
         chat = {}
 
         chat["id"] = item["chatId"]["S"]

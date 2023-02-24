@@ -128,12 +128,14 @@ export class ChatStack extends cdk.NestedStack {
             code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "getChats")),
             handler: "index.lambda_handler",
             environment: {
+                CONVERSATION_TABLE: conversationTable.tableName,
                 CHAT_TABLE: chatTable.tableName,
                 TIMESTAMP_INDEX_NAME: timestampIndexName,
             },
             timeout: cdk.Duration.minutes(1),
         });
 
+        conversationTable.grantReadData(getChatsFn);
         chatTable.grantReadData(getChatsFn);
 
         convChatResource.addMethod("GET", new apigw.LambdaIntegration(getChatsFn), {
