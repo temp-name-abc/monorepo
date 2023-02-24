@@ -59,7 +59,7 @@ Query:"""
 def prompt_chat(context, conversation, question):
     return f"""The following is a friendly conversation between a human and an AI.
 The AI is talkative and provides lots of specific details from its context.
-If the AI does not know the answer to a question, it truthfully says it does not know, and does not try to make up an answer.
+If the AI does not have enough context to answer the question, it says it does not have enough information to answer the question, and does not try to make up an answer.
 
 Context:
 {context}

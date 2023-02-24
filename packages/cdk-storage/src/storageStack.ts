@@ -35,7 +35,7 @@ export class StorageStack extends cdk.NestedStack {
         const collectionResource = storageResource.addResource("collection");
         const collectionIdResource = collectionResource.addResource("{collectionId}");
         const documentResource = collectionIdResource.addResource("document");
-        const documentIdResource = collectionIdResource.addResource("{documentId}");
+        const documentIdResource = documentResource.addResource("{documentId}");
 
         // ==== Collections ====
         const collectionTable = new dynamodb.Table(this, "collectionTable", {
