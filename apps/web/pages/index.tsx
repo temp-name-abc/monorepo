@@ -1,5 +1,10 @@
 import { AppShell } from "ui";
+import { StoragePage } from "ui-storage";
 
 export default function Web() {
-    return <p className="font-bold">Hello world!</p>;
+    return (
+        <AppShell>
+            <StoragePage />
+        </AppShell>
+    );
 }

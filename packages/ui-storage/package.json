@@ -1,5 +1,5 @@
 {
-    "name": "ui",
+    "name": "ui-storage",
     "version": "0.0.0",
     "main": "./index.tsx",
     "types": "./index.tsx",
@@ -15,8 +15,5 @@
         "tsconfig": "*",
         "typescript": "^4.5.2"
     },
-    "dependencies": {
-        "next-auth": "^4.19.2",
-        "tabler-icons-react": "^1.56.0"
-    }
+    "dependencies": {}
 }
