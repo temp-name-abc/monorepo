@@ -7,7 +7,6 @@ from datetime import datetime
 import uuid
 import urllib.parse
 import utils
-import openai
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -19,26 +18,38 @@ model_settings = {"max_tokens": 2048, "temperature": 0.5, "model": "text-davinci
 
 
 def lambda_handler(event, context):
-    logger.info(f"Processing chat for '{event}'")
+    logger.info(f"Processing answer for '{event}'")
 
     openai_secret = os.getenv("OPENAI_SECRET")
-    conversations_table = os.getenv("CONVERSATIONS_TABLE")
+    conversation_table = os.getenv("CONVERSATION_TABLE")
+    chat_table = os.getenv("CHAT_TABLE")
     api_url = os.getenv("API_URL")
     product_id = os.getenv("PRODUCT_ID")
     memory_size = int(os.getenv("MEMORY_SIZE"))
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
+    conversation_id = event["pathParameters"]["conversationId"]
 
     body = json.loads(event["body"])
 
-    # Load and validate parameters
-    conversation_id = body["conversationId"] if "conversationId" in body else None
     prev_chat_id = body["chatId"] if "chatId" in body else None
     collection_id = body["collectionId"] if "collectionId" in body else None
     question = body["question"]
 
-    if not (collection_id != None or (conversation_id != None and prev_chat_id != None)):
-        msg = "Requires at least one of 'collectionId' or 'conversationId' and 'chatId'"
+    # Load the OpenAI API key
+    utils.set_openai_api_key(secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"])
+
+    # Check the conversation is valid
+    response = dynamodb_client.get_item(
+        TableName=conversation_table,
+        Key={
+            "userId": {"S": user_id},
+            "conversationId": {"S": conversation_id}
+        }
+    )
+
+    if "Item" not in response:
+        msg = f"User '{user_id}' tried to chat to invalid conversation '{collection_id}'"
 
         logger.error(msg)
 
@@ -50,11 +61,7 @@ def lambda_handler(event, context):
             "body": msg
         }
 
-    # Load the OpenAI API key
-    utils.set_openai_api_key(secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"])
-
-    # Load the chat data
-    conversation_id = str(uuid.uuid4()) if conversation_id is None else conversation_id
+    # Load the chat history
     chat_id = str(uuid.uuid4())
     history = []
     context = []
@@ -62,16 +69,15 @@ def lambda_handler(event, context):
     now = datetime.utcnow()
     timestamp = int(now.timestamp())
 
-    if conversation_id != None and prev_chat_id != None:
+    if prev_chat_id != None:
         prev_chat_data = dynamodb_client.get_item(
-            TableName=conversations_table,
+            TableName=chat_table,
             Key={
                 "conversationId": {"S": conversation_id},
                 "chatId": {"S": prev_chat_id}
                 }
         )["Item"]
 
-        collection_id = prev_chat_data["collectionId"]["S"]
         history = json.loads(prev_chat_data["history"]["S"])
         context = json.loads(prev_chat_data["context"]["S"])
 
@@ -113,7 +119,7 @@ def lambda_handler(event, context):
     tokens += enough_info_tokens
     logger.info(f"Enough info prompt = '{enough_info_prompt}', response = '{enough_info}'")
 
-    if "yes" not in enough_info.lower():
+    if "yes" not in enough_info.lower() and collection_id != None:
         # Retrieve query
         query_encoded = urllib.parse.quote(query)
         documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults=1&query={query_encoded}"
@@ -146,17 +152,21 @@ def lambda_handler(event, context):
     history = history[len(history) - memory_size:]
 
     # Store the data
+    item = {
+        "conversationId": {"S": conversation_id},
+        "chatId": {"S": chat_id},
+        "userId": {"S": user_id},
+        "history": {"S": json.dumps(history)},
+        "context": {"S": json.dumps(context)},
+        "timestamp": {"N": str(timestamp)}
+    }
+
+    if collection_id != None:
+        item["collectionId"] = {"S": collection_id}
+
     dynamodb_client.put_item(
-        TableName=conversations_table,
-        Item={
-            "conversationId": {"S": conversation_id},
-            "chatId": {"S": chat_id},
-            "collectionId": {"S": collection_id},
-            "userId": {"S": user_id},
-            "timestamp": {"N": str(timestamp)},
-            "history": {"S": json.dumps(history)},
-            "context": {"S": json.dumps(context)}
-        }
+        TableName=chat_table,
+        Item=item
     )
 
     # Record the usage
@@ -185,9 +195,7 @@ def lambda_handler(event, context):
             "Access-Control-Allow-Origin": "*",
         },
         "body": json.dumps({
-            "conversationId": conversation_id,
             "chatId": chat_id,
-            "collectionId": collection_id,
             "question": question,
             "response": chat,
             "context": context
