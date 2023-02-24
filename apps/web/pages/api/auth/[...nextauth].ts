@@ -10,4 +10,12 @@ export default NextAuth({
             checks: "nonce",
         }),
     ],
+    callbacks: {
+        async session({ session, token }) {
+            // @ts-expect-error
+            session.idToken = token.idToken;
+
+            return session;
+        },
+    },
 });

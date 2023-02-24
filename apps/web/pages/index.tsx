@@ -5,7 +5,7 @@ export default function Web() {
         <>
             <Nav />
             <div>
-                <p>Hello world!</p>
+                <p className="font-bold">Hello world!</p>
             </div>
         </>
     );
