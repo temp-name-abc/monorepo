@@ -1,5 +1,5 @@
 import axios from "axios";
-import { conversations, IConversations } from "types";
+import { conversation, conversations, IConversation, IConversations } from "types";
 
 import { API_BASE_URL } from "utils";
 
@@ -15,4 +15,20 @@ export async function getConversations(token: string) {
     });
 
     return conversations.parse(data);
+}
+
+export async function createConversation(token: string, name: string) {
+    const { data } = await instance.post<IConversation>(
+        "/chat/conversation",
+        {
+            name,
+        },
+        {
+            headers: {
+                Authorization: token,
+            },
+        }
+    );
+
+    return conversation.parse(data);
 }

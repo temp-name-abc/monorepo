@@ -45,6 +45,7 @@ def lambda_handler(event, context):
             "Access-Control-Allow-Origin": "*",
         },
         "body": json.dumps({
-            "conversationId": conversation_id
+            "conversationId": conversation_id,
+            "name": conversation_name
         })
     }

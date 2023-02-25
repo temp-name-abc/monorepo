@@ -5,4 +5,3 @@ export const KEY_DOCUMENTS = "documents";
 export const KEY_DOCUMENT = "document";
 
 export const KEY_CONVERSATIONS = "conversations";
-export const KEY_CONVERSATION = "conversation";

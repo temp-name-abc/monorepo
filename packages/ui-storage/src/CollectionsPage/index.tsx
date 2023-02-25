@@ -11,11 +11,10 @@ interface IProps {}
 
 export function CollectionsPage({}: IProps) {
     const session = useSession();
+    const queryClient = useQueryClient();
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
-
-    const queryClient = useQueryClient();
 
     const { data } = useQuery([KEY_COLLECTIONS], () => getCollections(token as string), {
         enabled: !!token,
