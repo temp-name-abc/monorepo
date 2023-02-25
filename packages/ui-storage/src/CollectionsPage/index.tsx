@@ -5,7 +5,7 @@ import { SubAppShell } from "ui";
 import { createCollection, getCollections } from "helpers";
 import { Collections } from "./Collections";
 import { TextCreate } from "ui/src/TextCreate";
-import { storageLinks } from "../storageLinks";
+import { links } from "../links";
 
 interface IProps {}
 
@@ -30,7 +30,7 @@ export function CollectionsPage({}: IProps) {
     });
 
     return (
-        <SubAppShell title="Storage / Collections" description="View all your collections of documents." links={storageLinks}>
+        <SubAppShell title="Storage / Collections" description="View all your collections of documents." links={links}>
             <div className="flex flex-col space-y-12">
                 <div className="ml-auto">
                     <TextCreate onClick={(name) => token && mutation.mutate({ token, name })} />

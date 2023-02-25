@@ -11,7 +11,7 @@ export function SideNav({}: IProps) {
                     <Button variant="dull" type="link" href="/storage/collections" icon={<Bucket />} thick={true}>
                         Storage
                     </Button>
-                    <Button variant="dull" type="link" href="/chat" icon={<Message2 />} thick={true}>
+                    <Button variant="dull" type="link" href="/chat/conversations" icon={<Message2 />} thick={true}>
                         Chat
                     </Button>
                 </div>

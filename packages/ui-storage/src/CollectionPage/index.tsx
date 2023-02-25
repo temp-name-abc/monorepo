@@ -5,7 +5,7 @@ import { SubAppShell } from "ui/src/SubAppShell";
 import { KEY_COLLECTION, KEY_DOCUMENTS } from "utils";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { storageLinks } from "../storageLinks";
+import { links } from "../links";
 import { Documents } from "./Documents";
 
 interface IProps {}
@@ -35,7 +35,7 @@ export function CollectionPage({}: IProps) {
         <SubAppShell
             title={collectionData?.name ? `Storage / Collections / ${collectionData.name}` : "Storage / Collections / Collection"}
             description="View your documents for the given collection."
-            links={storageLinks}
+            links={links}
         >
             <div className="flex flex-col space-y-12">
                 <FileUpload uploadFile={(file) => token && mutation.mutate({ token, collectionId: collectionId as string, file })} />

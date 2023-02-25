@@ -15,7 +15,7 @@ interface IProps {
 export function SubAppShell({ children, title, description, links }: IProps) {
     return (
         <div className="p-10 space-y-10">
-            <nav className="flex items-center space-x-8">
+            <nav className="flex space-x-8">
                 {links.map((link, i) => (
                     <Button key={i} type="link" variant="dull" href={link.href} icon={link.icon}>
                         {link.children}

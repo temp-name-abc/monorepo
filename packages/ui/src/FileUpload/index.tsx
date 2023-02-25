@@ -9,7 +9,7 @@ export function FileUpload({ uploadFile }: IProps) {
 
     return (
         <form
-            className="flex items-center justify-between space-x-2"
+            className="flex justify-between space-x-2"
             onSubmit={(e) => {
                 e.preventDefault();
 
@@ -19,7 +19,7 @@ export function FileUpload({ uploadFile }: IProps) {
             }}
         >
             <input
-                className="cursor-pointer bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-800 file:cursor-pointer file:border-0 file:bg-violet-600 file:hover:bg-violet-700 file:px-4 file:py-2 file:text-gray-50 file:[margin-inline-end:0.75rem] file:font-medium"
+                className="cursor-pointer font-medium bg-gray-100 text-gray-400 hover:bg-gray-200 file:cursor-pointer file:border-0 file:bg-violet-600 file:hover:bg-violet-700 file:px-4 file:py-2 file:text-gray-50 file:[margin-inline-end:0.75rem] file:font-medium"
                 type="file"
                 multiple={true}
                 onChange={(e) => {

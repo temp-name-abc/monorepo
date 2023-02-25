@@ -1,5 +1,5 @@
 import { CollectionsPage } from "ui-storage";
 
-export default function Web() {
+export default function Collections() {
     return <CollectionsPage />;
 }
