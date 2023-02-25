@@ -7,6 +7,7 @@ import { createConversation, getConversations } from "helpers";
 import { Conversations } from "./Conversations";
 import { TextCreate } from "ui/src/TextCreate";
 import { useState } from "react";
+import ChatWindow from "./ChatWindow";
 
 interface IProps {}
 
@@ -22,6 +23,8 @@ export function ConversationsPage({}: IProps) {
         enabled: !!token,
     });
 
+    const {data: chatsData} = useQuery([KEY_CHAT, conversationId], () => )
+
     const mutation = useMutation({
         mutationFn: (args: { token: string; name: string }) => createConversation(args.token, args.name),
         onSuccess: () => queryClient.invalidateQueries([KEY_CONVERSATIONS]),
@@ -29,9 +32,12 @@ export function ConversationsPage({}: IProps) {
 
     return (
         <SubAppShell title="Chat / Conversations" description="View all your conversations." links={links}>
-            <div className="flex flex-col space-y-12">
-                <TextCreate onClick={(name) => token && mutation.mutate({ token, name })} />
-                <Conversations conversations={conversationsData} conversationId={conversationId} setConversationId={setConversationId} />
+            <div className="flex space-x-10">
+                <div className="flex flex-col space-y-12 w-full">
+                    <TextCreate onClick={(name) => token && mutation.mutate({ token, name })} />
+                    <Conversations conversations={conversationsData} conversationId={conversationId} setConversationId={setConversationId} />
+                </div>
+                <ChatWindow />
             </div>
         </SubAppShell>
     );

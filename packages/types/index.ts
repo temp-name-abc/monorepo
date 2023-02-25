@@ -6,3 +6,5 @@ export * from "./src/document";
 export * from "./src/documents";
 export * from "./src/conversation";
 export * from "./src/conversations";
+export * from "./src/chat";
+export * from "./src/chats";

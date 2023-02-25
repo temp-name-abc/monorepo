@@ -120,6 +120,8 @@ def lambda_handler(event, context):
     logger.info(f"Enough info prompt = '{enough_info_prompt}', response = '{enough_info}'")
 
     if "yes" not in enough_info.lower() and collection_id != None:
+        context = context[len(context) - memory_size + 1:]
+
         # Retrieve query
         query_encoded = urllib.parse.quote(query)
         documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults=1&query={query_encoded}"
@@ -135,13 +137,23 @@ def lambda_handler(event, context):
         else:
             document = documents_req.json()[0]
 
-            context.append({"body": document["body"], "id": document["id"]})
-            context_text = utils.create_context(context) # First context document could contain the information
-            context = context[len(context) - memory_size:]
+            exists = False
+            for context_document in context:
+                if context_document["documentId"] == document["documentId"]:
+                    exists = True
+                    break
 
-            logger.info(f"Retrieved context document '{document['id']}'")
+            if not exists:
+                context.append({"body": document["body"], "documentId": document["documentId"], "collectionId": collection_id})
+
+                logger.info(f"Retrieved context document '{document['id']}'")
+            
+            else:
+                logger.info(f"Retrieved document already exists")
 
     # Update the context, generate the response, and update the history
+    context_text = utils.create_context(context)
+
     chat_prompt = utils.prompt_chat(context_text, conversation_text, question)
     chat, chat_tokens = utils.generate_text(chat_prompt)
 
@@ -152,21 +164,16 @@ def lambda_handler(event, context):
     history = history[len(history) - memory_size:]
 
     # Store the data
-    item = {
-        "conversationId": {"S": conversation_id},
-        "chatId": {"S": chat_id},
-        "userId": {"S": user_id},
-        "history": {"S": json.dumps(history)},
-        "context": {"S": json.dumps(context)},
-        "timestamp": {"N": str(timestamp)}
-    }
-
-    if collection_id != None:
-        item["collectionId"] = {"S": collection_id}
-
     dynamodb_client.put_item(
         TableName=chat_table,
-        Item=item
+        Item={
+            "conversationId": {"S": conversation_id},
+            "chatId": {"S": chat_id},
+            "userId": {"S": user_id},
+            "history": {"S": json.dumps(history)},
+            "context": {"S": json.dumps(context)},
+            "timestamp": {"N": str(timestamp)}
+        }
     )
 
     # Record the usage
@@ -195,9 +202,10 @@ def lambda_handler(event, context):
             "Access-Control-Allow-Origin": "*",
         },
         "body": json.dumps({
+            "conversationId": conversation_id,
             "chatId": chat_id,
-            "question": question,
-            "response": chat,
-            "context": context
+            "history": history[1:2],
+            "context": context,
+            "timestamp": timestamp
         })
     }

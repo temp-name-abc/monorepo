@@ -32,3 +32,7 @@ export async function createConversation(token: string, name: string) {
 
     return conversation.parse(data);
 }
+
+export async function getChats(token: string, conversationId: string) {
+    const { data } = await instance.get();
+}

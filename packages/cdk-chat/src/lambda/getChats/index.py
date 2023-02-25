@@ -69,16 +69,11 @@ def lambda_handler(event, context):
     for item in chats_response["Items"]:
         chat = {}
 
-        chat["id"] = item["chatId"]["S"]
-        chat["context"] = item["context"]["S"]
+        chat["conversationId"] = item["conversationId"]["S"]
+        chat["chatId"] = item["chatId"]["S"]
+        chat["history"] = json.loads(item["history"]["S"])[1:2]
+        chat["context"] = json.loads(item["context"]["S"])
         chat["timestamp"] = item["timestamp"]["N"]
-
-        prev_chat = json.loads(item["history"]["S"])[-1]
-        
-        chat["body"] = {}
-        chat["body"]["chatId"] = prev_chat["chatId"]
-        chat["body"]["human"] = prev_chat["human"]
-        chat["body"]["ai"] = prev_chat["ai"]
 
         chats.append(chat)
 

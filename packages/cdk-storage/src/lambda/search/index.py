@@ -91,7 +91,7 @@ def lambda_handler(event, context):
 
         chunk_id = match["id"]
         document["score"] = match["score"]
-        document["id"] = match["metadata"]["documentId"]
+        document["documentId"] = match["metadata"]["documentId"]
 
         obj_res = s3_client.get_object(Bucket=chunk_bucket, Key=chunk_id)
         body = obj_res["Body"].read().decode("utf-8")
