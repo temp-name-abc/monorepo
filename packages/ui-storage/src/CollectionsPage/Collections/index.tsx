@@ -9,7 +9,7 @@ export function Collections({ collections }: IProps) {
     if (!collections) return null;
 
     return (
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-4 gap-10">
             {collections.collections.map((collection, i) => (
                 <Collection key={i} collection={collection} />
             ))}

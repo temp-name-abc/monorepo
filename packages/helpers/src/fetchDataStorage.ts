@@ -18,11 +18,17 @@ export async function getCollections(token: string) {
 }
 
 export async function createCollection(token: string, name: string) {
-    const { data } = await instance.get<ICollection>("/storage/collection", {
-        headers: {
-            Authorization: token,
+    const { data } = await instance.post<ICollection>(
+        "/storage/collection",
+        {
+            name,
         },
-    });
+        {
+            headers: {
+                Authorization: token,
+            },
+        }
+    );
 
-    return { ...collections.parse(data), name };
+    return collection.parse(data);
 }
