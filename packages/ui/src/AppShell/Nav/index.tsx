@@ -1,4 +1,5 @@
 import { useSession, signIn, signOut } from "next-auth/react";
+import Button from "../../Button";
 
 interface IProps {}
 
@@ -7,20 +8,23 @@ export function Nav({}: IProps) {
 
     return (
         <nav className="bg-white px-10 py-5 flex items-center justify-between border-b-2 border-gray-200">
-            <h1 className="font-bold text-gray-900">MONO</h1>
+            <h1 className="font-bold text-lg">
+                <span className="text-gray-900">MONO</span>
+                <span className="text-violet-600">STACK</span>
+            </h1>
             {session.data ? (
                 <div className="flex items-center justify-between space-x-5">
                     <p className="text-gray-800">
                         Welcome, <span className="font-medium">{session.data.user?.email?.split("@")[0]}</span>
                     </p>
-                    <button className="font-medium text-gray-400 bg-gray-100 hover:bg-gray-200 px-4 py-2" onClick={() => signOut()}>
+                    <Button type="button" variant="dull" onClick={() => signOut()}>
                         Sign Out
-                    </button>
+                    </Button>
                 </div>
             ) : (
-                <button className="font-medium text-gray-400 bg-gray-100 hover:bg-gray-200 px-4 py-2" onClick={() => signIn()}>
+                <Button type="button" variant="accent" onClick={() => signIn()}>
                     Sign In
-                </button>
+                </Button>
             )}
         </nav>
     );
