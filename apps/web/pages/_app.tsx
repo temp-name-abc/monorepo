@@ -1,16 +1,21 @@
 import { AppProps } from "next/app";
 import { SessionProvider } from "next-auth/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import "../styles.css";
 import { AppShell } from "ui";
+import "../styles.css";
+
+const queryClient = new QueryClient();
 
 export function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
     return (
-        <SessionProvider session={session}>
-            <AppShell>
-                <Component {...pageProps} />
-            </AppShell>
-        </SessionProvider>
+        <QueryClientProvider client={queryClient}>
+            <SessionProvider session={session}>
+                <AppShell>
+                    <Component {...pageProps} />
+                </AppShell>
+            </SessionProvider>
+        </QueryClientProvider>
     );
 }
 
