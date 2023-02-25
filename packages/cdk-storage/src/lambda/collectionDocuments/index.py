@@ -6,6 +6,7 @@ import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+s3_client = boto3.client("s3")
 dynamodb_client = boto3.client("dynamodb")
 
 
@@ -14,6 +15,7 @@ def lambda_handler(event, context):
 
     collection_table = os.getenv("COLLECTION_TABLE")
     document_table = os.getenv("DOCUMENT_TABLE")
+    document_bucket = os.getenv("DOCUMENT_BUCKET")
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     collection_id = event["pathParameters"]["collectionId"]
@@ -56,6 +58,9 @@ def lambda_handler(event, context):
 
         document["documentId"] = item["documentId"]["S"]
         document["name"] = item["name"]["S"]
+        document["url"] = s3_client.generate_presigned_url("get_object", Params={"Bucket": document_bucket, "Key": document["documentId"]}, ExpiresIn=86400)
+
+        documents.append(document)
 
     logger.info(f"Retrieved documents '{documents}' for collection '{collection_id}' for user '{user_id}'")
 

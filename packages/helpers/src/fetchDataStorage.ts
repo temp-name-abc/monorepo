@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ICollection, collection, collections, ICollections } from "types";
+import { ICollection, collection, collections, ICollections, IDocuments, document } from "types";
 
 import { API_BASE_URL } from "utils";
 
@@ -40,19 +40,15 @@ export async function getCollection(token: string, collectionId: string) {
         },
     });
 
-    console.log(data);
-
     return collection.parse(data);
 }
 
 export async function getDocuments(token: string, collectionId: string) {
-    const { data } = await instance.get<ICollection>(`/storage/collection/${collectionId}/document`, {
+    const { data } = await instance.get<IDocuments>(`/storage/collection/${collectionId}/document`, {
         headers: {
             Authorization: token,
         },
     });
 
-    console.log(data);
-
-    return collection.parse(data);
+    return document.parse(data);
 }

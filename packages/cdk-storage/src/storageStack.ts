@@ -145,12 +145,14 @@ export class StorageStack extends cdk.NestedStack {
             environment: {
                 COLLECTION_TABLE: collectionTable.tableName,
                 DOCUMENT_TABLE: documentTable.tableName,
+                DOCUMENT_BUCKET: documentBucket.bucketName,
             },
             timeout: cdk.Duration.seconds(30),
         });
 
         collectionTable.grantReadData(collectionDocumentsFn);
         documentTable.grantReadData(collectionDocumentsFn);
+        documentBucket.grantRead(collectionDocumentsFn);
 
         documentResource.addMethod("GET", new apigw.LambdaIntegration(collectionDocumentsFn), {
             authorizer: props.authorizer,
