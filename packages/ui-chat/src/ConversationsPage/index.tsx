@@ -4,8 +4,8 @@ import { links } from "../links";
 import { useSession } from "next-auth/react";
 import { KEY_CONVERSATIONS } from "utils";
 import { createConversation, getConversations } from "helpers";
-import Conversations from "./Conversations";
-import TextCreate from "ui/src/TextCreate";
+import { Conversations } from "./Conversations";
+import { TextCreate } from "ui/src/TextCreate";
 import { useState } from "react";
 
 interface IProps {}
@@ -24,7 +24,7 @@ export function ConversationsPage({}: IProps) {
 
     const mutation = useMutation({
         mutationFn: (args: { token: string; name: string }) => createConversation(args.token, args.name),
-        onSuccess: (collection) => queryClient.invalidateQueries([KEY_CONVERSATIONS]),
+        onSuccess: () => queryClient.invalidateQueries([KEY_CONVERSATIONS]),
     });
 
     return (
