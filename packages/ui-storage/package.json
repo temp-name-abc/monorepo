@@ -15,5 +15,8 @@
         "tsconfig": "*",
         "typescript": "^4.5.2"
     },
-    "dependencies": {}
+    "dependencies": {
+        "ui": "*",
+        "tabler-icons-react": "^1.56.0"
+    }
 }

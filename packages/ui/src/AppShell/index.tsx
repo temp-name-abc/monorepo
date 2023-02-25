@@ -11,7 +11,7 @@ export function AppShell({ children }: IProps) {
             <Nav />
             <div className="flex items-stretch">
                 <SideNav />
-                <main className="m-10 p-10 bg-gray-50 w-full">{children}</main>
+                <div className="m-10 bg-gray-50 w-full">{children}</div>
             </div>
         </>
     );

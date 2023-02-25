@@ -5,18 +5,18 @@ interface IProps {}
 
 export function SideNav({}: IProps) {
     return (
-        <div className="flex h-screen">
+        <nav className="flex h-screen">
             <div className="bg-gray-50 w-64 py-5 px-10">
                 <div className="flex flex-col space-y-5">
-                    <Button variant="dull" type="link" href="#" icon={<Bucket />}>
+                    <Button variant="dull" type="link" href="/storage/collections" icon={<Bucket />} thick={true}>
                         Storage
                     </Button>
-                    <Button variant="dull" type="link" href="#" icon={<Message2 />}>
+                    <Button variant="dull" type="link" href="/chat" icon={<Message2 />} thick={true}>
                         Chat
                     </Button>
                 </div>
             </div>
-        </div>
+        </nav>
     );
 }
 
