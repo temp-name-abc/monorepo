@@ -1,4 +1,4 @@
-import { Bucket, FileSearch } from "tabler-icons-react";
+import { Bucket, Message2 } from "tabler-icons-react";
 import { Button } from "../../Button";
 
 interface IProps {}
@@ -11,8 +11,8 @@ export function SideNav({}: IProps) {
                     <Button variant="dull" type="link" href="#" icon={<Bucket />}>
                         Storage
                     </Button>
-                    <Button variant="dull" type="link" href="#" icon={<FileSearch />}>
-                        Search
+                    <Button variant="dull" type="link" href="#" icon={<Message2 />}>
+                        Chat
                     </Button>
                 </div>
             </div>

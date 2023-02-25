@@ -1,1 +1,1 @@
-export * from "./src/StoragePage";
+export * from "./src/CollectionsPage";
