@@ -1,3 +1,4 @@
+import { FileUpload } from "ui";
 import { getCollection, getDocuments } from "helpers";
 import { useRouter } from "next/router";
 import { SubAppShell } from "ui/src/SubAppShell";
@@ -33,6 +34,9 @@ export function CollectionPage({}: IProps) {
             links={storageLinks}
         >
             <div className="flex flex-col space-y-12">
+                <div className="ml-auto">
+                    <FileUpload />
+                </div>
                 <Documents documents={documentsData} />
             </div>
         </SubAppShell>
