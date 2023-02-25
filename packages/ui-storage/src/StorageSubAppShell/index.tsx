@@ -1,4 +1,4 @@
-import { Folder, Search } from "tabler-icons-react";
+import { Folders, Search } from "tabler-icons-react";
 import { SubAppShell } from "ui";
 
 interface IProps {
@@ -9,7 +9,7 @@ export function StorageSubAppShell({ children }: IProps) {
     return (
         <SubAppShell
             links={[
-                { href: "/storage/collections", children: "Collections", icon: <Folder /> },
+                { href: "/storage/collections", children: "Collections", icon: <Folders /> },
                 { href: "#", children: "Search", icon: <Search /> },
             ]}
         >

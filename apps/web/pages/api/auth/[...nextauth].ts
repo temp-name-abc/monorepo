@@ -11,10 +11,14 @@ export default NextAuth({
         }),
     ],
     callbacks: {
+        async jwt({ account, token }) {
+            if (account) token.idToken = account.id_token;
+
+            return token;
+        },
         async session({ session, token }) {
             // @ts-expect-error
             session.idToken = token.idToken;
-
             return session;
         },
     },
