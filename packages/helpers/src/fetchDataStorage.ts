@@ -32,3 +32,13 @@ export async function createCollection(token: string, name: string) {
 
     return collection.parse(data);
 }
+
+export async function getCollection(token: string, collectionId: string) {
+    const { data } = await instance.get<ICollection>(`/storage/collection/${collectionId}`, {
+        headers: {
+            Authorization: token,
+        },
+    });
+
+    return collection.parse(data);
+}
