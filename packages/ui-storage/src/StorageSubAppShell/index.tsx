@@ -8,6 +8,8 @@ interface IProps {
 export function StorageSubAppShell({ children }: IProps) {
     return (
         <SubAppShell
+            title="Storage / Collections"
+            description="View your document collections."
             links={[
                 { href: "/storage/collections", children: "Collections", icon: <Folders /> },
                 { href: "#", children: "Search", icon: <Search /> },

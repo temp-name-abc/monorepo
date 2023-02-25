@@ -31,10 +31,6 @@ export function CollectionsPage({}: IProps) {
     return (
         <StorageSubAppShell>
             <div className="flex flex-col space-y-12">
-                <header className="space-y-3">
-                    <h2 className="text-gray-900 font-bold text-xl">Storage / Collections</h2>
-                    <p className="font-medium text-gray-600">View your document collections.</p>
-                </header>
                 <div className="ml-auto">
                     <TextCreate onClick={(name) => token && mutation.mutate({ token, name })} />
                 </div>
