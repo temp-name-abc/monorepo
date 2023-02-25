@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { StorageSubAppShell } from "../StorageSubAppShell";
 import { KEY_COLLECTION, KEY_COLLECTIONS } from "utils";
+import { SubAppShell } from "ui";
 import { createCollection, getCollections } from "helpers";
 import { Collections } from "./Collections";
-import TextCreate from "ui/src/TextCreate";
+import { TextCreate } from "ui/src/TextCreate";
+import { storageLinks } from "../storageLinks";
 
 interface IProps {}
 
@@ -29,14 +30,14 @@ export function CollectionsPage({}: IProps) {
     });
 
     return (
-        <StorageSubAppShell>
+        <SubAppShell title="Storage / Collections" description="View all your collections of documents." links={storageLinks}>
             <div className="flex flex-col space-y-12">
                 <div className="ml-auto">
                     <TextCreate onClick={(name) => token && mutation.mutate({ token, name })} />
                 </div>
                 <Collections collections={data} />
             </div>
-        </StorageSubAppShell>
+        </SubAppShell>
     );
 }
 
