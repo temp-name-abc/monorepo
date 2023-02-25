@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { File } from "tabler-icons-react";
+import { FileText } from "tabler-icons-react";
 
 import { IDocument } from "types";
 
@@ -9,14 +8,11 @@ interface IProps {
 
 export function Document({ document }: IProps) {
     return (
-        <Link
-            href={`/storage/collections/${collection.collectionId}`}
-            className="flex items justify-between text-gray-800 bg-gray-200 hover:bg-gray-300 px-8 py-4 font-medium"
-        >
-            <span>{collection.name}</span>
-            <span>{<Folder />}</span>
-        </Link>
+        <a href={document.url} className="flex items justify-between text-gray-800 bg-gray-200 hover:bg-gray-300 px-8 py-4 font-medium" target="_blank" rel="noreferrer">
+            <span>{document.name}</span>
+            <span>{<FileText />}</span>
+        </a>
     );
 }
 
-export default Collection;
+export default Document;

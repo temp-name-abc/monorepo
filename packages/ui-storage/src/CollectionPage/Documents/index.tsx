@@ -1,4 +1,5 @@
 import { IDocuments } from "types";
+import { Document } from "./Document";
 
 interface IProps {
     documents?: IDocuments;
@@ -10,7 +11,7 @@ export function Documents({ documents }: IProps) {
     return (
         <div className="grid grid-cols-4 gap-10">
             {documents.documents.map((document, i) => (
-                <Collection key={i} collection={collection} />
+                <Document key={i} document={document} />
             ))}
         </div>
     );

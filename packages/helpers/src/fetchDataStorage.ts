@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ICollection, collection, collections, ICollections, IDocuments, document } from "types";
+import { ICollection, collection, collections, ICollections, IDocuments, document, documents } from "types";
 
 import { API_BASE_URL } from "utils";
 
@@ -50,5 +50,5 @@ export async function getDocuments(token: string, collectionId: string) {
         },
     });
 
-    return document.parse(data);
+    return documents.parse(data);
 }

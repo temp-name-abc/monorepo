@@ -22,7 +22,7 @@ export function CollectionPage({}: IProps) {
         enabled: !!token,
     });
 
-    const { data: documentsData } = useQuery([KEY_DOCUMENTS], () => getDocuments(token as string, collectionId as string), {
+    const { data: documentsData } = useQuery([KEY_DOCUMENTS, collectionId], () => getDocuments(token as string, collectionId as string), {
         enabled: !!token && !!collectionData,
     });
 
@@ -33,7 +33,7 @@ export function CollectionPage({}: IProps) {
             links={storageLinks}
         >
             <div className="flex flex-col space-y-12">
-                <Documents />
+                <Documents documents={documentsData} />
             </div>
         </SubAppShell>
     );
