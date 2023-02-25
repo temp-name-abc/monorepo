@@ -39,16 +39,18 @@ def lambda_handler(event, context):
             "body": msg
         }
 
+    item = response["Item"]
+
     # Create signed URL to access document
     logger.info(f"Retrieved collection '{collection_id}' for user '{user_id}'")
 
     return {
-        "statusCode": 302,
+        "statusCode": 200,
         "headers": {
             "Access-Control-Allow-Origin": "*",
         },
         "body": json.dumps({
-            "collectionId": response["collectionId"]["S"],
-            "name": response["name"]["S"]
+            "collectionId": item["collectionId"]["S"],
+            "name": item["name"]["S"]
         })
     }
