@@ -34,9 +34,7 @@ export function CollectionPage({}: IProps) {
             links={storageLinks}
         >
             <div className="flex flex-col space-y-12">
-                <div className="ml-auto">
-                    <FileUpload />
-                </div>
+                <FileUpload />
                 <Documents documents={documentsData} />
             </div>
         </SubAppShell>
