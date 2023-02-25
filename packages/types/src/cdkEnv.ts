@@ -1,14 +1,16 @@
 import { z } from "zod";
 
+import { envVariable } from "./envVariable";
+
 export const cdkEnv = z.object({
-    googleClientId: z.string(),
-    googleClientSecret: z.string(),
-    homeUrl: z.string(),
-    apiUrl: z.string(),
-    pineconeEnv: z.string(),
-    pineconeIndex: z.string(),
-    productIdDocumentProcessText: z.string(),
-    productIdChat: z.string(),
+    googleClientId: envVariable,
+    googleClientSecret: envVariable,
+    homeUrl: envVariable,
+    apiUrl: envVariable,
+    pineconeEnv: envVariable,
+    pineconeIndex: envVariable,
+    productIdDocumentProcessText: envVariable,
+    productIdChat: envVariable,
 });
 
 export type ICdkEnv = z.infer<typeof cdkEnv>;
