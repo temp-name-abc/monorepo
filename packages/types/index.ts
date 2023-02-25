@@ -4,3 +4,5 @@ export * from "./src/collection";
 export * from "./src/collections";
 export * from "./src/document";
 export * from "./src/documents";
+export * from "./src/conversation";
+export * from "./src/conversations";
