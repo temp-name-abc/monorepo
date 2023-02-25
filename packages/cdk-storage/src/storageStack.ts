@@ -82,7 +82,7 @@ export class StorageStack extends cdk.NestedStack {
         // Get the collection
         const getCollectionFn = new lambda.Function(this, "getCollectionFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "userCollections")),
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "getCollection")),
             handler: "index.lambda_handler",
             environment: {
                 COLLECTION_TABLE: collectionTable.tableName,

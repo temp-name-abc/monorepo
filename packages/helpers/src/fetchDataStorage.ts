@@ -40,5 +40,19 @@ export async function getCollection(token: string, collectionId: string) {
         },
     });
 
+    console.log(data);
+
+    return collection.parse(data);
+}
+
+export async function getDocuments(token: string, collectionId: string) {
+    const { data } = await instance.get<ICollection>(`/storage/collection/${collectionId}/document`, {
+        headers: {
+            Authorization: token,
+        },
+    });
+
+    console.log(data);
+
     return collection.parse(data);
 }

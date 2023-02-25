@@ -2,12 +2,14 @@ import { getCollection } from "helpers";
 import { useRouter } from "next/router";
 import { SubAppShell } from "ui/src/SubAppShell";
 import { KEY_COLLECTION } from "utils";
+import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { storageLinks } from "../storageLinks";
 
 interface IProps {}
 
 export function CollectionPage({}: IProps) {
+    const session = useSession();
     const router = useRouter();
 
     // @ts-expect-error
