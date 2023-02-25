@@ -1,8 +1,10 @@
 import { useState } from "react";
 
-interface IProps {}
+interface IProps {
+    uploadFile: (file: File) => any;
+}
 
-export function FileUpload({}: IProps) {
+export function FileUpload({ uploadFile }: IProps) {
     const [files, setFiles] = useState<File[]>([]);
 
     return (
@@ -13,7 +15,7 @@ export function FileUpload({}: IProps) {
 
                 if (files.length === 0) return;
 
-                console.log(files);
+                files.forEach(uploadFile);
             }}
         >
             <input

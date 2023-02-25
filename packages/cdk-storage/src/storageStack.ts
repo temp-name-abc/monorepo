@@ -121,6 +121,13 @@ export class StorageStack extends cdk.NestedStack {
                 ignorePublicAcls: true,
                 restrictPublicBuckets: true,
             },
+            cors: [
+                {
+                    allowedMethods: [s3.HttpMethods.POST],
+                    allowedOrigins: ["*"],
+                    allowedHeaders: ["*"],
+                },
+            ],
         });
 
         const chunkTable = new dynamodb.Table(this, "chunkTable", {

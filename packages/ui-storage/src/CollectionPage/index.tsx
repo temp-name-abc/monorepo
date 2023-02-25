@@ -1,10 +1,10 @@
 import { FileUpload } from "ui";
-import { getCollection, getDocuments } from "helpers";
+import { getCollection, getDocuments, uploadDocument } from "helpers";
 import { useRouter } from "next/router";
 import { SubAppShell } from "ui/src/SubAppShell";
 import { KEY_COLLECTION, KEY_DOCUMENTS } from "utils";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { storageLinks } from "../storageLinks";
 import { Documents } from "./Documents";
 
@@ -27,6 +27,10 @@ export function CollectionPage({}: IProps) {
         enabled: !!token && !!collectionData,
     });
 
+    const mutation = useMutation({
+        mutationFn: (args: { token: string; collectionId: string; file: File }) => uploadDocument(args.token, args.collectionId, args.file),
+    });
+
     return (
         <SubAppShell
             title={collectionData?.name ? `Storage / Collections / ${collectionData.name}` : "Storage / Collections / Collection"}
@@ -34,7 +38,7 @@ export function CollectionPage({}: IProps) {
             links={storageLinks}
         >
             <div className="flex flex-col space-y-12">
-                <FileUpload />
+                <FileUpload uploadFile={(file) => token && mutation.mutate({ token, collectionId: collectionId as string, file })} />
                 <Documents documents={documentsData} />
             </div>
         </SubAppShell>

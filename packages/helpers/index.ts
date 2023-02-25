@@ -1,1 +1,1 @@
-export * from "./src/fetchDataStorage";
+export * from "./src/apiDataStorage";

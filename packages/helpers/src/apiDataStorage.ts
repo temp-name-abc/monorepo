@@ -52,3 +52,28 @@ export async function getDocuments(token: string, collectionId: string) {
 
     return documents.parse(data);
 }
+
+export async function uploadDocument(token: string, collectionId: string, file: File) {
+    const { data } = await instance.post(
+        `/storage/collection/${collectionId}/document`,
+        {
+            type: file.type,
+            name: file.name,
+        },
+        {
+            headers: {
+                Authorization: token,
+            },
+        }
+    );
+
+    const formData = new FormData();
+    Object.keys(data.fields).forEach((key) => formData.append(key, data.fields[key]));
+    formData.append("file", file);
+
+    await axios.post(data.url, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+}
