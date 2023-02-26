@@ -1,4 +1,5 @@
 import boto3
+import json
 import os
 import logging
 import stripe
@@ -23,8 +24,10 @@ def route_to_portal(customer_id: str, home_url: str, user_id: str):
         "statusCode": 302,
         "headers": {
             "Access-Control-Allow-Origin": "*",
-            "Location": portal["url"]
-        }
+        },
+        "body": json.dumps({
+            "url": portal["url"]
+        })
     }
 
 
@@ -98,10 +101,12 @@ def lambda_handler(event, context):
     logger.info(f"Created checkout session for user `{user_id}`")
 
     return {
-        "statusCode": 302,
+        "statusCode": 200,
         "headers": {
             "Access-Control-Allow-Origin": "*",
-            "Location": session["url"]
-        }
+        },
+        "body": json.dumps({
+            "url": session["url"]
+        })
     }
 

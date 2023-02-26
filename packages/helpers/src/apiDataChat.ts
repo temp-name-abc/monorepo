@@ -1,5 +1,5 @@
 import axios from "axios";
-import { conversation, conversations, IConversation, IConversations } from "types";
+import { chat, chats, conversation, conversations, IChat, IChats, IConversation, IConversations } from "types";
 
 import { API_BASE_URL } from "utils";
 
@@ -34,5 +34,27 @@ export async function createConversation(token: string, name: string) {
 }
 
 export async function getChats(token: string, conversationId: string) {
-    const { data } = await instance.get();
+    const { data } = await instance.get<IChats>(`/chat/conversation/${conversationId}/chat`, {
+        headers: {
+            Authorization: token,
+        },
+    });
+
+    return chats.parse(data);
+}
+
+export async function createChat(token: string, conversationId: string, question: string) {
+    const { data } = await instance.post<IChat>(
+        `/chat/conversation/${conversationId}/chat`,
+        {
+            question,
+        },
+        {
+            headers: {
+                Authorization: token,
+            },
+        }
+    );
+
+    return chat.parse(data);
 }

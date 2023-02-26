@@ -22,8 +22,8 @@ def lambda_handler(event, context):
     
     query_params = event["queryStringParameters"]
 
-    from_timestamp = query_params["fromTimestamp"] if "fromTimestamp" in query_params else "0"
-    to_timestamp = query_params["toTimestamp"] if "toTimestamp" in query_params else str(int(datetime.now().timestamp()))
+    from_timestamp = query_params["fromTimestamp"] if query_params != None and "fromTimestamp" in query_params else "0"
+    to_timestamp = query_params["toTimestamp"] if query_params != None and "toTimestamp" in query_params else str(int(datetime.now().timestamp()))
 
     # Verify the conversation
     conversation_response = dynamodb_client.get_item(
@@ -71,7 +71,7 @@ def lambda_handler(event, context):
 
         chat["conversationId"] = item["conversationId"]["S"]
         chat["chatId"] = item["chatId"]["S"]
-        chat["history"] = json.loads(item["history"]["S"])[1:2]
+        chat["history"] = json.loads(item["history"]["S"])[0:2]
         chat["context"] = json.loads(item["context"]["S"])
         chat["timestamp"] = item["timestamp"]["N"]
 
@@ -80,7 +80,7 @@ def lambda_handler(event, context):
     logger.info(f"Retrieved chats '{chats}' for conversation '{conversation_id}' for user '{user_id}'")
 
     return {
-        "statusCode": 302,
+        "statusCode": 200,
         "headers": {
             "Access-Control-Allow-Origin": "*",
         },

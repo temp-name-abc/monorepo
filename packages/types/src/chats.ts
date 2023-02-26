@@ -1,14 +1,8 @@
 import { z } from "zod";
+import { chat } from "./chat";
 
-export const chat = z.object({
-    chatId: z.string(),
-    context: null,
-    timestamp: z.number(),
-    body: z.object({
-        chatId: z.string(),
-        human: z.string(),
-        ai: z.string(),
-    }),
+export const chats = z.object({
+    chats: z.array(chat),
 });
 
-export type IChat = z.infer<typeof chat>;
+export type IChats = z.infer<typeof chats>;

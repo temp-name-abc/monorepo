@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SubAppShell } from "ui/src/SubAppShell";
 import { links } from "../links";
 import { useSession } from "next-auth/react";
-import { KEY_CONVERSATIONS } from "utils";
-import { createConversation, getConversations } from "helpers";
+import { KEY_CHATS, KEY_CONVERSATIONS } from "utils";
+import { createChat, createConversation, getChats, getConversations } from "helpers";
 import { Conversations } from "./Conversations";
 import { TextCreate } from "ui/src/TextCreate";
 import { useState } from "react";
@@ -23,21 +23,38 @@ export function ConversationsPage({}: IProps) {
         enabled: !!token,
     });
 
-    const {data: chatsData} = useQuery([KEY_CHAT, conversationId], () => )
-
-    const mutation = useMutation({
+    const conversationMutation = useMutation({
         mutationFn: (args: { token: string; name: string }) => createConversation(args.token, args.name),
         onSuccess: () => queryClient.invalidateQueries([KEY_CONVERSATIONS]),
+    });
+
+    const { data: chatsData } = useQuery([KEY_CHATS, conversationId], () => getChats(token as string, conversationId), {
+        enabled: !!token && !!conversationId,
+    });
+
+    const { mutate: chatMutation, isLoading } = useMutation({
+        mutationFn: (args: { token: string; conversationId: string; question: string }) => createChat(args.token, args.conversationId, args.question),
+        onSuccess: (_, { conversationId }) => queryClient.invalidateQueries([KEY_CHATS, conversationId]),
     });
 
     return (
         <SubAppShell title="Chat / Conversations" description="View all your conversations." links={links}>
             <div className="flex space-x-10">
                 <div className="flex flex-col space-y-12 w-full">
-                    <TextCreate onClick={(name) => token && mutation.mutate({ token, name })} />
+                    <TextCreate onClick={(name) => token && conversationMutation.mutate({ token, name })} cta="Create" placeholder="Create a conversation" />
                     <Conversations conversations={conversationsData} conversationId={conversationId} setConversationId={setConversationId} />
                 </div>
-                <ChatWindow />
+                {chatsData && (
+                    <div className="flex flex-col space-y-12 w-full">
+                        {JSON.stringify(chatsData)}
+                        {/* <ChatWindow chats={chatsData} /> */}
+                        <TextCreate
+                            onClick={(question) => token && conversationId && chatMutation({ token, conversationId, question })}
+                            cta="Send"
+                            placeholder="Send a chat"
+                        />
+                    </div>
+                )}
             </div>
         </SubAppShell>
     );
