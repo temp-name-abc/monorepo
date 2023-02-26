@@ -5,9 +5,9 @@ import { useSession } from "next-auth/react";
 import { KEY_CHATS, KEY_CONVERSATIONS } from "utils";
 import { createChat, createConversation, getChats, getConversations } from "helpers";
 import { Conversations } from "./Conversations";
-import { TextCreate } from "ui/src/TextCreate";
 import { useState } from "react";
 import ChatWindow from "./ChatWindow";
+import { DropdownSelect, TextCreate } from "ui";
 
 interface IProps {}
 
@@ -52,7 +52,7 @@ export function ConversationsPage({}: IProps) {
                     <div className="flex flex-col space-y-12 w-full">
                         <ChatWindow chats={chatsData} />
                         <div className="flex">
-                            <input />
+                            <DropdownSelect />
                             <TextCreate
                                 onClick={(question) => {
                                     const chats = chatsData.chats;
