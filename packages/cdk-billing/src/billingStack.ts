@@ -29,13 +29,26 @@ export class BillingStack extends cdk.NestedStack {
 
         const portalResource = billingResource.addResource("portal");
         const iamResource = billingResource.addResource("iam");
+        const statusResource = billingResource.addResource("status");
 
-        const statusResource = iamResource.addResource("status");
+        const iamStatusResource = iamResource.addResource("status");
         const usageResource = iamResource.addResource("usage");
+
+        // ==== Billing ====
 
         // Create billing setup function for new accounts
         const userBillingTable = new dynamodb.Table(this, "userBillingTable", {
             partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+            pointInTimeRecovery: true,
+        });
+
+        const productsTable = new dynamodb.Table(this, "productsTable", {
+            partitionKey: { name: "productId", type: dynamodb.AttributeType.STRING },
+            pointInTimeRecovery: true,
+        });
+
+        const usageTable = new dynamodb.Table(this, "usageTable", {
+            partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
         });
 
@@ -61,11 +74,6 @@ export class BillingStack extends cdk.NestedStack {
         props.userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, setupFn);
 
         // Create account portal function
-        const productsTable = new dynamodb.Table(this, "productsTable", {
-            partitionKey: { name: "productId", type: dynamodb.AttributeType.STRING },
-            pointInTimeRecovery: true,
-        });
-
         const portalFn = new lambda.Function(this, "portalFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
             code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "portal"), {
@@ -93,7 +101,33 @@ export class BillingStack extends cdk.NestedStack {
             authorizationType: apigw.AuthorizationType.COGNITO,
         });
 
-        // Create account status function
+        // Create IAM account status function
+        const iamStatusFn = new lambda.Function(this, "iamStatusFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "iamStatus"), {
+                bundling: {
+                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+                },
+            }),
+            handler: "index.lambda_handler",
+            environment: {
+                STRIPE_SECRET: stripeSecret.secretName,
+                USER_BILLING_TABLE: userBillingTable.tableName,
+                PRODUCTS_TABLE: productsTable.tableName,
+            },
+            timeout: cdk.Duration.seconds(30),
+        });
+
+        stripeSecret.grantRead(iamStatusFn);
+        userBillingTable.grantReadData(iamStatusFn);
+        productsTable.grantReadData(iamStatusFn);
+
+        iamStatusResource.addMethod("GET", new apigw.LambdaIntegration(iamStatusFn), {
+            authorizationType: apigw.AuthorizationType.IAM,
+        });
+
+        // Create status function
         const statusFn = new lambda.Function(this, "statusFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
             code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "status"), {
@@ -115,16 +149,12 @@ export class BillingStack extends cdk.NestedStack {
         userBillingTable.grantReadData(statusFn);
         productsTable.grantReadData(statusFn);
 
-        statusResource.addMethod("GET", new apigw.LambdaIntegration(statusFn), {
-            authorizationType: apigw.AuthorizationType.IAM,
+        statusResource.addMethod("GET", new apigw.LambdaIntegration(iamStatusFn), {
+            authorizer: props.authorizer,
+            authorizationType: apigw.AuthorizationType.COGNITO,
         });
 
         // Setup payment processing
-        const usageTable = new dynamodb.Table(this, "usageTable", {
-            partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
-            pointInTimeRecovery: true,
-        });
-
         const usageFnTimeout = cdk.Duration.minutes(5);
 
         const usageFn = new lambda.Function(this, "usageFn", {
