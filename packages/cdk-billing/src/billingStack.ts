@@ -154,7 +154,7 @@ export class BillingStack extends cdk.NestedStack {
             authorizationType: apigw.AuthorizationType.COGNITO,
         });
 
-        // Setup payment processing
+        // Setup usage records
         const usageFnTimeout = cdk.Duration.minutes(5);
 
         const usageFn = new lambda.Function(this, "usageFn", {
