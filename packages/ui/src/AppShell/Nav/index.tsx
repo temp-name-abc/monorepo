@@ -1,5 +1,6 @@
 import { useSession, signIn, signOut } from "next-auth/react";
-import Button from "../../Button";
+import { Settings } from "tabler-icons-react";
+import { Button } from "../../Button";
 
 interface IProps {}
 
@@ -17,6 +18,9 @@ export function Nav({}: IProps) {
                     <p className="text-gray-800">
                         Welcome, <span className="font-medium">{session.data.user?.email?.split("@")[0]}</span>
                     </p>
+                    <Button type="link" variant="accent" href="/settings/billing" icon={<Settings />}>
+                        Settings
+                    </Button>
                     <Button type="button" variant="dull" onClick={() => signOut()}>
                         Sign Out
                     </Button>
