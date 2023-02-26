@@ -35,6 +35,7 @@ export class StorageStack extends cdk.NestedStack {
         const collectionResource = storageResource.addResource("collection");
         const collectionIdResource = collectionResource.addResource("{collectionId}");
         const documentResource = collectionIdResource.addResource("document");
+        const documentIdResource = documentResource.addResource("{documentId}");
 
         // ==== Collections ====
         const collectionTable = new dynamodb.Table(this, "collectionTable", {
@@ -162,6 +163,28 @@ export class StorageStack extends cdk.NestedStack {
         documentBucket.grantRead(collectionDocumentsFn);
 
         documentResource.addMethod("GET", new apigw.LambdaIntegration(collectionDocumentsFn), {
+            authorizer: props.authorizer,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
+
+        // Get a document
+        const getDocumentFn = new lambda.Function(this, "getDocumentFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "getDocument")),
+            handler: "index.lambda_handler",
+            environment: {
+                COLLECTION_TABLE: collectionTable.tableName,
+                DOCUMENT_TABLE: documentTable.tableName,
+                DOCUMENT_BUCKET: documentBucket.bucketName,
+            },
+            timeout: cdk.Duration.seconds(30),
+        });
+
+        collectionTable.grantReadData(getDocumentFn);
+        documentTable.grantReadData(getDocumentFn);
+        documentBucket.grantRead(getDocumentFn);
+
+        documentIdResource.addMethod("GET", new apigw.LambdaIntegration(getDocumentFn), {
             authorizer: props.authorizer,
             authorizationType: apigw.AuthorizationType.COGNITO,
         });
