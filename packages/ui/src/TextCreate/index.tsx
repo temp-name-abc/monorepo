@@ -13,7 +13,7 @@ export function TextCreate({ cta, placeholder, onClick, disabled }: IProps) {
     return (
         <form
             className="space-x-2 flex w-full"
-            onClick={(e) => {
+            onSubmit={(e) => {
                 e.preventDefault();
 
                 if (!value) return;

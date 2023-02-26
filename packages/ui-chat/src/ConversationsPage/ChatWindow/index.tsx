@@ -1,14 +1,15 @@
 import { useEffect, useRef } from "react";
-import { IChats } from "types";
+import { IChat, IChats } from "types";
 import { ChatBubble } from "ui";
 import { Chat } from "./Chat";
 
 interface IProps {
     chats: IChats;
     question?: string;
+    onClickReply?: (chat: IChat) => void;
 }
 
-export function ChatWindow({ chats, question }: IProps) {
+export function ChatWindow({ chats, question, onClickReply }: IProps) {
     const bottomRef = useRef(null);
 
     useEffect(() => {
@@ -17,7 +18,7 @@ export function ChatWindow({ chats, question }: IProps) {
     }, [chats]);
 
     return (
-        <div className="h-[496px] bg-gray-100 p-10 space-y-8 overflow-y-auto">
+        <div className="h-[576px] bg-gray-100 p-10 space-y-8 overflow-y-auto">
             <ChatBubble style="centernobubble">Beginning of conversation</ChatBubble>
             <div className="flex flex-col space-y-8">
                 {chats.chats.map((chat, i) => {

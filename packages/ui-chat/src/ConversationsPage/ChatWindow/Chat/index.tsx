@@ -1,8 +1,10 @@
+import { IChat } from "types";
 import { ChatBubble } from "ui";
 
 interface IProps {
     user: any;
     other?: any;
+    onClickReply?: (chat: IChat) => void;
 }
 
 export function Chat({ user, other }: IProps) {

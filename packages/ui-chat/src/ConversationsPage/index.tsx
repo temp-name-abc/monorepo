@@ -7,7 +7,8 @@ import { createChat, createConversation, getChats, getCollections, getConversati
 import { Conversations } from "./Conversations";
 import { useState } from "react";
 import ChatWindow from "./ChatWindow";
-import { DropdownSelect, TextCreate } from "ui";
+import { DropdownSelect, TextCreate, ChatContext } from "ui";
+import { IChat } from "types";
 
 interface IProps {}
 
@@ -18,6 +19,7 @@ export function ConversationsPage({}: IProps) {
     const [conversationId, setConversationId] = useState<string>("");
     const [question, setQuestion] = useState<string>("");
     const [collectionId, setCollectionId] = useState<string>("");
+    const [chat, setChat] = useState<IChat | null>(null);
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
@@ -54,13 +56,22 @@ export function ConversationsPage({}: IProps) {
                 </div>
                 {chatsData && (
                     <div className="flex flex-col space-y-8 w-3/4">
-                        <ChatWindow chats={chatsData} question={isMutatingChat ? question : undefined} />
+                        <ChatWindow chats={chatsData} question={isMutatingChat ? question : undefined} onClickReply={setChat} />
                         <div className="flex space-x-8">
                             {collectionsData && (
                                 <div className="w-1/4">
                                     <DropdownSelect
                                         options={collectionsData.collections.map((collection) => [collection.collectionId, collection.name])}
                                         onChange={setCollectionId}
+                                        selected={(() => {
+                                            const chats = chatsData.chats;
+
+                                            if (chats.length !== 0) {
+                                                const context = chats[chats.length - 1].context;
+
+                                                if (context.length !== 0) return context[context.length - 1].collectionId;
+                                            }
+                                        })()}
                                     />
                                 </div>
                             )}
@@ -83,6 +94,7 @@ export function ConversationsPage({}: IProps) {
                                 disabled={isMutatingChat}
                             />
                         </div>
+                        {chat && <ChatContext chat={chat} />}
                     </div>
                 )}
             </div>
