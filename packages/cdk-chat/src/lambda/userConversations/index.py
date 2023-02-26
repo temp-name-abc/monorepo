@@ -13,16 +13,19 @@ def lambda_handler(event, context):
     logger.info(f"Retrieving conversations for '{event}'")
 
     conversation_table = os.getenv("CONVERSATION_TABLE")
+    timestamp_index_name = os.getenv("TIMESTAMP_INDEX_NAME")
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
 
     # Get a list of user conversations
-    response = dynamodb_client.scan(
+    response = dynamodb_client.query(
         TableName=conversation_table,
-        FilterExpression="userId = :userId",
+        IndexName=timestamp_index_name,
+        KeyConditionExpression="userId = :userId",
         ExpressionAttributeValues={
-            ":userId": {"S": user_id}
-        }
+            ":userId": {"S": user_id},
+        },
+        ScanIndexForward=False
     )
 
     conversations = []

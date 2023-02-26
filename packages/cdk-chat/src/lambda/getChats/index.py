@@ -19,11 +19,6 @@ def lambda_handler(event, context):
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     conversation_id = event["pathParameters"]["conversationId"]
-    
-    query_params = event["queryStringParameters"]
-
-    from_timestamp = query_params["fromTimestamp"] if query_params != None and "fromTimestamp" in query_params else "0"
-    to_timestamp = query_params["toTimestamp"] if query_params != None and "toTimestamp" in query_params else str(int(datetime.now().timestamp()))
 
     # Verify the conversation
     conversation_response = dynamodb_client.get_item(
@@ -51,14 +46,9 @@ def lambda_handler(event, context):
     chats_response = dynamodb_client.query(
         TableName=chat_table,
         IndexName=timestamp_index_name,
-        KeyConditionExpression="conversationId = :conversationId AND #timestamp BETWEEN :fromTimestamp AND :toTimestamp",
-        ExpressionAttributeNames={
-            "#timestamp": "timestamp"
-        },
+        KeyConditionExpression="conversationId = :conversationId",
         ExpressionAttributeValues={
             ":conversationId": {"S": conversation_id},
-            ":fromTimestamp": {"N": from_timestamp},
-            ":toTimestamp": {"N": to_timestamp}
         },
     )
 

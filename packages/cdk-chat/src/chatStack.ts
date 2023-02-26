@@ -28,11 +28,18 @@ export class ChatStack extends cdk.NestedStack {
         const conversationIdResource = conversationResource.addResource("{conversationId}");
         const convChatResource = conversationIdResource.addResource("chat");
 
+        const timestampIndexName = "timestampIndex";
+
         // ==== Conversation ====
         const conversationTable = new dynamodb.Table(this, "conversationTable", {
             partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
             sortKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
+        });
+
+        conversationTable.addLocalSecondaryIndex({
+            indexName: timestampIndexName,
+            sortKey: { name: "timestamp", type: dynamodb.AttributeType.NUMBER },
         });
 
         // Create conversation
@@ -60,6 +67,7 @@ export class ChatStack extends cdk.NestedStack {
             handler: "index.lambda_handler",
             environment: {
                 CONVERSATION_TABLE: conversationTable.tableName,
+                TIMESTAMP_INDEX_NAME: timestampIndexName,
             },
             timeout: cdk.Duration.minutes(1),
         });
@@ -77,8 +85,6 @@ export class ChatStack extends cdk.NestedStack {
             sortKey: { name: "chatId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
         });
-
-        const timestampIndexName = "timestampIndex";
 
         chatTable.addLocalSecondaryIndex({
             indexName: timestampIndexName,
