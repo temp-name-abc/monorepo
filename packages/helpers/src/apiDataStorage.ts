@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ICollection, collection, collections, ICollections, IDocuments, document, documents } from "types";
+import { ICollection, collection, collections, ICollections, IDocuments, document, documents, IDocument } from "types";
 
 import { API_BASE_URL } from "utils";
 
@@ -51,6 +51,16 @@ export async function getDocuments(token: string, collectionId: string) {
     });
 
     return documents.parse(data);
+}
+
+export async function getDocument(token: string, collectionId: string, documentId: string) {
+    const { data } = await instance.get<IDocument>(`/storage/collection/${collectionId}/document/${documentId}`, {
+        headers: {
+            Authorization: token,
+        },
+    });
+
+    return document.parse(data);
 }
 
 export async function uploadDocument(token: string, collectionId: string, file: File) {

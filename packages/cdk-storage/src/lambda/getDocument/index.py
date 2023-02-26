@@ -55,8 +55,8 @@ def lambda_handler(event, context):
     document = {}
 
     document["documentId"] = document_id
-    document["name"] = document_response["name"]
-    document["type"] = document_response["type"]
+    document["name"] = document_response["name"]["S"]
+    document["type"] = document_response["type"]["S"]
     document["url"] = s3_client.generate_presigned_url("get_object", Params={"Bucket": document_bucket, "Key": document_id}, ExpiresIn=86400)
 
     logger.info(f"Retrieved document '{document_id}' for collection '{collection_id}' for user '{user_id}'")
