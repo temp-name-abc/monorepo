@@ -1,7 +1,11 @@
 interface IProps {}
 
 export function DropdownSelect({}: IProps) {
-    return <select />;
+    return (
+        <select>
+            <option></option>
+        </select>
+    );
 }
 
 export default DropdownSelect;
