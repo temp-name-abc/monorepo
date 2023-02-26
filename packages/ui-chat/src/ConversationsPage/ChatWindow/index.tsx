@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { IChats } from "types";
-import Chat from "./Chat";
+import { ChatBubble } from "ui";
+import { Chat } from "./Chat";
 
 interface IProps {
     chats: IChats;
@@ -17,13 +18,15 @@ export function ChatWindow({ chats, question }: IProps) {
 
     return (
         <div className="h-[496px] bg-gray-100 p-10 space-y-8 overflow-y-auto">
-            <p className="text-center font-medium text-gray-400">Beginning of conversation</p>
+            <ChatBubble style="centernobubble">Beginning of conversation</ChatBubble>
             <div className="flex flex-col space-y-8">
-                {chats.chats.map((chat, i) => (
-                    <Chat key={i} chat={chat} />
-                ))}
+                {chats.chats.map((chat, i) => {
+                    const history = chat.history[chat.history.length - 1];
+
+                    return <Chat key={i} user={history.human} other={history.ai} />;
+                })}
+                {question && <Chat user={question} />}
             </div>
-            {question && <p>{question}</p>}
             <div ref={bottomRef} />
         </div>
     );

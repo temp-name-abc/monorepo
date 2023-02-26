@@ -43,8 +43,9 @@ export async function getChats(token: string, conversationId: string) {
     return chats.parse(data);
 }
 
-export async function createChat(token: string, conversationId: string, question: string, prevChatId?: string) {
+export async function createChat(token: string, conversationId: string, question: string, collectionId?: string, prevChatId?: string) {
     const body: any = { question };
+    if (collectionId) body.collectionId = collectionId;
     if (prevChatId) body.chatId = prevChatId;
 
     const { data } = await instance.post<IChat>(`/chat/conversation/${conversationId}/chat`, body, {

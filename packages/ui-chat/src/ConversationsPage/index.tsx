@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SubAppShell } from "ui/src/SubAppShell";
 import { links } from "../links";
 import { useSession } from "next-auth/react";
-import { KEY_CHATS, KEY_CONVERSATIONS } from "utils";
-import { createChat, createConversation, getChats, getConversations } from "helpers";
+import { KEY_CHATS, KEY_COLLECTIONS, KEY_CONVERSATIONS } from "utils";
+import { createChat, createConversation, getChats, getCollections, getConversations } from "helpers";
 import { Conversations } from "./Conversations";
 import { useState } from "react";
 import ChatWindow from "./ChatWindow";
@@ -17,6 +17,7 @@ export function ConversationsPage({}: IProps) {
 
     const [conversationId, setConversationId] = useState<string>("");
     const [question, setQuestion] = useState<string>("");
+    const [collectionId, setCollectionId] = useState<string>("");
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
@@ -35,9 +36,13 @@ export function ConversationsPage({}: IProps) {
     });
 
     const { mutate: chatMutation, isLoading: isMutatingChat } = useMutation({
-        mutationFn: (args: { token: string; conversationId: string; question: string; prevChatId?: string }) =>
-            createChat(args.token, args.conversationId, args.question, args.prevChatId),
+        mutationFn: (args: { token: string; conversationId: string; question: string; collectionId?: string; prevChatId?: string }) =>
+            createChat(args.token, args.conversationId, args.question, args.collectionId, args.prevChatId),
         onSuccess: (_, { conversationId }) => queryClient.invalidateQueries([KEY_CHATS, conversationId]),
+    });
+
+    const { data: collectionsData } = useQuery([KEY_COLLECTIONS], () => getCollections(token as string), {
+        enabled: !!token,
     });
 
     return (
@@ -48,22 +53,34 @@ export function ConversationsPage({}: IProps) {
                     <Conversations conversations={conversationsData} conversationId={conversationId} setConversationId={setConversationId} />
                 </div>
                 {chatsData && (
-                    <div className="flex flex-col space-y-12 w-3/4">
+                    <div className="flex flex-col space-y-8 w-3/4">
                         <ChatWindow chats={chatsData} question={isMutatingChat ? question : undefined} />
-                        <div className="flex">
-                            <DropdownSelect />
+                        <div className="flex space-x-8">
+                            {collectionsData && (
+                                <div className="w-1/4">
+                                    <DropdownSelect
+                                        options={collectionsData.collections.map((collection) => [collection.collectionId, collection.name])}
+                                        onChange={setCollectionId}
+                                    />
+                                </div>
+                            )}
                             <TextCreate
                                 onClick={(question) => {
                                     const chats = chatsData.chats;
-                                    const history = chats[chats.length - 1].history;
-                                    const prevChatId = history[history.length - 1].chatId;
+                                    let prevChatId: string | undefined = undefined;
+
+                                    if (chats.length !== 0) {
+                                        const history = chats[chats.length - 1].history;
+                                        prevChatId = history[history.length - 1].chatId;
+                                    }
 
                                     setQuestion(question);
 
-                                    token && conversationId && chatMutation({ token, conversationId, question, prevChatId });
+                                    token && conversationId && chatMutation({ token, conversationId, question, collectionId, prevChatId });
                                 }}
                                 cta="Send"
                                 placeholder="Send a chat"
+                                disabled={isMutatingChat}
                             />
                         </div>
                     </div>
