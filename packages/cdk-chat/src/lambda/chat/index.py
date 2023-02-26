@@ -152,7 +152,7 @@ def lambda_handler(event, context):
                     "score": document["score"]
                 })
 
-                logger.info(f"Retrieved context document '{document['id']}'")
+                logger.info(f"Retrieved context document '{document['documentId']}'")
             
             else:
                 logger.info(f"Retrieved document already exists")
