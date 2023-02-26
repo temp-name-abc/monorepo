@@ -59,7 +59,7 @@ export function ConversationsPage({}: IProps) {
                     <Conversations conversations={conversationsData} conversationId={conversationId} setConversationId={setConversationId} />
                 </div>
                 {chatsData && (
-                    <div className="flex flex-col space-y-8 w-3/4">
+                    <div className="flex flex-col space-y-12 w-3/4">
                         <ChatWindow chats={chatsData} question={isMutatingChat ? question : undefined} onClickReply={setSelectedChat} />
                         <div className="flex space-x-8">
                             {collectionsData && (
