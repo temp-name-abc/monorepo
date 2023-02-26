@@ -2,16 +2,19 @@ import { IChat } from "types";
 import { ChatBubble } from "ui";
 
 interface IProps {
-    user: any;
-    other?: any;
+    chat: IChat;
     onClickReply?: (chat: IChat) => void;
 }
 
-export function Chat({ user, other }: IProps) {
+export function Chat({ chat, onClickReply }: IProps) {
+    const history = chat.history[chat.history.length - 1];
+
     return (
         <div className="flex flex-col space-y-8">
-            <ChatBubble style="right">{user}</ChatBubble>
-            <ChatBubble style={other ? "left" : "leftnobubble"}>{other ? other : "Typing..."}</ChatBubble>
+            <ChatBubble style="right">{history.human}</ChatBubble>
+            <ChatBubble style="left" onClick={() => onClickReply && onClickReply(chat)}>
+                {history.ai}
+            </ChatBubble>
         </div>
     );
 }

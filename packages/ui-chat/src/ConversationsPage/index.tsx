@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { KEY_CHATS, KEY_COLLECTIONS, KEY_CONVERSATIONS } from "utils";
 import { createChat, createConversation, getChats, getCollections, getConversations } from "helpers";
 import { Conversations } from "./Conversations";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ChatWindow from "./ChatWindow";
 import { DropdownSelect, TextCreate, ChatContext } from "ui";
 import { IChat } from "types";
@@ -19,7 +19,11 @@ export function ConversationsPage({}: IProps) {
     const [conversationId, setConversationId] = useState<string>("");
     const [question, setQuestion] = useState<string>("");
     const [collectionId, setCollectionId] = useState<string>("");
-    const [chat, setChat] = useState<IChat | null>(null);
+    const [selectedChat, setSelectedChat] = useState<IChat | null>(null);
+
+    useEffect(() => {
+        setSelectedChat(null);
+    }, [conversationId, setSelectedChat]);
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
@@ -56,7 +60,7 @@ export function ConversationsPage({}: IProps) {
                 </div>
                 {chatsData && (
                     <div className="flex flex-col space-y-8 w-3/4">
-                        <ChatWindow chats={chatsData} question={isMutatingChat ? question : undefined} onClickReply={setChat} />
+                        <ChatWindow chats={chatsData} question={isMutatingChat ? question : undefined} onClickReply={setSelectedChat} />
                         <div className="flex space-x-8">
                             {collectionsData && (
                                 <div className="w-1/4">
@@ -94,7 +98,7 @@ export function ConversationsPage({}: IProps) {
                                 disabled={isMutatingChat}
                             />
                         </div>
-                        {chat && <ChatContext chat={chat} />}
+                        {selectedChat && <ChatContext chat={selectedChat} />}
                     </div>
                 )}
             </div>

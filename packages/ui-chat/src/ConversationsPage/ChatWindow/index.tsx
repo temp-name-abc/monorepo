@@ -21,12 +21,15 @@ export function ChatWindow({ chats, question, onClickReply }: IProps) {
         <div className="h-[576px] bg-gray-100 p-10 space-y-8 overflow-y-auto">
             <ChatBubble style="centernobubble">Beginning of conversation</ChatBubble>
             <div className="flex flex-col space-y-8">
-                {chats.chats.map((chat, i) => {
-                    const history = chat.history[chat.history.length - 1];
-
-                    return <Chat key={i} user={history.human} other={history.ai} />;
-                })}
-                {question && <Chat user={question} />}
+                {chats.chats.map((chat, i) => (
+                    <Chat key={i} chat={chat} onClickReply={onClickReply} />
+                ))}
+                {question && (
+                    <div className="flex flex-col space-y-8">
+                        <ChatBubble style="right">{question}</ChatBubble>
+                        <ChatBubble style="leftnobubble">Typing...</ChatBubble>
+                    </div>
+                )}
             </div>
             <div ref={bottomRef} />
         </div>

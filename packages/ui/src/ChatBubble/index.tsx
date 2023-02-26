@@ -1,9 +1,10 @@
 interface IProps {
     children: any;
     style: "left" | "right" | "leftnobubble" | "centernobubble" | "rightnobubble";
+    onClick?: () => void;
 }
 
-export function ChatBubble({ children, style }: IProps) {
+export function ChatBubble({ children, style, onClick }: IProps) {
     const styleLeft = "mr-auto px-8 py-4 text-gray-600 bg-white font-medium w-auto text-left text-sm";
     const styleRight = "ml-auto px-8 py-4 text-white bg-violet-600 font-medium w-auto text-right text-sm";
 
@@ -22,7 +23,7 @@ export function ChatBubble({ children, style }: IProps) {
     };
 
     return (
-        <p className={mapping[style]} style={{ maxWidth: "50%" }}>
+        <p onClick={onClick} className={`${mapping[style]} ${onClick ? "cursor-pointer" : ""}`} style={{ maxWidth: "50%" }}>
             {children}
         </p>
     );
