@@ -90,6 +90,8 @@ def lambda_handler(event, context):
         document = {}
 
         chunk_id = match["id"]
+
+        document["chunkId"] = chunk_id
         document["score"] = match["score"]
         document["documentId"] = match["metadata"]["documentId"]
 

@@ -144,7 +144,13 @@ def lambda_handler(event, context):
                     break
 
             if not exists:
-                context.append({"body": document["body"], "documentId": document["documentId"], "collectionId": collection_id})
+                context.append({
+                    "body": document["body"],
+                    "documentId": document["documentId"],
+                    "collectionId": collection_id,
+                    "chunkId": document["chunkId"],
+                    "score": document["score"]
+                })
 
                 logger.info(f"Retrieved context document '{document['id']}'")
             

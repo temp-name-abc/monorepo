@@ -4,9 +4,10 @@ import Chat from "./Chat";
 
 interface IProps {
     chats: IChats;
+    question?: string;
 }
 
-export function ChatWindow({ chats }: IProps) {
+export function ChatWindow({ chats, question }: IProps) {
     const bottomRef = useRef(null);
 
     useEffect(() => {
@@ -22,6 +23,7 @@ export function ChatWindow({ chats }: IProps) {
                     <Chat key={i} chat={chat} />
                 ))}
             </div>
+            {question && <p>{question}</p>}
             <div ref={bottomRef} />
         </div>
     );

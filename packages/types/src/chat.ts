@@ -15,6 +15,8 @@ export const chat = z.object({
             body: z.string(),
             documentId: z.string(),
             collectionId: z.string(),
+            chunkId: z.string(),
+            score: z.number(),
         })
     ),
     timestamp: z.number(),
