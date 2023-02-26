@@ -28,15 +28,11 @@ def lambda_handler(event, context):
     stripe.api_key = secrets_manager_client.get_secret_value(SecretId=stripe_secret)["SecretString"]
 
     # Retrieve customer account
-    user_data = dynamodb_client.get_item(
-        TableName=user_billing_table,
-        Key={"userId": {"S": user_id}}
-    )["Item"]
-
-    customer_id = user_data["stripeCustomerId"]["S"]
+    customer_data = dynamodb_client.get_item(TableName=user_billing_table, Key={"userId": {"S": user_id}})["Item"]
+    customer_id = customer_data["stripeCustomerId"]["S"]
 
     # Always active in some cases
-    if "sandbox" in user_data and user_data["sandbox"]["BOOL"]:
+    if "sandbox" in customer_data and customer_data["sandbox"]["BOOL"]:
         logger.info(f"User '{user_id}' is on sandbox mode")
 
         return {
@@ -50,11 +46,7 @@ def lambda_handler(event, context):
         }
 
     # Retrieve the product id
-    product_data = dynamodb_client.get_item(
-        TableName=products_table,
-        Key={"productId": {"S": product_id}}
-    )["Item"]
-
+    product_data = dynamodb_client.get_item(TableName=products_table, Key={"productId": {"S": product_id}})["Item"]
     stripe_product_id = product_data["stripeProductId"]["S"]
 
     # Check if the customer already has a subscription

@@ -51,33 +51,24 @@ def lambda_handler(event, context):
     stripe.api_key = secrets_manager_client.get_secret_value(SecretId=stripe_secret)["SecretString"]
 
     # Retrieve customer account
-    customer_response = dynamodb_client.get_item(
-        TableName=user_billing_table,
-        Key={"userId": {"S": user_id}}
-    )
+    customer_item = dynamodb_client.get_item(TableName=user_billing_table, Key={"userId": {"S": user_id}})["Item"]
+    customer_id = customer_item["stripeCustomerId"]["S"]
 
-    item = customer_response["Item"]
-    customer_id = item["stripeCustomerId"]["S"]
-
+    # Retrieve the product
     if product_id == None:
         return route_to_portal(customer_id, home_url, user_id)
 
-    # Retrieve the product
-    product_response = dynamodb_client.get_item(
-        TableName=products_table,
-        Key={"productId": {"S": product_id}}
-    )
+    product_item = dynamodb_client.get_item(TableName=products_table, Key={"productId": {"S": product_id}})["Item"]
 
-    item = product_response["Item"]
+    stripe_product_id = product_item["stripeProductId"]["S"]
+    stripe_price_id = product_item["stripePriceId"]["S"]
 
-    stripe_product_id = item["stripeProductId"]["S"]
-    stripe_price_id = item["stripePriceId"]["S"]
-
+    # Add the partner share amount
     stripe_partner_id = None
     partner_share = None
-    if "stripePartnerId" in item and "partnerShare" in item:
-        stripe_partner_id = item["stripePartnerId"]["S"]
-        partner_share = item["partnerShare"]["S"]
+    if "stripePartnerId" in product_item and "partnerShare" in product_item:
+        stripe_partner_id = product_item["stripePartnerId"]["S"]
+        partner_share = product_item["partnerShare"]["S"]
 
     # Check if the customer already has a subscription
     customer = stripe.Customer.retrieve(customer_id, expand=["subscriptions"])

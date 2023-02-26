@@ -47,7 +47,8 @@ def lambda_handler(event, context):
                     "id": {"S": key},
                     "timestamp": {"N": str(timestamp)},
                     "productId": {"S": product_id},
-                    "metadata": {"S": json.dumps({"userData": user_data, "productData": product_data})},
+                    "userData": {"S": json.dumps(user_data)},
+                    "productData": {"S": json.dumps(product_data)},
                     "quantity": {"N": str(quantity)}
                 },
                 ConditionExpression="attribute_not_exists(id)"
@@ -78,4 +79,4 @@ def lambda_handler(event, context):
 
                 logger.info(f"Reported usage for user '{user_id}' at time '{timestamp}' with product id '{product_id}'")
 
-                return
+                break
