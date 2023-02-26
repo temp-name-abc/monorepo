@@ -43,18 +43,15 @@ export async function getChats(token: string, conversationId: string) {
     return chats.parse(data);
 }
 
-export async function createChat(token: string, conversationId: string, question: string) {
-    const { data } = await instance.post<IChat>(
-        `/chat/conversation/${conversationId}/chat`,
-        {
-            question,
+export async function createChat(token: string, conversationId: string, question: string, prevChatId?: string) {
+    const body: any = { question };
+    if (prevChatId) body.prevChatId = prevChatId;
+
+    const { data } = await instance.post<IChat>(`/chat/conversation/${conversationId}/chat`, body, {
+        headers: {
+            Authorization: token,
         },
-        {
-            headers: {
-                Authorization: token,
-            },
-        }
-    );
+    });
 
     return chat.parse(data);
 }

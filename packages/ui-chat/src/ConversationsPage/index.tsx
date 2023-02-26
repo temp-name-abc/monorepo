@@ -37,6 +37,10 @@ export function ConversationsPage({}: IProps) {
         onSuccess: (_, { conversationId }) => queryClient.invalidateQueries([KEY_CHATS, conversationId]),
     });
 
+    // **** Make sure that we are chaining the previous chat ids together...
+    // **** Also need to lock the search bar whilst we are fetching
+    // **** Add the chat context section
+
     return (
         <SubAppShell title="Chat / Conversations" description="View all your conversations." links={links}>
             <div className="flex space-x-10">
@@ -46,8 +50,7 @@ export function ConversationsPage({}: IProps) {
                 </div>
                 {chatsData && (
                     <div className="flex flex-col space-y-12 w-full">
-                        {JSON.stringify(chatsData)}
-                        {/* <ChatWindow chats={chatsData} /> */}
+                        <ChatWindow chats={chatsData} />
                         <TextCreate
                             onClick={(question) => token && conversationId && chatMutation({ token, conversationId, question })}
                             cta="Send"
