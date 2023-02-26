@@ -1,5 +1,5 @@
 import { IChat } from "types";
-import Link from "next/link";
+import { Context } from "./Context";
 
 interface IProps {
     chat: IChat;
@@ -14,20 +14,7 @@ export function ChatContext({ chat }: IProps) {
             </header>
             <div className="flex flex-col space-y-8">
                 {chat.context.map((context, i) => (
-                    <div className="flex flex-col space-y-4 bg-gray-100 px-8 py-4">
-                        <div key={i} className="italic text-gray-600 font-medium text-sm">
-                            {context.body}
-                        </div>
-                        <div className="flex space-x-2">
-                            <Link className="cursor-pointer font-bold text-gray-600 hover:text-gray-700" href={`/storage/collections/${context.collectionId}`}>
-                                Collection
-                            </Link>
-                            <span className="font-bold text-gray-600">/</span>
-                            <Link href="#" className="cursor-pointer font-medium text-gray-600 hover:text-gray-700">
-                                Document
-                            </Link>
-                        </div>
-                    </div>
+                    <Context key={i} context={context} />
                 ))}
             </div>
         </div>
