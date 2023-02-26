@@ -45,7 +45,7 @@ export async function getChats(token: string, conversationId: string) {
 
 export async function createChat(token: string, conversationId: string, question: string, prevChatId?: string) {
     const body: any = { question };
-    if (prevChatId) body.prevChatId = prevChatId;
+    if (prevChatId) body.chatId = prevChatId;
 
     const { data } = await instance.post<IChat>(`/chat/conversation/${conversationId}/chat`, body, {
         headers: {

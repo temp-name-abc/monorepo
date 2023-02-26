@@ -60,7 +60,6 @@ def lambda_handler(event, context):
             ":fromTimestamp": {"N": from_timestamp},
             ":toTimestamp": {"N": to_timestamp}
         },
-        ScanIndexForward=False
     )
 
     # Create list of chats
@@ -73,7 +72,7 @@ def lambda_handler(event, context):
         chat["chatId"] = item["chatId"]["S"]
         chat["history"] = json.loads(item["history"]["S"])[0:2]
         chat["context"] = json.loads(item["context"]["S"])
-        chat["timestamp"] = item["timestamp"]["N"]
+        chat["timestamp"] = int(item["timestamp"]["N"])
 
         chats.append(chat)
 

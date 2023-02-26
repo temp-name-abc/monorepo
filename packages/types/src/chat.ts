@@ -17,7 +17,7 @@ export const chat = z.object({
             collectionId: z.string(),
         })
     ),
-    timestamp: z.string(),
+    timestamp: z.number(),
 });
 
 export type IChat = z.infer<typeof chat>;

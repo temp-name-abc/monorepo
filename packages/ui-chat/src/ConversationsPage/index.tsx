@@ -33,11 +33,11 @@ export function ConversationsPage({}: IProps) {
     });
 
     const { mutate: chatMutation, isLoading } = useMutation({
-        mutationFn: (args: { token: string; conversationId: string; question: string }) => createChat(args.token, args.conversationId, args.question),
+        mutationFn: (args: { token: string; conversationId: string; question: string; prevChatId?: string }) =>
+            createChat(args.token, args.conversationId, args.question, args.prevChatId),
         onSuccess: (_, { conversationId }) => queryClient.invalidateQueries([KEY_CHATS, conversationId]),
     });
 
-    // **** Make sure that we are chaining the previous chat ids together...
     // **** Also need to lock the search bar whilst we are fetching
     // **** Add the chat context section
 
@@ -51,11 +51,20 @@ export function ConversationsPage({}: IProps) {
                 {chatsData && (
                     <div className="flex flex-col space-y-12 w-full">
                         <ChatWindow chats={chatsData} />
-                        <TextCreate
-                            onClick={(question) => token && conversationId && chatMutation({ token, conversationId, question })}
-                            cta="Send"
-                            placeholder="Send a chat"
-                        />
+                        <div className="flex">
+                            <input />
+                            <TextCreate
+                                onClick={(question) => {
+                                    const chats = chatsData.chats;
+                                    const history = chats[chats.length - 1].history;
+                                    const prevChatId = history[history.length - 1].chatId;
+
+                                    token && conversationId && chatMutation({ token, conversationId, question, prevChatId });
+                                }}
+                                cta="Send"
+                                placeholder="Send a chat"
+                            />
+                        </div>
                     </div>
                 )}
             </div>

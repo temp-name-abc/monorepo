@@ -204,7 +204,7 @@ def lambda_handler(event, context):
         "body": json.dumps({
             "conversationId": conversation_id,
             "chatId": chat_id,
-            "history": history[0],
+            "history": history[0:2],
             "context": context,
             "timestamp": timestamp
         })
