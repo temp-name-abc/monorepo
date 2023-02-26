@@ -6,3 +6,4 @@ export * from "./src/FileUpload";
 export * from "./src/DropdownSelect";
 export * from "./src/ChatBubble";
 export * from "./src/ChatContext";
+export * from "./src/Subscriptions";

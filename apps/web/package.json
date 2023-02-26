@@ -16,8 +16,7 @@
         "react-dom": "^18.2.0",
         "ui": "*",
         "ui-storage": "*",
-        "ui-chat": "*",
-        "ui-settings": "*"
+        "ui-chat": "*"
     },
     "devDependencies": {
         "@babel/core": "^7.0.0",

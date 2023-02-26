@@ -6,12 +6,12 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as path from "path";
+import { IProduct } from "types";
 
 interface IStackProps extends cdk.NestedStackProps {
     api: apigw.RestApi;
     authorizer: apigw.CognitoUserPoolsAuthorizer;
     apiUrl: string;
-    productId: string;
 }
 
 export class ChatStack extends cdk.NestedStack {
@@ -92,6 +92,8 @@ export class ChatStack extends cdk.NestedStack {
         });
 
         // Create chat function
+        const product: IProduct = "chat.chat";
+
         const chatFn = new lambda.Function(this, "chatFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
             code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "chat"), {
@@ -106,7 +108,7 @@ export class ChatStack extends cdk.NestedStack {
                 CONVERSATION_TABLE: conversationTable.tableName,
                 CHAT_TABLE: chatTable.tableName,
                 API_URL: props.apiUrl,
-                PRODUCT_ID: props.productId,
+                PRODUCT_ID: product,
                 MEMORY_SIZE: "5",
             },
             timeout: cdk.Duration.minutes(1),

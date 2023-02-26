@@ -8,14 +8,12 @@ import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
+import { IProduct } from "types";
 
 interface IStackProps extends cdk.NestedStackProps {
     api: apigw.RestApi;
     authorizer: apigw.CognitoUserPoolsAuthorizer;
     apiUrl: string;
-    pineconeEnv: string;
-    pineconeIndex: string;
-    productId: string;
 }
 
 export class StorageStack extends cdk.NestedStack {
@@ -212,6 +210,8 @@ export class StorageStack extends cdk.NestedStack {
         });
 
         // Create object processing function
+        const product: IProduct = "storage.document.process.text";
+
         const processFn = new lambda.DockerImageFunction(this, "processFn", {
             code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "process")),
             environment: {
@@ -223,9 +223,7 @@ export class StorageStack extends cdk.NestedStack {
                 CHUNK_TABLE: chunkTable.tableName,
                 CHUNK_BUCKET: chunkBucket.bucketName,
                 API_URL: props.apiUrl,
-                PINECONE_ENV: props.pineconeEnv,
-                PINECONE_INDEX: props.pineconeIndex,
-                PRODUCT_ID: props.productId,
+                PRODUCT_ID: product,
                 CHUNK_SIZE: "150",
             },
             timeout: cdk.Duration.minutes(15),
@@ -263,8 +261,6 @@ export class StorageStack extends cdk.NestedStack {
                 OPENAI_SECRET: openAISecret.secretName,
                 COLLECTION_TABLE: collectionTable.tableName,
                 CHUNK_BUCKET: chunkBucket.bucketName,
-                PINECONE_ENV: props.pineconeEnv,
-                PINECONE_INDEX: props.pineconeIndex,
             },
             timeout: cdk.Duration.minutes(1),
         });

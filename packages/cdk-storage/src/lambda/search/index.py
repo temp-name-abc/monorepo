@@ -22,8 +22,6 @@ def lambda_handler(event, context):
     openai_secret = os.getenv("OPENAI_SECRET")
     collection_table = os.getenv("COLLECTION_TABLE")
     chunk_bucket = os.getenv("CHUNK_BUCKET")
-    pinecone_env = os.getenv("PINECONE_ENV")
-    pinecone_index = os.getenv("PINECONE_INDEX")
 
     query_params = event["queryStringParameters"]
 
@@ -36,7 +34,11 @@ def lambda_handler(event, context):
     openai.api_key = secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"]
 
     # Load the Pinecone API key
-    pinecone_api_key = secrets_manager_client.get_secret_value(SecretId=pinecone_secret)["SecretString"]
+    pinecone_data = json.loads(secrets_manager_client.get_secret_value(SecretId=pinecone_secret)["SecretString"])
+
+    pinecone_api_key = pinecone_data["apiKey"]
+    pinecone_env = pinecone_data["env"]
+    pinecone_index = pinecone_data["index"]
 
     pinecone.init(
         api_key=pinecone_api_key,

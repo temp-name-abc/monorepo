@@ -16,8 +16,6 @@ const env = cdkEnv.parse({
     apiUrl: process.env.API_URL,
     pineconeEnv: process.env.PINECONE_ENV,
     pineconeIndex: process.env.PINECONE_INDEX,
-    productIdDocumentProcessText: process.env.PRODUCT_ID_DOCUMENT_PROCESS_TEXT,
-    productIdChat: process.env.PRODUCT_ID_CHAT,
 });
 
 export class CdkStack extends cdk.Stack {
@@ -41,16 +39,12 @@ export class CdkStack extends cdk.Stack {
             api: coreStack.api,
             authorizer: coreStack.authorizer,
             apiUrl: env.apiUrl,
-            pineconeEnv: env.pineconeEnv,
-            pineconeIndex: env.pineconeIndex,
-            productId: env.productIdDocumentProcessText,
         });
 
         new ChatStack(this, "chatStack", {
             api: coreStack.api,
             authorizer: coreStack.authorizer,
             apiUrl: env.apiUrl,
-            productId: env.productIdChat,
         });
     }
 }

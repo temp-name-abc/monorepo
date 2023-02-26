@@ -26,7 +26,8 @@ def route_to_portal(customer_id: str, home_url: str, user_id: str):
             "Access-Control-Allow-Origin": "*",
         },
         "body": json.dumps({
-            "url": portal["url"]
+            "url": portal["url"],
+            "active": True
         })
     }
 
@@ -97,7 +98,8 @@ def lambda_handler(event, context):
             "Access-Control-Allow-Origin": "*",
         },
         "body": json.dumps({
-            "url": session["url"]
+            "url": session["url"],
+            "active": False
         })
     }
 

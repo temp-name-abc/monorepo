@@ -1,4 +1,4 @@
-import { BillingPage } from "ui-settings";
+import { BillingPage } from "ui-storage";
 
 interface IProps {}
 

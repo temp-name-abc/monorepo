@@ -47,8 +47,6 @@ def lambda_handler(event, context):
     chunk_table = os.getenv("CHUNK_TABLE")
     chunk_bucket = os.getenv("CHUNK_BUCKET")
     api_url = os.getenv("API_URL")
-    pinecone_env = os.getenv("PINECONE_ENV")
-    pinecone_index = os.getenv("PINECONE_INDEX")
     product_id = os.getenv("PRODUCT_ID")
     chunk_size = int(os.getenv("CHUNK_SIZE"))
 
@@ -56,7 +54,11 @@ def lambda_handler(event, context):
     openai.api_key = secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"]
 
     # Load the Pinecone API key
-    pinecone_api_key = secrets_manager_client.get_secret_value(SecretId=pinecone_secret)["SecretString"]
+    pinecone_data = json.loads(secrets_manager_client.get_secret_value(SecretId=pinecone_secret)["SecretString"])
+
+    pinecone_api_key = pinecone_data["apiKey"]
+    pinecone_env = pinecone_data["env"]
+    pinecone_index = pinecone_data["index"]
 
     pinecone.init(
         api_key=pinecone_api_key,

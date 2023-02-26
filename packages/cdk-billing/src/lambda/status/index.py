@@ -18,10 +18,9 @@ def lambda_handler(event, context):
     user_billing_table = os.getenv("USER_BILLING_TABLE")
     products_table = os.getenv("PRODUCTS_TABLE")
 
-    user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
-
     query_params = event["queryStringParameters"]
 
+    user_id = query_params["userId"]
     product_id = query_params["productId"]
 
     # Load the Stripe key

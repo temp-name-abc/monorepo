@@ -29,9 +29,8 @@ export class BillingStack extends cdk.NestedStack {
 
         const portalResource = billingResource.addResource("portal");
         const iamResource = billingResource.addResource("iam");
-        const statusResource = billingResource.addResource("status");
 
-        const iamStatusResource = iamResource.addResource("status");
+        const statusResource = iamResource.addResource("status");
         const usageResource = iamResource.addResource("usage");
 
         // ==== Billing ====
@@ -102,32 +101,6 @@ export class BillingStack extends cdk.NestedStack {
         });
 
         // Create IAM account status function
-        const iamStatusFn = new lambda.Function(this, "iamStatusFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "iamStatus"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
-            handler: "index.lambda_handler",
-            environment: {
-                STRIPE_SECRET: stripeSecret.secretName,
-                USER_BILLING_TABLE: userBillingTable.tableName,
-                PRODUCTS_TABLE: productsTable.tableName,
-            },
-            timeout: cdk.Duration.seconds(30),
-        });
-
-        stripeSecret.grantRead(iamStatusFn);
-        userBillingTable.grantReadData(iamStatusFn);
-        productsTable.grantReadData(iamStatusFn);
-
-        iamStatusResource.addMethod("GET", new apigw.LambdaIntegration(iamStatusFn), {
-            authorizationType: apigw.AuthorizationType.IAM,
-        });
-
-        // Create status function
         const statusFn = new lambda.Function(this, "statusFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
             code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "status"), {
@@ -149,9 +122,8 @@ export class BillingStack extends cdk.NestedStack {
         userBillingTable.grantReadData(statusFn);
         productsTable.grantReadData(statusFn);
 
-        statusResource.addMethod("GET", new apigw.LambdaIntegration(iamStatusFn), {
-            authorizer: props.authorizer,
-            authorizationType: apigw.AuthorizationType.COGNITO,
+        statusResource.addMethod("GET", new apigw.LambdaIntegration(statusFn), {
+            authorizationType: apigw.AuthorizationType.IAM,
         });
 
         // Setup usage records
