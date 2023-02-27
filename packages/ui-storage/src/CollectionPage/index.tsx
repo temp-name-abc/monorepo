@@ -17,14 +17,15 @@ export function CollectionPage({}: IProps) {
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
 
-    const { collectionId } = router.query;
+    let collectionId: string | undefined = undefined;
+    if (router.query.collectionId) collectionId = router.query.collectionId[0];
 
     const { data: collectionData } = useQuery([KEY_COLLECTION], () => getCollection(token as string, collectionId as string), {
-        enabled: !!token,
+        enabled: !!token && !!collectionId,
     });
 
     const { data: documentsData } = useQuery([KEY_DOCUMENTS, collectionId], () => getDocuments(token as string, collectionId as string), {
-        enabled: !!token && !!collectionData,
+        enabled: !!token && !!collectionData && !!collectionId,
     });
 
     const mutation = useMutation({
