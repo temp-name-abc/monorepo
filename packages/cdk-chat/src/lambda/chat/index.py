@@ -129,7 +129,7 @@ def lambda_handler(event, context):
 
             exists = False
             for context_document in context:
-                if context_document["documentId"] == document["documentId"]:
+                if context_document["chunkId"] == document["chunkId"]:
                     exists = True
                     break
 
@@ -142,10 +142,10 @@ def lambda_handler(event, context):
                     "score": document["score"]
                 })
 
-                logger.info(f"Retrieved context document '{document['documentId']}'")
+                logger.info(f"Retrieved context chunk '{document['chunkId']}' for document '{document['documentId']}'")
             
             else:
-                logger.info(f"Retrieved document already exists")
+                logger.info(f"Retrieved chunk '{document['chunkId']}' for document '{document['documentId']}' already exists")
 
     # Update the context, generate the response, and update the history
     context_text = utils.create_context(context)
@@ -200,7 +200,7 @@ def lambda_handler(event, context):
         "body": json.dumps({
             "conversationId": conversation_id,
             "chatId": chat_id,
-            "history": history[0:2],
+            "history": history[max(len(history) - 2, 0):],
             "context": context,
             "timestamp": timestamp
         })

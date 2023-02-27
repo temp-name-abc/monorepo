@@ -60,9 +60,11 @@ def lambda_handler(event, context):
 
         chat["conversationId"] = item["conversationId"]["S"]
         chat["chatId"] = item["chatId"]["S"]
-        chat["history"] = json.loads(item["history"]["S"])[0:2]
         chat["context"] = json.loads(item["context"]["S"])
         chat["timestamp"] = int(item["timestamp"]["N"])
+
+        history = json.loads(item["history"]["S"])
+        chat["history"] = history[max(len(history) - 2, 0):]
 
         chats.append(chat)
 

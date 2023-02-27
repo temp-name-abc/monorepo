@@ -15,7 +15,7 @@ export function ChatWindow({ chats, question, onClickReply }: IProps) {
     useEffect(() => {
         // @ts-expect-error
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [chats]);
+    }, [chats, question]);
 
     return (
         <div className="h-[576px] bg-gray-100 p-10 space-y-8 overflow-y-auto">
