@@ -4,15 +4,10 @@ interface IProps {
     uploadFile: (file: File) => any;
     fileTypes?: string[];
     isLoading?: boolean;
-    isSuccess?: boolean;
 }
 
-export function FileUpload({ uploadFile, fileTypes, isLoading, isSuccess }: IProps) {
+export function FileUpload({ uploadFile, fileTypes, isLoading }: IProps) {
     const [files, setFiles] = useState<File[]>([]);
-
-    useEffect(() => {
-        setFiles([]);
-    }, [isSuccess]);
 
     return (
         <form

@@ -59,7 +59,15 @@ def lambda_handler(event, context):
         document["documentId"] = item["documentId"]["S"]
         document["name"] = item["name"]["S"]
         document["type"] = item["type"]["S"]
-        document["url"] = s3_client.generate_presigned_url("get_object", Params={"Bucket": document_bucket, "Key": document["documentId"]}, ExpiresIn=86400)
+        document["url"] = s3_client.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": document_bucket,
+                "Key": document["documentId"],
+                "ResponseContentDisposition": f'attachment; filename="{item["name"]["S"]}"'
+            },
+            ExpiresIn=86400
+        )
 
         documents.append(document)
 
