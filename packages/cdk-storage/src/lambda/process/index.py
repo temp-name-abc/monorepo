@@ -10,6 +10,7 @@ import PyPDF2
 import hashlib
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
+import io
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -108,7 +109,7 @@ def lambda_handler(event, context):
             logger.info("Processed text file")
 
         elif file_type == "application/pdf":
-            pdfreader = PyPDF2.PdfReader(raw_body)
+            pdfreader = PyPDF2.PdfReader(io.BytesIO(raw_body))
 
             for page in pdfreader.pages:
                 text = page.extract_text()

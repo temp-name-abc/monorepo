@@ -1,17 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface IProps {
     uploadFile: (file: File) => any;
     fileTypes?: string[];
+    isLoading?: boolean;
+    isSuccess?: boolean;
 }
 
-export function FileUpload({ uploadFile, fileTypes }: IProps) {
+export function FileUpload({ uploadFile, fileTypes, isLoading, isSuccess }: IProps) {
     const [files, setFiles] = useState<File[]>([]);
+
+    useEffect(() => {
+        setFiles([]);
+    }, [isSuccess]);
 
     return (
         <form
             className="flex justify-between space-x-2"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
                 e.preventDefault();
 
                 if (files.length === 0) return;
@@ -31,8 +37,9 @@ export function FileUpload({ uploadFile, fileTypes }: IProps) {
                     setFiles(Array.from(_files));
                 }}
                 accept={fileTypes ? fileTypes.join(",") : undefined}
+                disabled={isLoading}
             />
-            <input type="submit" value="Upload" className="cursor-pointer font-medium px-4 py-2 text-gray-50 bg-violet-600 hover:bg-violet-700" />
+            <input type="submit" value="Upload" className="cursor-pointer font-medium px-4 py-2 text-gray-50 bg-violet-600 hover:bg-violet-700" disabled={isLoading} />
         </form>
     );
 }

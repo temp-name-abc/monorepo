@@ -28,7 +28,7 @@ export function CollectionPage({}: IProps) {
         enabled: !!token && !!collectionData && !!collectionId,
     });
 
-    const mutation = useMutation({
+    const { mutate, isLoading, isSuccess } = useMutation({
         mutationFn: (args: { token: string; collectionId: string; file: File }) => uploadDocument(args.token, args.collectionId, args.file),
     });
 
@@ -40,8 +40,10 @@ export function CollectionPage({}: IProps) {
         >
             <div className="flex flex-col space-y-12">
                 <FileUpload
-                    uploadFile={(file) => token && mutation.mutate({ token, collectionId: collectionId as string, file })}
+                    uploadFile={(file) => token && mutate({ token, collectionId: collectionId as string, file })}
                     fileTypes={["text/plain", "application/pdf"]}
+                    isLoading={isLoading}
+                    isSuccess={isSuccess}
                 />
                 <Documents documents={documentsData} />
             </div>
