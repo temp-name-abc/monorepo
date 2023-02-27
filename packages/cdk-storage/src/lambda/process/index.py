@@ -6,6 +6,7 @@ import openai
 import pinecone
 import requests
 from datetime import datetime
+import PyPDF2
 import hashlib
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
@@ -43,6 +44,8 @@ def lambda_handler(event, context):
     openai_secret = os.getenv("OPENAI_SECRET")
     upload_records_table = os.getenv("UPLOAD_RECORDS_TABLE")
     document_table = os.getenv("DOCUMENT_TABLE")
+    document_bucket = os.getenv("DOCUMENT_BUCKET")
+    processed_document_bucket = os.getenv("PROCESSED_DOCUMENT_BUCKET")
     chunk_table = os.getenv("CHUNK_TABLE")
     chunk_bucket = os.getenv("CHUNK_BUCKET")
     api_url = os.getenv("API_URL")
@@ -95,9 +98,31 @@ def lambda_handler(event, context):
         
         # Retrieve document text
         obj_res = s3_client.get_object(Bucket=bucket_name, Key=document_id)
-        body = obj_res["Body"].read().decode("utf-8", errors="ignore")
+        raw_body = obj_res["Body"].read()
+        body = ""
 
-        # Write the uploaded document to the document table
+        # Process supported file types
+        if file_type == "text/plain":
+            body = raw_body.decode("utf-8", errors="ignore")
+
+            logger.info("Processed text file")
+
+        elif file_type == "application/pdf":
+            pdfreader = PyPDF2.PdfReader(raw_body)
+
+            for page in pdfreader.pages:
+                text = page.extract_text()
+
+                body += text + " "
+
+            logger.info("Processed pdf")
+            
+        else:
+            logger.error(f"Document '{document_id}' has unsupported file type '{file_type}'")
+
+            continue
+
+        # Write the uploaded document to main storage
         dynamodb_client.put_item(
             TableName=document_table,
             Item={
@@ -109,6 +134,9 @@ def lambda_handler(event, context):
                 "timestamp": {"S": str(timestamp)} 
             }
         )
+
+        s3_client.put_object(Bucket=document_bucket, Key=document_id, Body=raw_body)
+        s3_client.put_object(Bucket=processed_document_bucket, Key=document_id, Body=body)
 
         # Record the chunks of the document for indexing
         words = body.split(" ")

@@ -108,7 +108,7 @@ export class StorageStack extends cdk.NestedStack {
             timeToLiveAttribute: "ttl",
         });
 
-        const documentBucket = new s3.Bucket(this, "documentBucket", {
+        const tempBucket = new s3.Bucket(this, "tempBucket", {
             blockPublicAccess: {
                 blockPublicAcls: true,
                 blockPublicPolicy: true,
@@ -122,6 +122,29 @@ export class StorageStack extends cdk.NestedStack {
                     allowedHeaders: ["*"],
                 },
             ],
+            lifecycleRules: [
+                {
+                    expiration: cdk.Duration.days(1),
+                },
+            ],
+        });
+
+        const documentBucket = new s3.Bucket(this, "documentBucket", {
+            blockPublicAccess: {
+                blockPublicAcls: true,
+                blockPublicPolicy: true,
+                ignorePublicAcls: true,
+                restrictPublicBuckets: true,
+            },
+        });
+
+        const processedDocumentBucket = new s3.Bucket(this, "processedDocumentBucket", {
+            blockPublicAccess: {
+                blockPublicAcls: true,
+                blockPublicPolicy: true,
+                ignorePublicAcls: true,
+                restrictPublicBuckets: true,
+            },
         });
 
         const chunkTable = new dynamodb.Table(this, "chunkTable", {
@@ -190,14 +213,14 @@ export class StorageStack extends cdk.NestedStack {
             environment: {
                 UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
                 COLLECTION_TABLE: collectionTable.tableName,
-                DOCUMENT_BUCKET: documentBucket.bucketName,
+                TEMP_BUCKET: tempBucket.bucketName,
             },
             timeout: cdk.Duration.seconds(30),
         });
 
         uploadRecordsTable.grantWriteData(uploadFn);
         collectionTable.grantReadData(uploadFn);
-        documentBucket.grantWrite(uploadFn);
+        tempBucket.grantWrite(uploadFn);
 
         documentResource.addMethod("POST", new apigw.LambdaIntegration(uploadFn), {
             authorizer: props.authorizer,
@@ -214,6 +237,8 @@ export class StorageStack extends cdk.NestedStack {
                 OPENAI_SECRET: openAISecret.secretName,
                 UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
                 DOCUMENT_TABLE: documentTable.tableName,
+                DOCUMENT_BUCKET: documentBucket.bucketName,
+                PROCESSED_DOCUMENT_BUCKET: processedDocumentBucket.bucketName,
                 CHUNK_TABLE: chunkTable.tableName,
                 CHUNK_BUCKET: chunkBucket.bucketName,
                 API_URL: props.apiUrl,
@@ -226,8 +251,10 @@ export class StorageStack extends cdk.NestedStack {
         pineconeSecret.grantRead(processFn);
         openAISecret.grantRead(processFn);
         uploadRecordsTable.grantReadData(processFn);
+        tempBucket.grantRead(processFn);
         documentTable.grantWriteData(processFn);
-        documentBucket.grantRead(processFn);
+        documentBucket.grantWrite(processFn);
+        processedDocumentBucket.grantWrite(processFn);
         chunkTable.grantWriteData(processFn);
         chunkBucket.grantWrite(processFn);
         processFn.addToRolePolicy(
@@ -239,7 +266,7 @@ export class StorageStack extends cdk.NestedStack {
         );
 
         processFn.addEventSource(
-            new lambdaEventSources.S3EventSource(documentBucket, {
+            new lambdaEventSources.S3EventSource(tempBucket, {
                 events: [s3.EventType.OBJECT_CREATED_POST],
             })
         );

@@ -17,7 +17,7 @@ def lambda_handler(event, context):
 
     upload_records_table = os.getenv("UPLOAD_RECORDS_TABLE")
     collection_table = os.getenv("COLLECTION_TABLE")
-    document_bucket = os.getenv("DOCUMENT_BUCKET")
+    temp_bucket = os.getenv("TEMP_BUCKET")
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     collection_id = event["pathParameters"]["collectionId"]
@@ -70,7 +70,7 @@ def lambda_handler(event, context):
 
     # Create a presigned POST URL
     obj_response = s3_client.generate_presigned_post(
-        Bucket=document_bucket,
+        Bucket=temp_bucket,
         Key=key,
         ExpiresIn=86400
     )
