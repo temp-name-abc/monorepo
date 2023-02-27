@@ -31,7 +31,7 @@ export function Context({ context }: IProps) {
                     {collectionData?.name ? collectionData.name : "Collection"}
                 </Link>
                 <span className="font-bold text-gray-600">/</span>
-                <Link href={documentData?.url ? documentData.url : "#"} className="cursor-pointer font-medium text-gray-600 hover:text-gray-700">
+                <Link href={documentData?.fileUrl ? documentData.fileUrl : "#"} className="cursor-pointer font-medium text-gray-600 hover:text-gray-700">
                     {documentData?.name ? documentData.name : "Document"}
                 </Link>
             </div>

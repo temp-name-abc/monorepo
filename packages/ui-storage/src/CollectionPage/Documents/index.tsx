@@ -9,7 +9,7 @@ export function Documents({ documents }: IProps) {
     if (!documents) return null;
 
     return (
-        <div className="grid grid-cols-4 gap-10">
+        <div className="grid grid-cols-3 gap-10">
             {documents.documents.map((document, i) => (
                 <Document key={i} document={document} />
             ))}
