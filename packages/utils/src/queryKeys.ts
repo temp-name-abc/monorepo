@@ -7,3 +7,5 @@ export const KEY_DOCUMENT = "document";
 export const KEY_CONVERSATIONS = "conversations";
 
 export const KEY_CHATS = "chats";
+
+export const KEY_PORTAL = "portal";

@@ -1,5 +1,7 @@
 import { CollectionsPage } from "ui-storage";
 
-export default function Collections() {
+interface IProps {}
+
+export default function Collections({}: IProps) {
     return <CollectionsPage />;
 }

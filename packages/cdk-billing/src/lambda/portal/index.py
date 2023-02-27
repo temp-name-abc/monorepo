@@ -21,7 +21,7 @@ def route_to_portal(customer_id: str, home_url: str, user_id: str):
     logger.info(f"Created portal session for user `{user_id}`")
 
     return {
-        "statusCode": 302,
+        "statusCode": 200,
         "headers": {
             "Access-Control-Allow-Origin": "*",
         },
@@ -45,7 +45,7 @@ def lambda_handler(event, context):
     query_params = event["queryStringParameters"]
 
     product_id = None
-    if "productId" in query_params:
+    if query_params != None and "productId" in query_params:
         product_id = query_params["productId"]
 
     # Load the Stripe key

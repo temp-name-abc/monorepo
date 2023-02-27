@@ -9,6 +9,6 @@ export const productData: { [key in IProduct]: IProductData } = {
     },
     "storage.document.process.text": {
         name: "Text document processing",
-        description: "Upload, process, and store text documents",
+        description: "Upload, process, and store text documents.",
     },
 };
