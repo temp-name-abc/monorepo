@@ -72,7 +72,10 @@ def lambda_handler(event, context):
     obj_response = s3_client.generate_presigned_post(
         Bucket=temp_bucket,
         Key=key,
-        ExpiresIn=86400
+        ExpiresIn=86400,
+        Fields={
+            "Content-Type": file_type
+        }
     )
 
     logger.info(f"Created file upload record with key '{key}' for user '{user_id}'")
