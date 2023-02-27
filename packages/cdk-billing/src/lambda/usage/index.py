@@ -47,8 +47,7 @@ def lambda_handler(event, context):
                     "id": {"S": key},
                     "timestamp": {"N": str(timestamp)},
                     "productId": {"S": product_id},
-                    "userData": {"S": json.dumps(user_data)},
-                    "productData": {"S": json.dumps(product_data)},
+                    "userId": {"S": user_id},
                     "quantity": {"N": str(quantity)}
                 },
                 ConditionExpression="attribute_not_exists(id)"
