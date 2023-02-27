@@ -163,6 +163,7 @@ export class StorageStack extends cdk.NestedStack {
                 COLLECTION_TABLE: collectionTable.tableName,
                 DOCUMENT_TABLE: documentTable.tableName,
                 DOCUMENT_BUCKET: documentBucket.bucketName,
+                PROCESSED_DOCUMENT_BUCKET: processedDocumentBucket.bucketName,
             },
             timeout: cdk.Duration.seconds(30),
         });
@@ -170,6 +171,7 @@ export class StorageStack extends cdk.NestedStack {
         collectionTable.grantReadData(collectionDocumentsFn);
         documentTable.grantReadData(collectionDocumentsFn);
         documentBucket.grantRead(collectionDocumentsFn);
+        processedDocumentBucket.grantRead(collectionDocumentsFn);
 
         documentResource.addMethod("GET", new apigw.LambdaIntegration(collectionDocumentsFn), {
             authorizer: props.authorizer,
@@ -185,6 +187,7 @@ export class StorageStack extends cdk.NestedStack {
                 COLLECTION_TABLE: collectionTable.tableName,
                 DOCUMENT_TABLE: documentTable.tableName,
                 DOCUMENT_BUCKET: documentBucket.bucketName,
+                PROCESSED_DOCUMENT_BUCKET: processedDocumentBucket.bucketName,
             },
             timeout: cdk.Duration.seconds(30),
         });
@@ -192,6 +195,7 @@ export class StorageStack extends cdk.NestedStack {
         collectionTable.grantReadData(getDocumentFn);
         documentTable.grantReadData(getDocumentFn);
         documentBucket.grantRead(getDocumentFn);
+        processedDocumentBucket.grantRead(getDocumentFn);
 
         documentIdResource.addMethod("GET", new apigw.LambdaIntegration(getDocumentFn), {
             authorizer: props.authorizer,

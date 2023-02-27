@@ -16,6 +16,7 @@ def lambda_handler(event, context):
     collection_table = os.getenv("COLLECTION_TABLE")
     document_table = os.getenv("DOCUMENT_TABLE")
     document_bucket = os.getenv("DOCUMENT_BUCKET")
+    processed_document_bucket = os.getenv("PROCESSED_DOCUMENT_BUCKET")
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     collection_id = event["pathParameters"]["collectionId"]
@@ -59,12 +60,21 @@ def lambda_handler(event, context):
         document["documentId"] = item["documentId"]["S"]
         document["name"] = item["name"]["S"]
         document["type"] = item["type"]["S"]
-        document["url"] = s3_client.generate_presigned_url(
+        document["fileUrl"] = s3_client.generate_presigned_url(
             "get_object",
             Params={
                 "Bucket": document_bucket,
                 "Key": document["documentId"],
                 "ResponseContentDisposition": f'attachment; filename="{item["name"]["S"]}"'
+            },
+            ExpiresIn=86400
+        )
+        document["processedFileUrl"] = s3_client.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": processed_document_bucket,
+                "Key": document["documentId"],
+                "ResponseContentDisposition": f'attachment; filename="{item["name"]["S"] + ".PROCESSED.txt"}"'
             },
             ExpiresIn=86400
         )
