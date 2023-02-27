@@ -30,7 +30,12 @@ export function TextCreate({ cta, placeholder, onClick, disabled }: IProps) {
                 placeholder={placeholder}
                 className="w-full px-4 py-2 text-gray-400 bg-gray-100 focus:bg-gray-200 focus:text-gray-800 outline-none"
             />
-            <input disabled={disabled} type="submit" value={cta} className="cursor-pointer font-medium px-4 py-2 text-gray-50 bg-violet-600 hover:bg-violet-700" />
+            <input
+                disabled={disabled}
+                type="submit"
+                value={cta}
+                className={`cursor-pointer font-medium px-4 py-2 ${disabled ? "text-gray-400 bg-gray-100" : "text-gray-50 bg-violet-600 hover:bg-violet-700"}`}
+            />
         </form>
     );
 }
