@@ -108,11 +108,6 @@ export class StorageStack extends cdk.NestedStack {
             timeToLiveAttribute: "ttl",
         });
 
-        const uploadLockTable = new dynamodb.Table(this, "uploadLockTable", {
-            partitionKey: { name: "uploadId", type: dynamodb.AttributeType.STRING },
-            timeToLiveAttribute: "ttl",
-        });
-
         const documentBucket = new s3.Bucket(this, "documentBucket", {
             blockPublicAccess: {
                 blockPublicAcls: true,
@@ -218,7 +213,6 @@ export class StorageStack extends cdk.NestedStack {
                 PINECONE_SECRET: pineconeSecret.secretName,
                 OPENAI_SECRET: openAISecret.secretName,
                 UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
-                UPLOAD_LOCK_TABLE: uploadLockTable.tableName,
                 DOCUMENT_TABLE: documentTable.tableName,
                 CHUNK_TABLE: chunkTable.tableName,
                 CHUNK_BUCKET: chunkBucket.bucketName,
@@ -232,7 +226,6 @@ export class StorageStack extends cdk.NestedStack {
         pineconeSecret.grantRead(processFn);
         openAISecret.grantRead(processFn);
         uploadRecordsTable.grantReadData(processFn);
-        uploadLockTable.grantWriteData(processFn);
         documentTable.grantWriteData(processFn);
         documentBucket.grantRead(processFn);
         chunkTable.grantWriteData(processFn);

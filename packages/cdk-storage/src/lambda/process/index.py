@@ -5,8 +5,8 @@ import logging
 import openai
 import pinecone
 import requests
-import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
+import hashlib
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 
@@ -42,7 +42,6 @@ def lambda_handler(event, context):
     pinecone_secret = os.getenv("PINECONE_SECRET")
     openai_secret = os.getenv("OPENAI_SECRET")
     upload_records_table = os.getenv("UPLOAD_RECORDS_TABLE")
-    upload_lock_table = os.getenv("UPLOAD_LOCK_TABLE")
     document_table = os.getenv("DOCUMENT_TABLE")
     chunk_table = os.getenv("CHUNK_TABLE")
     chunk_bucket = os.getenv("CHUNK_BUCKET")
@@ -75,25 +74,9 @@ def lambda_handler(event, context):
         # Lock the upload temporarily
         now = datetime.utcnow()
         timestamp = int(now.timestamp())
-        expiry_time = now + timedelta(minutes=10)
-        ttl_seconds = int(expiry_time.timestamp())
-
-        dynamodb_client.put_item(
-            TableName=upload_lock_table,
-            Item={
-                "uploadId": {"S": document_id},
-                "ttl": {"N": str(ttl_seconds)}
-            },
-            ConditionExpression="attribute_not_exists(uploadId)"
-        )
 
         # Get the upload document
-        upload_data = dynamodb_client.get_item(
-            TableName=upload_records_table,
-            Key={
-                "uploadId": {"S": document_id}
-            }
-        )["Item"]
+        upload_data = dynamodb_client.get_item(TableName=upload_records_table, Key={"uploadId": {"S": document_id}})["Item"]
 
         user_id = upload_data["userId"]["S"]
         collection_id = upload_data["collectionId"]["S"]
@@ -132,8 +115,8 @@ def lambda_handler(event, context):
         tokens = 0
 
         while len(words) > 0:
-            chunk_id = str(uuid.uuid4())
             chunk = " ".join(words[:chunk_size])
+            chunk_id = hashlib.sha256(f"{collection_id}:{document_id}:{chunk}".encode()).hexdigest()
 
             # Create the embeddings
             embeddings_response = openai.Embedding.create(input=chunk, **model_settings)
