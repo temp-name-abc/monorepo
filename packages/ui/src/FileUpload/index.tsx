@@ -2,9 +2,10 @@ import { useState } from "react";
 
 interface IProps {
     uploadFile: (file: File) => any;
+    fileTypes?: string[];
 }
 
-export function FileUpload({ uploadFile }: IProps) {
+export function FileUpload({ uploadFile, fileTypes }: IProps) {
     const [files, setFiles] = useState<File[]>([]);
 
     return (
@@ -29,6 +30,7 @@ export function FileUpload({ uploadFile }: IProps) {
 
                     setFiles(Array.from(_files));
                 }}
+                accept={fileTypes ? fileTypes.join(",") : undefined}
             />
             <input type="submit" value="Upload" className="cursor-pointer font-medium px-4 py-2 text-gray-50 bg-violet-600 hover:bg-violet-700" />
         </form>

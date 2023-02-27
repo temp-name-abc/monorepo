@@ -38,7 +38,10 @@ export function CollectionPage({}: IProps) {
             links={links}
         >
             <div className="flex flex-col space-y-12">
-                <FileUpload uploadFile={(file) => token && mutation.mutate({ token, collectionId: collectionId as string, file })} />
+                <FileUpload
+                    uploadFile={(file) => token && mutation.mutate({ token, collectionId: collectionId as string, file })}
+                    fileTypes={["text/plain", "application/pdf"]}
+                />
                 <Documents documents={documentsData} />
             </div>
         </SubAppShell>
