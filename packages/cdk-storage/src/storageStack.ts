@@ -115,18 +115,11 @@ export class StorageStack extends cdk.NestedStack {
                 ignorePublicAcls: true,
                 restrictPublicBuckets: true,
             },
-            cors: [
+            lifecycleRules: [
                 {
-                    allowedMethods: [s3.HttpMethods.POST],
-                    allowedOrigins: ["*"],
-                    allowedHeaders: ["*"],
+                    expiration: cdk.Duration.days(1),
                 },
             ],
-            // lifecycleRules: [
-            //     {
-            //         expiration: cdk.Duration.days(1),
-            //     },
-            // ],
         });
 
         const documentBucket = new s3.Bucket(this, "documentBucket", {
@@ -267,7 +260,7 @@ export class StorageStack extends cdk.NestedStack {
 
         processFn.addEventSource(
             new lambdaEventSources.S3EventSource(tempBucket, {
-                events: [s3.EventType.OBJECT_CREATED_POST],
+                events: [s3.EventType.OBJECT_CREATED_PUT],
             })
         );
 

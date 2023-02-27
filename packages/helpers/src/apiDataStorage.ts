@@ -64,26 +64,24 @@ export async function getDocument(token: string, collectionId: string, documentI
 }
 
 export async function uploadDocument(token: string, collectionId: string, file: File) {
-    const { data } = await instance.post(
-        `/storage/collection/${collectionId}/document`,
-        {
-            type: file.type,
-            name: file.name,
-        },
-        {
-            headers: {
-                Authorization: token,
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+
+    reader.onload = async () => {
+        const processedFile = reader.result?.toString().split(",")[1];
+
+        await instance.post(
+            `/storage/collection/${collectionId}/document`,
+            {
+                type: file.type,
+                name: file.name,
+                file: processedFile,
             },
-        }
-    );
-
-    const formData = new FormData();
-    Object.keys(data.fields).forEach((key) => formData.append(key, data.fields[key]));
-    formData.append("file", file);
-
-    await axios.post(data.url, formData, {
-        headers: {
-            "Content-Type": "multipart/form-data",
-        },
-    });
+            {
+                headers: {
+                    Authorization: token,
+                },
+            }
+        );
+    };
 }

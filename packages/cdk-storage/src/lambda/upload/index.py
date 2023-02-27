@@ -4,6 +4,7 @@ import json
 import logging
 import uuid
 from datetime import datetime, timedelta
+import base64
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -13,7 +14,7 @@ dynamodb_client = boto3.client("dynamodb")
 
 
 def lambda_handler(event, context):
-    logger.info(f"Creating file upload request for '{event}'")
+    logger.info(f"Creating file upload request")
 
     upload_records_table = os.getenv("UPLOAD_RECORDS_TABLE")
     collection_table = os.getenv("COLLECTION_TABLE")
@@ -25,6 +26,7 @@ def lambda_handler(event, context):
 
     file_type = body["type"]
     file_name = body["name"]
+    file = base64.b64decode(body["file"])
 
     # Check the collection is valid
     response = dynamodb_client.get_item(
@@ -69,11 +71,7 @@ def lambda_handler(event, context):
     )
 
     # Create a presigned POST URL
-    obj_response = s3_client.generate_presigned_post(
-        Bucket=temp_bucket,
-        Key=key,
-        ExpiresIn=86400
-    )
+    s3_client.put_object(Bucket=temp_bucket, Key=key, Body=file)
 
     logger.info(f"Created file upload record with key '{key}' for user '{user_id}'")
 
@@ -81,7 +79,6 @@ def lambda_handler(event, context):
         "statusCode": 200,
         "headers": {
             "Access-Control-Allow-Origin": "*",
-        },
-        "body": json.dumps(obj_response)
+        }
     }
 
