@@ -14,7 +14,7 @@ export function Document({ document }: IProps) {
             target="_blank"
             rel="noreferrer"
         >
-            <span>{document.name}</span>
+            <span className="overflow-hidden">{document.name}</span>
             <span>{<FileText />}</span>
         </a>
     );

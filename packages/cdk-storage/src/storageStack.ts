@@ -122,11 +122,11 @@ export class StorageStack extends cdk.NestedStack {
                     allowedHeaders: ["*"],
                 },
             ],
-            lifecycleRules: [
-                {
-                    expiration: cdk.Duration.days(1),
-                },
-            ],
+            // lifecycleRules: [
+            //     {
+            //         expiration: cdk.Duration.days(1),
+            //     },
+            // ],
         });
 
         const documentBucket = new s3.Bucket(this, "documentBucket", {
