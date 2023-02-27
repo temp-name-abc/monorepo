@@ -50,11 +50,7 @@ export default NextAuth({
             } else if (props.token.refreshToken && props.token.expiresAt) {
                 const timestamp = Date.now();
 
-                console.log(timestamp, props.token.expiresAt);
-
                 if (timestamp >= (props.token.expiresAt as number)) {
-                    console.log("HERE");
-
                     const refreshedTokens = await refreshAccessToken(props.token.refreshToken as string);
 
                     props.token.idToken = refreshedTokens.id_token;
