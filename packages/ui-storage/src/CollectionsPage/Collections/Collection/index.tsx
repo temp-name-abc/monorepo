@@ -13,7 +13,7 @@ export function Collection({ collection }: IProps) {
             href={`/storage/collections/${collection.collectionId}`}
             className="flex items justify-between text-gray-800 bg-gray-200 hover:bg-gray-300 px-8 py-4 font-medium space-x-4"
         >
-            <span>{collection.name}</span>
+            <span className="overflow-hidden">{collection.name}</span>
             <span>{<Folder />}</span>
         </Link>
     );
