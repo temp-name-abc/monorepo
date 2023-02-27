@@ -40,13 +40,7 @@ def lambda_handler(event, context):
     utils.set_openai_api_key(secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"])
 
     # Check the conversation is valid
-    response = dynamodb_client.get_item(
-        TableName=conversation_table,
-        Key={
-            "userId": {"S": user_id},
-            "conversationId": {"S": conversation_id}
-        }
-    )
+    response = dynamodb_client.get_item(TableName=conversation_table, Key={"userId": {"S": user_id}, "conversationId": {"S": conversation_id}})
 
     if "Item" not in response:
         msg = f"User '{user_id}' tried to chat to invalid conversation '{collection_id}'"
@@ -70,16 +64,12 @@ def lambda_handler(event, context):
     timestamp = int(now.timestamp())
 
     if prev_chat_id != None:
-        prev_chat_data = dynamodb_client.get_item(
-            TableName=chat_table,
-            Key={
-                "conversationId": {"S": conversation_id},
-                "chatId": {"S": prev_chat_id}
-                }
-        )["Item"]
+        prev_chat_data = dynamodb_client.get_item(TableName=chat_table, Key={"conversationId": {"S": conversation_id}, "chatId": {"S": prev_chat_id}})["Item"]
 
         history = json.loads(prev_chat_data["history"]["S"])
         context = json.loads(prev_chat_data["context"]["S"])
+
+        logger.info(f"Loaded previous chat '{prev_chat_id}'")
 
     # Check the user can be billed bill
     active_url = f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
@@ -120,7 +110,7 @@ def lambda_handler(event, context):
     logger.info(f"Enough info prompt = '{enough_info_prompt}', response = '{enough_info}'")
 
     if "yes" not in enough_info.lower() and collection_id != None:
-        context = context[len(context) - memory_size + 1:]
+        context = context[max(len(context) - memory_size + 1, 0):]
 
         # Retrieve query
         query_encoded = urllib.parse.quote(query)
@@ -167,7 +157,7 @@ def lambda_handler(event, context):
     logger.info(f"Chat prompt = '{chat_prompt}', response = '{chat}'")
 
     history.append({"human": question, "ai": chat, "chatId": chat_id})
-    history = history[len(history) - memory_size:]
+    history = history[max(len(history) - memory_size, 0):]
 
     # Store the data
     dynamodb_client.put_item(
