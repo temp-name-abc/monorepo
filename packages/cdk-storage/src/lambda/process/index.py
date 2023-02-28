@@ -124,9 +124,9 @@ def lambda_handler(event, context):
             continue
 
         # Check the uploaded document is safe
-        is_safe = openai.Moderation.create(input=text)["results"][0]["flagged"]
+        is_flagged = openai.Moderation.create(input=text)["results"][0]["flagged"]
 
-        if not is_safe:
+        if is_flagged:
             logger.error(f"User '{user_id}' uploaded unsafe document")
 
             continue

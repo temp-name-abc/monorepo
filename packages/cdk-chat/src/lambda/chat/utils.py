@@ -40,7 +40,7 @@ def is_safe_text(text):
         input=text
     )
 
-    return response["results"][0]["flagged"]
+    return not response["results"][0]["flagged"]
 
 
 def prompt_query(conversation, question):
@@ -56,6 +56,7 @@ Query:"""
 def prompt_chat(context, conversation, question):
     return f"""The following is a friendly conversation between a human and an AI.
 The AI is talkative and provides lots of specific details from its context.
+The AI is only able to use information from its context to answer the question. If the context is not present, the AI cannot answer the question.
 If the AI does not have enough context to answer the question, it says it does not have enough information to answer the question, and does not try to make up an answer.
 
 Context:
