@@ -100,7 +100,7 @@ export function ConversationsPage({}: IProps) {
                                 }}
                                 cta="Send"
                                 placeholder="Send a chat"
-                                disabled={isMutatingChat}
+                                disabled={isMutatingChat || !collectionId}
                                 maxCharacters={chatData.maxCharacters}
                             />
                         </div>

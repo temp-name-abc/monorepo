@@ -2,7 +2,6 @@ import boto3
 import json
 import os
 import logging
-import requests
 from datetime import datetime
 import uuid
 import utils
@@ -35,7 +34,6 @@ def lambda_handler(event, context):
     chat_table = os.getenv("CHAT_TABLE")
     api_url = os.getenv("API_URL")
     product_id = os.getenv("PRODUCT_ID")
-    context_memory_size = int(os.getenv("CONTEXT_MEMORY_SIZE"))
     chat_memory_size = int(os.getenv("CHAT_MEMORY_SIZE"))
     documents_retrieved = int(os.getenv("DOCUMENTS_RETRIEVED"))
     matching_threshold = float(os.getenv("MATCHING_THRESHOLD"))
@@ -47,7 +45,7 @@ def lambda_handler(event, context):
     body = json.loads(event["body"])
 
     prev_chat_id = body["chatId"] if "chatId" in body else None
-    collection_id = body["collectionId"] if "collectionId" in body else None
+    collection_id = body["collectionId"]
     question = body["question"]
 
     # Validate inputs
@@ -79,7 +77,6 @@ def lambda_handler(event, context):
         prev_chat_data = dynamodb_client.get_item(TableName=chat_table, Key={"conversationId": {"S": conversation_id}, "chatId": {"S": prev_chat_id}})["Item"]
 
         history = json.loads(prev_chat_data["history"]["S"])
-        context = json.loads(prev_chat_data["context"]["S"])
 
         logger.info(f"Loaded previous chat '{prev_chat_id}'")
 
@@ -93,53 +90,44 @@ def lambda_handler(event, context):
 
     # Get the conversation
     conversation_text = utils.create_conversation(history)
-    context_text = utils.create_context(context)
 
     # Figure out the question
     query_prompt = utils.prompt_query(conversation_text, question)
     query = utils.generate_text(query_prompt, max_characters)
     logger.info(f"Query prompt = '{query_prompt}', response = '{query}'")
 
-    # Check if there is enough context
-    query_context_similarity = utils.query_similarity(context_text, query)
-    logger.info(f"Similarity = '{query_context_similarity}'")
+    # Retrieve question context
+    documents = utils.get_documents(api_url, query, user_id, collection_id, documents_retrieved)
 
-    if query_context_similarity < matching_threshold and collection_id != None:
-        context = context[max(len(context) - context_memory_size + documents_retrieved, 0):]
+    if documents == None:
+        logger.error(f"Unable to find documents")
+    
+    elif not documents:
+        logger.warning(f"No documents found")
+    
+    else:
+        chunks = {}
 
-        documents = utils.get_documents(api_url, query, user_id, collection_id, documents_retrieved + context_memory_size)
+        for document in documents:
+            if document["score"] < matching_threshold:
+                break
 
-        if documents == None:
-            logger.error(f"Unable to find documents")
-        
-        elif not documents:
-            logger.warning(f"No documents found")
-        
-        else:
-            chunks = {document["chunkId"]: True for document in context}
-            retrieved = 0
+            if document["chunkId"] in chunks:
+                continue
 
-            for document in documents:
-                if document["score"] < matching_threshold or retrieved == documents_retrieved:
-                    break
+            context.append({
+                "body": document["body"],
+                "documentId": document["documentId"],
+                "collectionId": collection_id,
+                "chunkId": document["chunkId"],
+                "score": document["score"]
+            })
 
-                if document["chunkId"] in chunks:
-                    continue
+            chunks[document["chunkId"]] = True
 
-                context.append({
-                    "body": document["body"],
-                    "documentId": document["documentId"],
-                    "collectionId": collection_id,
-                    "chunkId": document["chunkId"],
-                    "score": document["score"]
-                })
+            logger.info(f"Retrieved context chunk '{document['chunkId']}' for document '{document['documentId']}'")
 
-                chunks[document["chunkId"]] = True
-                retrieved += 1
-
-                logger.info(f"Retrieved context chunk '{document['chunkId']}' for document '{document['documentId']}'")
-
-            context_text = utils.create_context(context)
+        context_text = utils.create_context(context)
 
     # Generate the response and update the history
     chat_prompt = utils.prompt_chat(context_text, conversation_text, question)

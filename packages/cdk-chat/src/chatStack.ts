@@ -94,15 +94,21 @@ export class ChatStack extends cdk.NestedStack {
         // Create chat function
         const product: IProduct = "chat.chat";
 
-        const chatFn = new lambda.DockerImageFunction(this, "chatFn", {
-            code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "chat")),
+        const chatFn = new lambda.Function(this, "chatFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "chat"), {
+                bundling: {
+                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+                },
+            }),
+            handler: "index.lambda_handler",
             environment: {
                 OPENAI_SECRET: openAISecret.secretName,
                 CONVERSATION_TABLE: conversationTable.tableName,
                 CHAT_TABLE: chatTable.tableName,
                 API_URL: API_BASE_URL,
                 PRODUCT_ID: product,
-                CONTEXT_MEMORY_SIZE: chatData.contextMemoryLength.toString(),
                 CHAT_MEMORY_SIZE: chatData.chatMemoryLength.toString(),
                 DOCUMENTS_RETRIEVED: chatData.documentsRetrieved.toString(),
                 MATCHING_THRESHOLD: chatData.matchingThreshold.toString(),
