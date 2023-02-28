@@ -94,38 +94,38 @@ export class ChatStack extends cdk.NestedStack {
         // Create chat function
         const product: IProduct = "chat.chat";
 
-        // const chatFn = new lambda.DockerImageFunction(this, "chatFn", {
-        //     code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "chat")),
-        //     environment: {
-        //         OPENAI_SECRET: openAISecret.secretName,
-        //         CONVERSATION_TABLE: conversationTable.tableName,
-        //         CHAT_TABLE: chatTable.tableName,
-        //         API_URL: API_BASE_URL,
-        //         PRODUCT_ID: product,
-        //         CONTEXT_MEMORY_SIZE: chatData.contextMemoryLength.toString(),
-        //         CHAT_MEMORY_SIZE: chatData.chatMemoryLength.toString(),
-        //         DOCUMENTS_RETRIEVED: chatData.documentsRetrieved.toString(),
-        //         MATCHING_THRESHOLD: chatData.matchingThreshold.toString(),
-        //         MAX_CHARACTERS: chatData.maxCharacters.toString(),
-        //     },
-        //     timeout: cdk.Duration.minutes(1),
-        // });
+        const chatFn = new lambda.DockerImageFunction(this, "chatFn", {
+            code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "chat")),
+            environment: {
+                OPENAI_SECRET: openAISecret.secretName,
+                CONVERSATION_TABLE: conversationTable.tableName,
+                CHAT_TABLE: chatTable.tableName,
+                API_URL: API_BASE_URL,
+                PRODUCT_ID: product,
+                CONTEXT_MEMORY_SIZE: chatData.contextMemoryLength.toString(),
+                CHAT_MEMORY_SIZE: chatData.chatMemoryLength.toString(),
+                DOCUMENTS_RETRIEVED: chatData.documentsRetrieved.toString(),
+                MATCHING_THRESHOLD: chatData.matchingThreshold.toString(),
+                MAX_CHARACTERS: chatData.maxCharacters.toString(),
+            },
+            timeout: cdk.Duration.minutes(1),
+        });
 
-        // openAISecret.grantRead(chatFn);
-        // conversationTable.grantReadData(chatFn);
-        // chatTable.grantReadWriteData(chatFn);
-        // chatFn.addToRolePolicy(
-        //     new iam.PolicyStatement({
-        //         effect: iam.Effect.ALLOW,
-        //         actions: ["execute-api:Invoke"],
-        //         resources: ["*"],
-        //     })
-        // );
+        openAISecret.grantRead(chatFn);
+        conversationTable.grantReadData(chatFn);
+        chatTable.grantReadWriteData(chatFn);
+        chatFn.addToRolePolicy(
+            new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: ["execute-api:Invoke"],
+                resources: ["*"],
+            })
+        );
 
-        // convChatResource.addMethod("POST", new apigw.LambdaIntegration(chatFn), {
-        //     authorizer: props.authorizer,
-        //     authorizationType: apigw.AuthorizationType.COGNITO,
-        // });
+        convChatResource.addMethod("POST", new apigw.LambdaIntegration(chatFn), {
+            authorizer: props.authorizer,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
 
         // Get chats
         const getChatsFn = new lambda.Function(this, "getChatsFn", {
