@@ -127,9 +127,9 @@ def lambda_handler(event, context):
 
             logger.info(f"Retrieved context chunk '{document['chunkId']}' for document '{document['documentId']}'")
 
-        context_text = utils.create_context(context)
+    # Generate context, response, and update the history
+    context_text = utils.create_context(context)
 
-    # Generate the response and update the history
     chat_prompt = utils.prompt_chat(context_text, conversation_text, question)
     chat = utils.generate_text(chat_prompt, max_characters)
     logger.info(f"Chat prompt = '{chat_prompt}', response = '{chat}'")
