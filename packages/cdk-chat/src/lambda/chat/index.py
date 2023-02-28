@@ -135,10 +135,9 @@ def lambda_handler(event, context):
                 })
 
                 chunks[document["chunkId"]] = True
+                retrieved += 1
 
                 logger.info(f"Retrieved context chunk '{document['chunkId']}' for document '{document['documentId']}'")
-
-                retrieved += 1
 
             context_text = utils.create_context(context)
 
