@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SubAppShell } from "ui/src/SubAppShell";
 import { links } from "../links";
 import { useSession } from "next-auth/react";
-import { KEY_CHATS, KEY_COLLECTIONS, KEY_CONVERSATIONS } from "utils";
+import { chatData, KEY_CHATS, KEY_COLLECTIONS, KEY_CONVERSATIONS } from "utils";
 import { createChat, createConversation, getChats, getCollections, getConversations } from "helpers";
 import { Conversations } from "./Conversations";
 import { useEffect, useState } from "react";
@@ -101,6 +101,7 @@ export function ConversationsPage({}: IProps) {
                                 cta="Send"
                                 placeholder="Send a chat"
                                 disabled={isMutatingChat}
+                                maxCharacters={chatData.maxCharacters}
                             />
                         </div>
                         {selectedChat && <ChatContext chat={selectedChat} />}
