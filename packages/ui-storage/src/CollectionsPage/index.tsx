@@ -20,7 +20,7 @@ export function CollectionsPage({}: IProps) {
         enabled: !!token,
     });
 
-    const mutation = useMutation({
+    const { mutate, isLoading } = useMutation({
         mutationFn: (args: { token: string; name: string }) => createCollection(args.token, args.name),
         onSuccess: (collection) => {
             queryClient.invalidateQueries([KEY_COLLECTIONS]);
@@ -32,7 +32,7 @@ export function CollectionsPage({}: IProps) {
         <SubAppShell title="Storage / Collections" description="View all your collections of documents." links={links}>
             <div className="flex flex-col space-y-12">
                 <div className="ml-auto">
-                    <TextCreate onClick={(name) => token && mutation.mutate({ token, name })} cta="Create" placeholder="Create a collection" />
+                    <TextCreate onClick={(name) => token && mutate({ token, name })} cta="Create" placeholder="Create a collection" disabled={isLoading} />
                 </div>
                 <Collections collections={data} />
             </div>

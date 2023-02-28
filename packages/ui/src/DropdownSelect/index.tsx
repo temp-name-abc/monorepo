@@ -14,7 +14,7 @@ export function DropdownSelect({ options, onChange, selected: _selected }: IProp
     }, [selected]);
 
     useEffect(() => {
-        setSelected(_selected ? _selected : "");
+        setSelected(_selected && options.filter((opt) => opt[0] === _selected).length > 0 ? _selected : "");
     }, [_selected, setSelected]);
 
     return (

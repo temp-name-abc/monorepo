@@ -32,7 +32,7 @@ export function ConversationsPage({}: IProps) {
         enabled: !!token,
     });
 
-    const conversationMutation = useMutation({
+    const { mutate: conversationMutate, isLoading: isMutatingConversation } = useMutation({
         mutationFn: (args: { token: string; name: string }) => createConversation(args.token, args.name),
         onSuccess: () => queryClient.invalidateQueries([KEY_CONVERSATIONS]),
     });
@@ -55,7 +55,12 @@ export function ConversationsPage({}: IProps) {
         <SubAppShell title="Chat / Conversations" description="View all your conversations." links={links}>
             <div className="flex space-x-10">
                 <div className={`flex flex-col space-y-12 ${chatsData ? "w-1/4" : "w-full"}`}>
-                    <TextCreate onClick={(name) => token && conversationMutation.mutate({ token, name })} cta="Create" placeholder="Create a conversation" />
+                    <TextCreate
+                        onClick={(name) => token && conversationMutate({ token, name })}
+                        cta="Create"
+                        placeholder="Create a conversation"
+                        disabled={isMutatingConversation}
+                    />
                     <Conversations conversations={conversationsData} conversationId={conversationId} setConversationId={setConversationId} />
                 </div>
                 {chatsData && (
