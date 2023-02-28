@@ -1,6 +1,7 @@
-import { envVariable, IChatData, IProduct, IProductData } from "types";
+import { IChatData, IProduct, IProductData } from "types";
 
-export const API_BASE_URL = envVariable.parse(process.env.NEXT_PUBLIC_API_BASE_URL);
+export const API_BASE_URL = "https://wkpf3087f5.execute-api.ap-southeast-2.amazonaws.com/prod";
+export const HOME_BASE_URL = "HOME_URL=https://monorepo-web-eta.vercel.app";
 
 export const productData: { [key in IProduct]: IProductData } = {
     "chat.chat": {

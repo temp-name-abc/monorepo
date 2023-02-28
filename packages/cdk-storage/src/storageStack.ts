@@ -9,12 +9,11 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
 import { IProduct } from "types";
-import { chatData } from "utils";
+import { API_BASE_URL, chatData } from "utils";
 
 interface IStackProps extends cdk.NestedStackProps {
     api: apigw.RestApi;
     authorizer: apigw.CognitoUserPoolsAuthorizer;
-    apiUrl: string;
 }
 
 export class StorageStack extends cdk.NestedStack {
@@ -239,7 +238,7 @@ export class StorageStack extends cdk.NestedStack {
                 PROCESSED_DOCUMENT_BUCKET: processedDocumentBucket.bucketName,
                 CHUNK_TABLE: chunkTable.tableName,
                 CHUNK_BUCKET: chunkBucket.bucketName,
-                API_URL: props.apiUrl,
+                API_URL: API_BASE_URL,
                 PRODUCT_ID: product,
                 CHUNK_CHARACTERS: chatData.chunkCharacters.toString(),
             },

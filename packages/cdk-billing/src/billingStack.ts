@@ -9,12 +9,12 @@ import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
+import { HOME_BASE_URL } from "utils";
 
 interface IStackProps extends cdk.NestedStackProps {
     api: apigw.RestApi;
     authorizer: apigw.CognitoUserPoolsAuthorizer;
     userPool: cognito.UserPool;
-    homeUrl: string;
 }
 
 export class BillingStack extends cdk.NestedStack {
@@ -86,7 +86,7 @@ export class BillingStack extends cdk.NestedStack {
                 STRIPE_SECRET: stripeSecret.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
                 PRODUCTS_TABLE: productsTable.tableName,
-                HOME_URL: props.homeUrl,
+                HOME_URL: HOME_BASE_URL,
             },
             timeout: cdk.Duration.seconds(30),
         });
