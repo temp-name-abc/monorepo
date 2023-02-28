@@ -7,6 +7,7 @@ import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as path from "path";
 import { IProduct } from "types";
+import { chatData } from "utils";
 
 interface IStackProps extends cdk.NestedStackProps {
     api: apigw.RestApi;
@@ -109,7 +110,10 @@ export class ChatStack extends cdk.NestedStack {
                 CHAT_TABLE: chatTable.tableName,
                 API_URL: props.apiUrl,
                 PRODUCT_ID: product,
-                MEMORY_SIZE: "5",
+                CONTEXT_MEMORY_SIZE: chatData.contextMemoryLength.toString(),
+                CHAT_MEMORY_SIZE: chatData.chatMemoryLength.toString(),
+                DOCUMENTS_RETRIEVED: chatData.documentsRetrieved.toString(),
+                MATCHING_THRESHOLD: chatData.matchingThreshold.toString(),
             },
             timeout: cdk.Duration.minutes(1),
         });

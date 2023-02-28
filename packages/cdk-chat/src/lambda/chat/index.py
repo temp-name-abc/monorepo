@@ -25,7 +25,10 @@ def lambda_handler(event, context):
     chat_table = os.getenv("CHAT_TABLE")
     api_url = os.getenv("API_URL")
     product_id = os.getenv("PRODUCT_ID")
-    memory_size = int(os.getenv("MEMORY_SIZE"))
+    context_memory_size = int(os.getenv("CONTEXT_MEMORY_SIZE"))
+    chat_memory_size = int(os.getenv("CHAT_MEMORY_SIZE"))
+    documents_retrieved = int(os.getenv("DOCUMENTS_RETRIEVED"))
+    matching_threshold = float(os.getenv("MATCHING_THRESHOLD"))
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     conversation_id = event["pathParameters"]["conversationId"]
@@ -71,7 +74,7 @@ def lambda_handler(event, context):
 
         logger.info(f"Loaded previous chat '{prev_chat_id}'")
 
-    # Check the user can be billed bill
+    # Check the user can be billed
     active_url = f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
     active_request = utils.make_request(active_url, "GET")
     active_req = requests.get(active_url, headers=active_request.headers)
@@ -110,11 +113,11 @@ def lambda_handler(event, context):
     logger.info(f"Enough info prompt = '{enough_info_prompt}', response = '{enough_info}'")
 
     if "yes" not in enough_info.lower() and collection_id != None:
-        context = context[max(len(context) - memory_size + 1, 0):]
+        context = context[max(len(context) - context_memory_size + documents_retrieved, 0):]
 
         # Retrieve query
         query_encoded = urllib.parse.quote(query)
-        documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults=1&query={query_encoded}"
+        documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults={documents_retrieved}&query={query_encoded}"
         documents_request = utils.make_request(documents_url, "GET")
         documents_req = requests.get(documents_url, headers=documents_request.headers)
 
@@ -157,7 +160,7 @@ def lambda_handler(event, context):
     logger.info(f"Chat prompt = '{chat_prompt}', response = '{chat}'")
 
     history.append({"human": question, "ai": chat, "chatId": chat_id})
-    history = history[max(len(history) - memory_size, 0):]
+    history = history[max(len(history) - context_memory_size, 0):]
 
     # Store the data
     dynamodb_client.put_item(

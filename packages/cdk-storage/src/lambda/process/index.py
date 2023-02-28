@@ -51,7 +51,7 @@ def lambda_handler(event, context):
     chunk_bucket = os.getenv("CHUNK_BUCKET")
     api_url = os.getenv("API_URL")
     product_id = os.getenv("PRODUCT_ID")
-    chunk_size = int(os.getenv("CHUNK_SIZE"))
+    chunk_characters = int(os.getenv("CHUNK_CHARACTERS"))
 
     # Load the OpenAI API key
     openai.api_key = secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"]
@@ -123,34 +123,16 @@ def lambda_handler(event, context):
 
             continue
 
-        # Write the uploaded document to main storage
-        dynamodb_client.put_item(
-            TableName=document_table,
-            Item={
-                "collectionId": {"S": collection_id},
-                "documentId": {"S": document_id},
-                "userId": {"S": user_id},
-                "name": {"S": name},
-                "type": {"S": file_type},
-                "timestamp": {"S": str(timestamp)} 
-            }
-        )
-
-        s3_client.put_object(Bucket=document_bucket, Key=document_id, Body=raw_body)
-        s3_client.put_object(Bucket=processed_document_bucket, Key=document_id, Body=body)
-
         # Record the chunks of the document for indexing
-        words = body.split(" ")
-        tokens = 0
+        remaining = body
 
-        while len(words) > 0:
-            chunk = " ".join(words[:chunk_size])
+        while remaining:
+            chunk = remaining[:chunk_characters]
             chunk_id = hashlib.sha256(f"{collection_id}:{document_id}:{chunk}".encode()).hexdigest()
 
             # Create the embeddings
             embeddings_response = openai.Embedding.create(input=chunk, **model_settings)
             embeddings = embeddings_response["data"][0]["embedding"]
-            tokens += embeddings_response["usage"]["total_tokens"]
 
             # Store pinecone embeddings with a composite key
             index.upsert([
@@ -173,9 +155,25 @@ def lambda_handler(event, context):
                 }
             )
 
-            words = words[chunk_size:]
+            remaining = remaining[chunk_characters:]
 
             logger.info(f"Stored chunk '{chunk_id}' of document '{document_id}' in collection '{collection_id}'")
+
+        # Write the uploaded document to main storage
+        s3_client.put_object(Bucket=document_bucket, Key=document_id, Body=raw_body)
+        s3_client.put_object(Bucket=processed_document_bucket, Key=document_id, Body=body)
+
+        dynamodb_client.put_item(
+            TableName=document_table,
+            Item={
+                "collectionId": {"S": collection_id},
+                "documentId": {"S": document_id},
+                "userId": {"S": user_id},
+                "name": {"S": name},
+                "type": {"S": file_type},
+                "timestamp": {"S": str(timestamp)} 
+            }
+        )
 
         # Record usage for user
         usage_url = f"{api_url}/billing/iam/usage"
@@ -183,7 +181,7 @@ def lambda_handler(event, context):
             "userId": user_id,
             "timestamp": timestamp,
             "productId": product_id,
-            "quantity": tokens
+            "quantity": len(body)
         }))
         usage_req = requests.post(
             usage_url,

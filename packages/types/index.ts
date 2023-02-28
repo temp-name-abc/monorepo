@@ -13,3 +13,4 @@ export * from "./src/history";
 export * from "./src/product";
 export * from "./src/productData";
 export * from "./src/portalData";
+export * from "./src/chatData";
