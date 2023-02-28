@@ -123,6 +123,14 @@ def lambda_handler(event, context):
 
             continue
 
+        # Check the uploaded document is safe
+        is_safe = openai.Moderation.create(input=text)["results"][0]["flagged"]
+
+        if not is_safe:
+            logger.error(f"User '{user_id}' uploaded unsafe document")
+
+            continue
+
         # Record the chunks of the document for indexing
         remaining = body
 

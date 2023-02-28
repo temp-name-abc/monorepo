@@ -91,6 +91,14 @@ def lambda_handler(event, context):
     # Get the conversation
     conversation_text = utils.create_conversation(history)
 
+    # Moderate text
+    is_safe = utils.is_safe_text(conversation_text)
+
+    if not is_safe:
+        msg = f"User '{user_id}' sent unsafe text"
+
+        return make_error(msg)
+
     # Figure out the question
     query_prompt = utils.prompt_query(conversation_text, question)
     query = utils.generate_text(query_prompt, max_characters)

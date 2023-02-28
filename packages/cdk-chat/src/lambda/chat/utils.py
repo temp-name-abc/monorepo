@@ -35,6 +35,14 @@ def generate_text(prompt, max_characters, temperature = 0.7):
     return output
 
 
+def is_safe_text(text):
+    response = openai.Moderation.create(
+        input=text
+    )
+
+    return response["results"][0]["flagged"]
+
+
 def prompt_query(conversation, question):
     return f"""the following outputs the question that can be used to find the information required to answer the most recent question.
 
