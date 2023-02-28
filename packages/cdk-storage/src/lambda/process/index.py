@@ -75,7 +75,6 @@ def lambda_handler(event, context):
         document_id = record["s3"]["object"]["key"]
         bucket_name = record["s3"]["bucket"]["name"]
 
-        # Lock the upload temporarily
         now = datetime.utcnow()
         timestamp = int(now.timestamp())
 

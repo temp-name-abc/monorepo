@@ -145,6 +145,13 @@ export class StorageStack extends cdk.NestedStack {
             pointInTimeRecovery: true,
         });
 
+        const chunkIndexName = "chunkIndex";
+
+        chunkTable.addGlobalSecondaryIndex({
+            indexName: chunkIndexName,
+            partitionKey: { name: "documentId", type: dynamodb.AttributeType.STRING },
+        });
+
         const chunkBucket = new s3.Bucket(this, "chunkBucket", {
             blockPublicAccess: {
                 blockPublicAcls: true,
@@ -198,6 +205,42 @@ export class StorageStack extends cdk.NestedStack {
         processedDocumentBucket.grantRead(getDocumentFn);
 
         documentIdResource.addMethod("GET", new apigw.LambdaIntegration(getDocumentFn), {
+            authorizer: props.authorizer,
+            authorizationType: apigw.AuthorizationType.COGNITO,
+        });
+
+        // Delete a document
+        const deleteDocumentFn = new lambda.Function(this, "deleteDocumentFn", {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "deleteDocument"), {
+                bundling: {
+                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+                },
+            }),
+            handler: "index.lambda_handler",
+            environment: {
+                PINECONE_SECRET: pineconeSecret.secretName,
+                DOCUMENT_TABLE: documentTable.tableName,
+                DOCUMENT_BUCKET: documentBucket.bucketName,
+                PROCESSED_DOCUMENT_BUCKET: processedDocumentBucket.bucketName,
+                CHUNK_TABLE: chunkTable.tableName,
+                CHUNK_INDEX_NAME: chunkIndexName,
+                CHUNK_BUCKET: chunkBucket.bucketName,
+            },
+            timeout: cdk.Duration.minutes(1),
+        });
+
+        // Add permissions
+        pineconeSecret.grantRead(deleteDocumentFn);
+        documentTable.grantWriteData(deleteDocumentFn);
+        documentBucket.grantDelete(deleteDocumentFn);
+        processedDocumentBucket.grantDelete(deleteDocumentFn);
+        chunkTable.grantWriteData(deleteDocumentFn);
+        chunkBucket.grantDelete(deleteDocumentFn);
+
+        // Add API integration
+        documentIdResource.addMethod("DELETE", new apigw.LambdaIntegration(deleteDocumentFn), {
             authorizer: props.authorizer,
             authorizationType: apigw.AuthorizationType.COGNITO,
         });
