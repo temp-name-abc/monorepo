@@ -37,10 +37,10 @@ def generate_text(prompt, max_characters, temperature = 0.7):
 
 
 def query_similarity(text, query):
-    text_response = openai.Embedding.create(input=text, model="text-davinci-003")
+    text_response = openai.Embedding.create(input=text, model="text-embedding-ada-002")
     text_embedding = np.array(text_response["data"][0]["embedding"])
 
-    query_response = openai.Embedding.create(input=query, model="text-davinci-003")
+    query_response = openai.Embedding.create(input=query, model="text-embedding-ada-002")
     query_embedding = np.array(query_response["data"][0]["embedding"])
 
     similarity = np.dot(text_embedding, query_embedding) / (np.linalg.norm(text_embedding) * np.linalg.norm(query_embedding))
