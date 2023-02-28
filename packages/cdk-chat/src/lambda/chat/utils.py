@@ -1,8 +1,12 @@
 import openai
+import json
 import os
 import boto3
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
+import numpy as np
+import urllib.parse
+import requests
 
 
 def make_request(url, method, data = None):
@@ -25,25 +29,23 @@ def set_openai_api_key(api_key):
     openai.api_key = api_key
 
 
-def generate_text(prompt, temperature = 0.7):
-    response = openai.Completion.create(prompt=prompt, temperature=temperature, max_tokens=2048, model="text-davinci-003")
+def generate_text(prompt, max_characters, temperature = 0.7):
+    response = openai.Completion.create(prompt=prompt, temperature=temperature, max_tokens=max_characters // 4, model="text-davinci-003")
     output = response["choices"][0]["text"].strip()
-    tokens = response["usage"]["total_tokens"]
 
-    return output, tokens
+    return output
 
 
-def prompt_enough_info(context, question):
-    return f"""The following answers whether the context provided in the following context is sufficient to answer the question.
-If there is enough context provided to answer the question, the answer is 'yes', otherwise, the answer should be 'no'.
+def query_similarity(text, query):
+    text_response = openai.Embedding.create(input=text, model="text-davinci-003")
+    text_embedding = np.array(text_response["data"][0]["embedding"])
 
-Context:
-{context}
+    query_response = openai.Embedding.create(input=query, model="text-davinci-003")
+    query_embedding = np.array(query_response["data"][0]["embedding"])
 
-Question:
-{question}
+    similarity = np.dot(text_embedding, query_embedding) / (np.linalg.norm(text_embedding) * np.linalg.norm(query_embedding))
 
-Answer:"""
+    return similarity
 
 
 def prompt_query(conversation, question):
@@ -77,3 +79,40 @@ AI: {conversation["ai"]}""" for conversation in history)
 
 def create_context(context):
     return ". ".join(ctx["body"] for ctx in context)
+
+
+def get_documents(api_url, query, user_id, collection_id, documents_retrieved):
+    query_encoded = urllib.parse.quote(query)
+    documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults={documents_retrieved}&query={query_encoded}"
+    documents_request = make_request(documents_url, "GET")
+    documents_req = requests.get(documents_url, headers=documents_request.headers)
+
+    if not documents_req.ok:
+        return None
+
+    return documents_req.json()
+
+
+def record_usage(api_url, user_id, timestamp, product_id, question):
+    usage_url = f"{api_url}/billing/iam/usage"
+    usage_request = make_request(usage_url, "POST", json.dumps({
+        "userId": user_id,
+        "timestamp": timestamp,
+        "productId": product_id,
+        "quantity": len(question)
+    }))
+    usage_req = requests.post(
+        usage_url,
+        headers=usage_request.headers,
+        data=usage_request.data
+    )
+
+    return usage_req.ok
+
+
+def is_billable(api_url, user_id, product_id):
+    active_url = f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
+    active_request = make_request(active_url, "GET")
+    active_req = requests.get(active_url, headers=active_request.headers)
+
+    return not (not active_req.ok or not active_req.json()["active"])

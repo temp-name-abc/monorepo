@@ -6,6 +6,7 @@ export const chatData = z.object({
     chatMemoryLength: z.number(),
     documentsRetrieved: z.number(),
     matchingThreshold: z.number(),
+    maxCharacters: z.number(),
 });
 
 export type IChatData = z.infer<typeof chatData>;
