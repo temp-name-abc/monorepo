@@ -117,9 +117,10 @@ def lambda_handler(event, context):
         
         else:
             chunks = {document["chunkId"]: True for document in context}
+            retrieved = 0
 
             for document in documents:
-                if document["score"] < matching_threshold:
+                if document["score"] < matching_threshold or retrieved == documents_retrieved:
                     break
 
                 if document["chunkId"] in chunks:
@@ -136,6 +137,8 @@ def lambda_handler(event, context):
                 chunks[document["chunkId"]] = True
 
                 logger.info(f"Retrieved context chunk '{document['chunkId']}' for document '{document['documentId']}'")
+
+                retrieved += 1
 
             context_text = utils.create_context(context)
 
