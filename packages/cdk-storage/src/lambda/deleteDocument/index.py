@@ -1,6 +1,7 @@
 import boto3
 import json
 import os
+from urllib.parse import parse_qs
 import logging
 import pinecone
 
@@ -39,9 +40,14 @@ def lambda_handler(event, context):
     index = pinecone.Index(pinecone_index)
 
     for record in event["Records"]:
-        user_id = record["userId"]
-        collection_id = record["collectionId"]
-        document_id = record["documentId"]
+        body = json.loads(record["body"])
+
+        user_id = body["userId"]
+
+        path_params = parse_qs(body["pathParams"].strip("{}"))
+
+        collection_id = path_params.get("collectionId")[0]
+        document_id = path_params.get("documentId")[0]
 
         # Check the user id is valid
         document_response = dynamodb_client.get_item(
