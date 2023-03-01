@@ -1,6 +1,6 @@
 import { IChatData, IProduct, IProductData } from "types";
 
-export const API_BASE_URL = "https://wkpf3087f5.execute-api.ap-southeast-2.amazonaws.com/prod";
+export const API_BASE_URL = "https://api.monostack.app/prod";
 export const HOME_BASE_URL = "https://monostack.app";
 
 export const productData: { [key in IProduct]: IProductData } = {

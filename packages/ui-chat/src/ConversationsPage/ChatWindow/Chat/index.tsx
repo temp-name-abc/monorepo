@@ -1,5 +1,5 @@
 import { IChat } from "types";
-import { ChatBubble } from "ui";
+import { ChatBubble } from "../ChatBubble";
 
 interface IProps {
     chat: IChat;

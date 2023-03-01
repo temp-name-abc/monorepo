@@ -1,13 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { links } from "../links";
 import { useSession } from "next-auth/react";
-import { chatData, KEY_CHATS, KEY_COLLECTIONS, KEY_CONVERSATIONS } from "utils";
-import { createChat, createConversation, getChats, getCollections, getConversations } from "helpers";
+import { KEY_CONVERSATION, KEY_CONVERSATIONS } from "utils";
+import { createConversation, getChats, getConversations } from "helpers";
 import { Conversations } from "./Conversations";
-import { useEffect, useState } from "react";
-import ChatWindow from "./ChatWindow";
-import { DropdownSelect, TextCreate, ChatContext, SubAppShell } from "ui";
+import { useEffect, useRef, useState } from "react";
+import { ChatWindow } from "./ChatWindow";
+import { TextCreate, ChatContext, SubAppShell } from "ui";
 import { IChat } from "types";
+import ChatInput from "./ChatInput";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface IProps {}
 
@@ -15,14 +16,12 @@ export function ConversationsPage({}: IProps) {
     const session = useSession();
     const queryClient = useQueryClient();
 
+    const bottomRef = useRef(null);
+
     const [conversationId, setConversationId] = useState<string>("");
     const [question, setQuestion] = useState<string>("");
-    const [collectionId, setCollectionId] = useState<string>("");
     const [selectedChat, setSelectedChat] = useState<IChat | null>(null);
-
-    useEffect(() => {
-        setSelectedChat(null);
-    }, [conversationId, setSelectedChat]);
+    const [isTyping, setIsTyping] = useState<boolean>(false);
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
@@ -36,19 +35,18 @@ export function ConversationsPage({}: IProps) {
         onSuccess: () => queryClient.invalidateQueries([KEY_CONVERSATIONS]),
     });
 
-    const { data: chatsData } = useQuery([KEY_CHATS, conversationId], () => getChats(token as string, conversationId), {
+    const { data: chatsData } = useQuery([KEY_CONVERSATION, conversationId], () => getChats(token as string, conversationId), {
         enabled: !!token && !!conversationId,
     });
 
-    const { mutate: chatMutation, isLoading: isMutatingChat } = useMutation({
-        mutationFn: (args: { token: string; conversationId: string; question: string; collectionId?: string; prevChatId?: string }) =>
-            createChat(args.token, args.conversationId, args.question, args.collectionId, args.prevChatId),
-        onSuccess: (_, { conversationId }) => queryClient.invalidateQueries([KEY_CHATS, conversationId]),
-    });
+    useEffect(() => {
+        setSelectedChat(null);
+    }, [conversationId, setSelectedChat]);
 
-    const { data: collectionsData } = useQuery([KEY_COLLECTIONS], () => getCollections(token as string), {
-        enabled: !!token,
-    });
+    useEffect(() => {
+        // @ts-expect-error
+        bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, [chatsData, question]);
 
     return (
         <SubAppShell title="Chat / Conversations" description="View all your conversations." links={links}>
@@ -62,50 +60,12 @@ export function ConversationsPage({}: IProps) {
                     />
                     <Conversations conversations={conversationsData} conversationId={conversationId} setConversationId={setConversationId} />
                 </div>
-                {chatsData && (
-                    <div className="flex flex-col space-y-12 w-3/4">
-                        <ChatWindow chats={chatsData} question={isMutatingChat ? question : undefined} onClickReply={setSelectedChat} />
-                        <div className="flex space-x-8">
-                            {collectionsData && (
-                                <div className="w-1/4">
-                                    <DropdownSelect
-                                        options={collectionsData.collections.map((collection) => [collection.collectionId, collection.name])}
-                                        onChange={setCollectionId}
-                                        selected={(() => {
-                                            const chats = chatsData.chats;
-
-                                            if (chats.length !== 0) {
-                                                const context = chats[chats.length - 1].context;
-
-                                                if (context.length !== 0) return context[context.length - 1].collectionId;
-                                            }
-                                        })()}
-                                    />
-                                </div>
-                            )}
-                            <TextCreate
-                                onClick={(question) => {
-                                    const chats = chatsData.chats;
-                                    let prevChatId: string | undefined = undefined;
-
-                                    if (chats.length !== 0) {
-                                        const history = chats[chats.length - 1].history;
-                                        prevChatId = history[history.length - 1].chatId;
-                                    }
-
-                                    setQuestion(question);
-
-                                    token && conversationId && chatMutation({ token, conversationId, question, collectionId, prevChatId });
-                                }}
-                                cta="Send"
-                                placeholder="Send a chat"
-                                disabled={isMutatingChat || !collectionId}
-                                maxCharacters={chatData.maxCharacters}
-                            />
-                        </div>
-                        {selectedChat && <ChatContext chat={selectedChat} />}
-                    </div>
-                )}
+                <div className="flex flex-col space-y-12 w-3/4">
+                    <ChatWindow chats={chatsData} question={isTyping ? question : undefined} onClickReply={setSelectedChat} />
+                    <ChatInput conversationId={conversationId} setQuestion={setQuestion} setIsTyping={setIsTyping} chatsData={chatsData} />
+                    <div ref={bottomRef} />
+                    {selectedChat && <ChatContext chat={selectedChat} />}
+                </div>
             </div>
         </SubAppShell>
     );

@@ -1,21 +1,15 @@
-import { useEffect, useRef } from "react";
 import { IChat, IChats } from "types";
-import { ChatBubble } from "ui";
+import { ChatBubble } from "./ChatBubble";
 import { Chat } from "./Chat";
 
 interface IProps {
-    chats: IChats;
+    chats?: IChats;
     question?: string;
     onClickReply?: (chat: IChat) => void;
 }
 
 export function ChatWindow({ chats, question, onClickReply }: IProps) {
-    const bottomRef = useRef(null);
-
-    useEffect(() => {
-        // @ts-expect-error
-        bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-    }, [chats, question]);
+    if (!chats) return null;
 
     return (
         <div className="h-[576px] bg-gray-100 p-10 space-y-8 overflow-y-auto">
@@ -31,7 +25,6 @@ export function ChatWindow({ chats, question, onClickReply }: IProps) {
                     </div>
                 )}
             </div>
-            <div ref={bottomRef} />
         </div>
     );
 }
