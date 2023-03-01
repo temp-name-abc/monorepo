@@ -23,9 +23,6 @@ def lambda_handler(event, context):
     chunk_index_name = os.getenv("CHUNK_INDEX_NAME")
     chunk_bucket = os.getenv("CHUNK_BUCKET")
 
-    user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
-    collection_id = event["pathParameters"]["collectionId"]
-    document_id = event["pathParameters"]["documentId"]
 
     # Load the Pinecone API key
     pinecone_data = json.loads(secrets_manager_client.get_secret_value(SecretId=pinecone_secret)["SecretString"])
@@ -41,19 +38,24 @@ def lambda_handler(event, context):
 
     index = pinecone.Index(pinecone_index)
 
-    # Retrieve all document chunks
-    chunk_response = dynamodb_client.query(
-        TableName=chunk_table,
-        IndexName=chunk_index_name,
-        KeyConditionExpression="documentId = :documentId",
-        ExpressionAttributeValues={
-            ":documentId": {"S": document_id},
-        },
-    )
+    for record in event["Records"]:
+        user_id = record["userId"]
+        collection_id = record["collectionId"]
+        document_id = record["documentId"]
 
-    items = chunk_response["Items"]
+        # Check the user id is valid
+        document_response = dynamodb_client.get_item(
+            TableName=document_table,
+            Key={
+                "collectionId": {"S": collection_id},
+                "documentId": {"S": document_id}
+            }
+        )["Item"]
 
-    while "LastEvaluatedKey" in chunk_response:
+        if document_response["userId"]["S"] != user_id:
+            continue
+
+        # Retrieve all document chunks
         chunk_response = dynamodb_client.query(
             TableName=chunk_table,
             IndexName=chunk_index_name,
@@ -61,35 +63,40 @@ def lambda_handler(event, context):
             ExpressionAttributeValues={
                 ":documentId": {"S": document_id},
             },
-            ExclusiveStartKey=chunk_response["LastEvaluatedKey"]
         )
 
-        items.extend(chunk_response["Items"])
+        items = chunk_response["Items"]
 
-    # Delete each chunk
-    for item in items:
-        chunk_id = item["chunkId"]["S"]
+        while "LastEvaluatedKey" in chunk_response:
+            chunk_response = dynamodb_client.query(
+                TableName=chunk_table,
+                IndexName=chunk_index_name,
+                KeyConditionExpression="documentId = :documentId",
+                ExpressionAttributeValues={
+                    ":documentId": {"S": document_id},
+                },
+                ExclusiveStartKey=chunk_response["LastEvaluatedKey"]
+            )
 
-        index.delete(ids=[chunk_id])
+            items.extend(chunk_response["Items"])
 
-        s3_client.delete_object(Bucket=chunk_bucket, Key=chunk_id)
+        # Delete each chunk
+        for item in items:
+            chunk_id = item["chunkId"]["S"]
 
-        dynamodb_client.delete_item(TableName=chunk_table, Key={"chunkId": {"S": chunk_id}})
+            index.delete(ids=[chunk_id])
 
-        logger.info(f"Deleted chunk '{chunk_id}' for document '{document_id}'")
+            s3_client.delete_object(Bucket=chunk_bucket, Key=chunk_id)
 
-    # Delete the objects
-    s3_client.delete_object(Bucket=processed_document_bucket, Key=document_id)
-    s3_client.delete_object(Bucket=document_bucket, Key=document_id)
+            dynamodb_client.delete_item(TableName=chunk_table, Key={"chunkId": {"S": chunk_id}})
 
-    # Delete the item
-    dynamodb_client.delete_item(TableName=document_table, Key={"collectionId": {"S": collection_id}, "documentId": {"S": document_id}})
+            logger.info(f"Deleted chunk '{chunk_id}' for document '{document_id}'")
 
-    logger.info(f"Deleted document '{document_id}'")
+        # Delete the objects
+        s3_client.delete_object(Bucket=processed_document_bucket, Key=document_id)
+        s3_client.delete_object(Bucket=document_bucket, Key=document_id)
 
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Access-Control-Allow-Origin": "*",
-        },
-    }
+        # Delete the item
+        dynamodb_client.delete_item(TableName=document_table, Key={"collectionId": {"S": collection_id}, "documentId": {"S": document_id}})
+
+        logger.info(f"Deleted document '{document_id}'")

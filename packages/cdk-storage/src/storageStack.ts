@@ -6,6 +6,7 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
 import { IProduct } from "types";
@@ -210,6 +211,8 @@ export class StorageStack extends cdk.NestedStack {
         });
 
         // Delete a document
+        const deleteDocumentTimeout = cdk.Duration.minutes(15);
+
         const deleteDocumentFn = new lambda.Function(this, "deleteDocumentFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
             code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "deleteDocument"), {
@@ -228,22 +231,66 @@ export class StorageStack extends cdk.NestedStack {
                 CHUNK_INDEX_NAME: chunkIndexName,
                 CHUNK_BUCKET: chunkBucket.bucketName,
             },
-            timeout: cdk.Duration.minutes(1),
+            timeout: deleteDocumentTimeout,
         });
 
         // Grant permissions
         pineconeSecret.grantRead(deleteDocumentFn);
-        documentTable.grantWriteData(deleteDocumentFn);
+        documentTable.grantReadWriteData(deleteDocumentFn);
         documentBucket.grantDelete(deleteDocumentFn);
         processedDocumentBucket.grantDelete(deleteDocumentFn);
         chunkTable.grantReadWriteData(deleteDocumentFn);
         chunkBucket.grantDelete(deleteDocumentFn);
 
         // Add API integration
-        documentIdResource.addMethod("DELETE", new apigw.LambdaIntegration(deleteDocumentFn), {
-            authorizer: props.authorizer,
-            authorizationType: apigw.AuthorizationType.COGNITO,
+        const deleteQueue = new sqs.Queue(this, "deleteQueue", {
+            visibilityTimeout: deleteDocumentTimeout,
         });
+
+        deleteDocumentFn.addEventSource(new lambdaEventSources.SqsEventSource(deleteQueue));
+
+        const credentialsRole = new iam.Role(this, "deleteApiSqsRole", {
+            assumedBy: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+        });
+        deleteQueue.grantSendMessages(credentialsRole);
+
+        documentIdResource.addMethod(
+            "DELETE",
+            new apigw.AwsIntegration({
+                service: "sqs",
+                path: `${process.env.CDK_DEFAULT_ACCOUNT}/${deleteQueue.queueName}`,
+                integrationHttpMethod: "POST",
+                options: {
+                    credentialsRole,
+                    requestParameters: {
+                        "integration.request.header.Content-Type": "'application/x-www-form-urlencoded'",
+                    },
+                    requestTemplates: {
+                        "application/json": `Action=SendMessage&MessageBody={"collectionId": "$pathParameters.collectionId", "documentId": "$pathParameters.documentId", "userId": "$context.authorizer.claims.sub"}`,
+                    },
+                    integrationResponses: [
+                        {
+                            statusCode: "200",
+                            responseParameters: {
+                                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                            },
+                        },
+                    ],
+                },
+            }),
+            {
+                methodResponses: [
+                    {
+                        statusCode: "200",
+                        responseParameters: {
+                            "method.response.header.Access-Control-Allow-Origin": true,
+                        },
+                    },
+                ],
+                authorizer: props.authorizer,
+                authorizationType: apigw.AuthorizationType.COGNITO,
+            }
+        );
 
         // Create upload function
         const uploadFn = new lambda.Function(this, "uploadFn", {
