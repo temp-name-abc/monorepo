@@ -58,6 +58,7 @@ def lambda_handler(event, context):
         document = {}
 
         document["documentId"] = item["documentId"]["S"]
+        document["collectionId"] = item["collectionId"]["S"]
         document["name"] = item["name"]["S"]
         document["type"] = item["type"]["S"]
         document["fileUrl"] = s3_client.generate_presigned_url(

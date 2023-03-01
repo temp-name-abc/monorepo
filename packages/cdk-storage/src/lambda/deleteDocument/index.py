@@ -51,8 +51,23 @@ def lambda_handler(event, context):
         },
     )
 
+    items = chunk_response["Items"]
+
+    while "LastEvaluatedKey" in chunk_response:
+        chunk_response = dynamodb_client.query(
+            TableName=chunk_table,
+            IndexName=chunk_index_name,
+            KeyConditionExpression="documentId = :documentId",
+            ExpressionAttributeValues={
+                ":documentId": {"S": document_id},
+            },
+            ExclusiveStartKey=chunk_response["LastEvaluatedKey"]
+        )
+
+        items.extend(chunk_response["Items"])
+
     # Delete each chunk
-    for item in chunk_response["Items"]:
+    for item in items:
         chunk_id = item["chunkId"]["S"]
 
         index.delete(ids=[chunk_id])
@@ -68,7 +83,7 @@ def lambda_handler(event, context):
     s3_client.delete_object(Bucket=document_bucket, Key=document_id)
 
     # Delete the item
-    dynamodb_client.delete_item(TableName=document_table, Key={"documentId": {"S": document_id}})
+    dynamodb_client.delete_item(TableName=document_table, Key={"collectionId": {"S": collection_id}, "documentId": {"S": document_id}})
 
     logger.info(f"Deleted document '{document_id}'")
 

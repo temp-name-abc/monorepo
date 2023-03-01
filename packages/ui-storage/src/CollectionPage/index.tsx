@@ -2,9 +2,9 @@ import { FileUpload } from "ui";
 import { getCollection, getDocuments, uploadDocument } from "helpers";
 import { useRouter } from "next/router";
 import { SubAppShell } from "ui/src/SubAppShell";
-import { KEY_COLLECTION, KEY_DOCUMENTS } from "utils";
+import { KEY_COLLECTION, KEY_DOCUMENT, KEY_DOCUMENTS } from "utils";
 import { useSession } from "next-auth/react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { links } from "../links";
 import { Documents } from "./Documents";
 
@@ -13,6 +13,7 @@ interface IProps {}
 export function CollectionPage({}: IProps) {
     const session = useSession();
     const router = useRouter();
+    const queryClient = useQueryClient();
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
@@ -30,6 +31,7 @@ export function CollectionPage({}: IProps) {
 
     const { mutate, isLoading, isSuccess } = useMutation({
         mutationFn: (args: { token: string; collectionId: string; file: File }) => uploadDocument(args.token, args.collectionId, args.file),
+        onSuccess: (response) => queryClient.invalidateQueries([KEY_DOCUMENTS, response.collectionId]),
     });
 
     return (

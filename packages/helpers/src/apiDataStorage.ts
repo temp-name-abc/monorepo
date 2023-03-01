@@ -67,21 +67,41 @@ export async function uploadDocument(token: string, collectionId: string, file: 
     const reader = new FileReader();
     reader.readAsDataURL(file);
 
-    reader.onload = async () => {
-        const processedFile = reader.result?.toString().split(",")[1];
+    await new Promise<void>(
+        (res) =>
+            (reader.onload = async () => {
+                const processedFile = reader.result?.toString().split(",")[1];
 
-        await instance.post(
-            `/storage/collection/${collectionId}/document`,
-            {
-                type: file.type,
-                name: file.name,
-                file: processedFile,
-            },
-            {
-                headers: {
-                    Authorization: token,
-                },
-            }
-        );
+                await instance.post(
+                    `/storage/collection/${collectionId}/document`,
+                    {
+                        type: file.type,
+                        name: file.name,
+                        file: processedFile,
+                    },
+                    {
+                        headers: {
+                            Authorization: token,
+                        },
+                    }
+                );
+
+                res();
+            })
+    );
+
+    return { collectionId };
+}
+
+export async function deleteDocument(token: string, collectionId: string, documentId: string) {
+    await instance.delete<IDocument>(`/storage/collection/${collectionId}/document/${documentId}`, {
+        headers: {
+            Authorization: token,
+        },
+    });
+
+    return {
+        documentId,
+        collectionId,
     };
 }

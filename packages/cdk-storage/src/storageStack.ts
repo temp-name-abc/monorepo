@@ -231,12 +231,12 @@ export class StorageStack extends cdk.NestedStack {
             timeout: cdk.Duration.minutes(1),
         });
 
-        // Add permissions
+        // Grant permissions
         pineconeSecret.grantRead(deleteDocumentFn);
         documentTable.grantWriteData(deleteDocumentFn);
         documentBucket.grantDelete(deleteDocumentFn);
         processedDocumentBucket.grantDelete(deleteDocumentFn);
-        chunkTable.grantWriteData(deleteDocumentFn);
+        chunkTable.grantReadWriteData(deleteDocumentFn);
         chunkBucket.grantDelete(deleteDocumentFn);
 
         // Add API integration
