@@ -89,13 +89,13 @@ def get_documents(api_url, query, user_id, collection_id, documents_retrieved):
     return documents_req.json()
 
 
-def record_usage(api_url, user_id, timestamp, product_id, question):
+def record_usage(api_url, user_id, timestamp, product_id):
     usage_url = f"{api_url}/billing/iam/usage"
     usage_request = make_request(usage_url, "POST", json.dumps({
         "userId": user_id,
         "timestamp": timestamp,
         "productId": product_id,
-        "quantity": len(question)
+        "quantity": 1
     }))
     usage_req = requests.post(
         usage_url,

@@ -1,16 +1,16 @@
 import { IChatData, IProduct, IProductData } from "types";
 
 export const API_BASE_URL = "https://wkpf3087f5.execute-api.ap-southeast-2.amazonaws.com/prod";
-export const HOME_BASE_URL = "https://monorepo-web-eta.vercel.app";
+export const HOME_BASE_URL = "https://monostack.app";
 
 export const productData: { [key in IProduct]: IProductData } = {
-    "chat.chat": {
+    "chat.conversation.chat": {
         name: "Chat",
-        description: "Send chats to the chatbot.",
+        description: "Pay for each chat you send to a chatbot hosted on the platform.",
     },
-    "storage.document.process.text": {
-        name: "Text document processing",
-        description: "Upload, process, and store text documents.",
+    "storage.collection.document.process": {
+        name: "Process Document",
+        description: "Pay for each character contained within the documents you upload.",
     },
 };
 

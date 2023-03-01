@@ -159,7 +159,7 @@ def lambda_handler(event, context):
     )
 
     # Record the usage
-    reported = utils.record_usage(api_url, user_id, timestamp, product_id, question)
+    reported = utils.record_usage(api_url, user_id, timestamp, product_id)
 
     if not reported:
         logger.warning(f"Unable to record usage for user '{user_id}' with product '{product_id}'")

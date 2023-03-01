@@ -315,7 +315,7 @@ export class StorageStack extends cdk.NestedStack {
         });
 
         // Create object processing function
-        const product: IProduct = "storage.document.process.text";
+        const product: IProduct = "storage.collection.document.process";
 
         const processFn = new lambda.DockerImageFunction(this, "processFn", {
             code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "process")),

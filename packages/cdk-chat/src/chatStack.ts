@@ -92,7 +92,7 @@ export class ChatStack extends cdk.NestedStack {
         });
 
         // Create chat function
-        const product: IProduct = "chat.chat";
+        const product: IProduct = "chat.conversation.chat";
 
         const chatFn = new lambda.Function(this, "chatFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
