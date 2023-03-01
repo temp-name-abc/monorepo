@@ -1,5 +1,4 @@
-import { SubAppShell } from "ui/src/SubAppShell";
-import Subscriptions from "ui/src/Subscriptions";
+import { Subscriptions, SubAppShell } from "ui";
 import { links } from "../links";
 
 interface IProps {}

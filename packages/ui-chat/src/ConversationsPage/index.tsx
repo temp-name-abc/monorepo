@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { SubAppShell } from "ui/src/SubAppShell";
 import { links } from "../links";
 import { useSession } from "next-auth/react";
 import { chatData, KEY_CHATS, KEY_COLLECTIONS, KEY_CONVERSATIONS } from "utils";
@@ -7,7 +6,7 @@ import { createChat, createConversation, getChats, getCollections, getConversati
 import { Conversations } from "./Conversations";
 import { useEffect, useState } from "react";
 import ChatWindow from "./ChatWindow";
-import { DropdownSelect, TextCreate, ChatContext } from "ui";
+import { DropdownSelect, TextCreate, ChatContext, SubAppShell } from "ui";
 import { IChat } from "types";
 
 interface IProps {}

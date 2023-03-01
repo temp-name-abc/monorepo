@@ -1,8 +1,7 @@
-import { FileUpload } from "ui";
+import { FileUpload, SubAppShell } from "ui";
 import { getCollection, getDocuments, uploadDocument } from "helpers";
 import { useRouter } from "next/router";
-import { SubAppShell } from "ui/src/SubAppShell";
-import { KEY_COLLECTION, KEY_DOCUMENT, KEY_DOCUMENTS } from "utils";
+import { KEY_COLLECTION, KEY_DOCUMENTS } from "utils";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { links } from "../links";

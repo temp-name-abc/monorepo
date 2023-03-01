@@ -1,4 +1,5 @@
 import { ICollections } from "types";
+import { CardLayout } from "ui";
 import { Collection } from "./Collection";
 
 interface IProps {
@@ -9,11 +10,11 @@ export function Collections({ collections }: IProps) {
     if (!collections) return null;
 
     return (
-        <div className="grid grid-cols-3 gap-10">
-            {collections.collections.map((collection, i) => (
+        <CardLayout
+            elements={collections.collections.map((collection, i) => (
                 <Collection key={i} collection={collection} />
             ))}
-        </div>
+        />
     );
 }
 

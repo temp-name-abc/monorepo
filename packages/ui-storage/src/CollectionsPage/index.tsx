@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { KEY_COLLECTION, KEY_COLLECTIONS } from "utils";
-import { SubAppShell } from "ui";
+import { SubAppShell, TextCreate } from "ui";
 import { createCollection, getCollections } from "helpers";
 import { Collections } from "./Collections";
-import { TextCreate } from "ui/src/TextCreate";
 import { links } from "../links";
 
 interface IProps {}

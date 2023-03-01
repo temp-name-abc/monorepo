@@ -17,7 +17,7 @@ export function SubAppShell({ children, title, description, links }: IProps) {
     return (
         <>
             <Head>
-                <title>{title} - MonoStack</title>
+                <title>{`${title} - MonoStack`}</title>
                 <meta name="description" content={description} />
             </Head>
             <div className="p-10 space-y-10">

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "../../Button";
 
@@ -8,10 +9,12 @@ export function Nav({}: IProps) {
 
     return (
         <nav className="bg-white px-10 py-5 flex items-center justify-between border-b-2 border-gray-200">
-            <h1 className="font-bold text-lg">
-                <span className="text-gray-900">MONO</span>
-                <span className="text-violet-600">STACK</span>
-            </h1>
+            <Link href="/">
+                <h1 className="font-bold text-lg">
+                    <span className="text-gray-900">MONO</span>
+                    <span className="text-violet-600">STACK</span>
+                </h1>
+            </Link>
             {session.data ? (
                 <div className="flex items-center justify-between space-x-5">
                     <p className="text-gray-800">
