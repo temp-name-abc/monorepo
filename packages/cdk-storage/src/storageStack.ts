@@ -266,7 +266,7 @@ export class StorageStack extends cdk.NestedStack {
                         "integration.request.header.Content-Type": "'application/x-www-form-urlencoded'",
                     },
                     requestTemplates: {
-                        "application/json": `Action=SendMessage&MessageBody={"pathParams": "$util.urlEncode($input.params().path)", "userId": "$context.authorizer.claims.sub"}`,
+                        "application/json": `Action=SendMessage&MessageBody={"pathParams": "$input.params().path", "userId": "$context.authorizer.claims.sub"}`,
                     },
                     integrationResponses: [
                         {
