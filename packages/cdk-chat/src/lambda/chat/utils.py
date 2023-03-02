@@ -31,13 +31,19 @@ def set_openai_api_key(api_key):
 def generate_query(history, question, max_characters):
     messages = [
         {"role": "system", "content": "You are able to identify what information is required to answer a question given a conversation. \
-            For the given conversation, you will return the query that can be used to find the information required to answer the most recent question."},
+            For the given conversation, you will only identify the information that you would need to know to be able to answer the users question. \
+                Apart from the information required to answer the question, you will not respond to the conversation."},
     ]
 
-    for item in history:
-        messages += [{"role": "user", "content": item["human"]}, {"role": "assistant", "content": item["ai"]}]
+    text = ""
 
-    messages += [{"role": "user", "content": question}]
+    for item in history:
+        text += f"Human: {item['human']}"
+        text += f"AI: {item['ai']}"
+
+    text += f"Human: {question}"
+
+    messages += [{"role": "user", "content": f"What would be a query that could be used to find the information required to answer the following conversation:\n\n{text}"}]
 
     return openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
