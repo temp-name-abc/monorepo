@@ -48,7 +48,7 @@ export function CollectionPage({}: IProps) {
     return (
         <SubAppShell
             title={collectionData?.name ? `Storage / Collections / ${collectionData.name}` : "Storage / Collections / Collection"}
-            description="View your documents for the given collection."
+            description="Upload, view, and delete your documents within the given collection. Currently supports .pdf and .txt files. Possible use cases include uploading your University lecture slides."
             links={links}
         >
             <div className="flex flex-col space-y-12">
