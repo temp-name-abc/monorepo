@@ -9,12 +9,14 @@ import { TextCreate, ChatContext, SubAppShell } from "ui";
 import { IChat } from "types";
 import ChatInput from "./ChatInput";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useBillingEnabled } from "hooks";
 
 interface IProps {}
 
 export function ConversationsPage({}: IProps) {
     const session = useSession();
     const queryClient = useQueryClient();
+    useBillingEnabled("chat.conversation.chat");
 
     const bottomRef = useRef(null);
 
