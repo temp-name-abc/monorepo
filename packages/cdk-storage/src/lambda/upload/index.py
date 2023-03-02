@@ -39,7 +39,7 @@ def lambda_handler(event, context):
     collection_table = os.getenv("COLLECTION_TABLE")
     temp_bucket = os.getenv("TEMP_BUCKET")
     product_id = os.getenv("PRODUCT_ID")
-    api_url = os.getenv("API_BASE_URL")
+    api_url = os.getenv("API_URL")
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     collection_id = event["pathParameters"]["collectionId"]
