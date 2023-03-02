@@ -1,6 +1,7 @@
 import { IChat, IChats } from "types";
 import { ChatBubble } from "./ChatBubble";
 import { Chat } from "./Chat";
+import { useEffect, useRef } from "react";
 
 interface IProps {
     chats?: IChats;
@@ -9,10 +10,17 @@ interface IProps {
 }
 
 export function ChatWindow({ chats, question, onClickReply }: IProps) {
+    const chatWindowRef = useRef(null);
+
+    useEffect(() => {
+        // @ts-expect-error
+        chatWindowRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, [chats, question]);
+
     if (!chats) return null;
 
     return (
-        <div className="bg-gray-100 p-10 space-y-8 h-[576px] overflow-y-auto">
+        <div className="bg-gray-100 p-10 space-y-8 h-[640px] overflow-y-auto">
             <ChatBubble style="centernobubble">Beginning of conversation</ChatBubble>
             <div className="flex flex-col space-y-8">
                 {chats.chats.map((chat, i) => (
@@ -24,6 +32,7 @@ export function ChatWindow({ chats, question, onClickReply }: IProps) {
                         <ChatBubble style="leftnobubble">Typing...</ChatBubble>
                     </div>
                 )}
+                <div ref={chatWindowRef} />
             </div>
         </div>
     );

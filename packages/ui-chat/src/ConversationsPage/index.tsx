@@ -3,11 +3,11 @@ import { useSession } from "next-auth/react";
 import { KEY_CONVERSATION, KEY_CONVERSATIONS } from "utils";
 import { createConversation, getChats, getConversations } from "helpers";
 import { Conversations } from "./Conversations";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ChatWindow } from "./ChatWindow";
 import { TextCreate, ChatContext, SubAppShell } from "ui";
 import { IChat } from "types";
-import ChatInput from "./ChatInput";
+import { ChatInput } from "./ChatInput";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBillingEnabled } from "hooks";
 
@@ -17,8 +17,6 @@ export function ConversationsPage({}: IProps) {
     const session = useSession();
     const queryClient = useQueryClient();
     useBillingEnabled("chat.conversation.chat");
-
-    const bottomRef = useRef(null);
 
     const [conversationId, setConversationId] = useState<string>("");
     const [question, setQuestion] = useState<string>("");
@@ -45,11 +43,6 @@ export function ConversationsPage({}: IProps) {
         setSelectedChat(null);
     }, [conversationId, setSelectedChat]);
 
-    useEffect(() => {
-        // @ts-expect-error
-        bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-    }, [chatsData, question]);
-
     return (
         <SubAppShell title="Chat / Conversations" description="View all your conversations." links={links}>
             <div className="flex space-x-10">
@@ -65,7 +58,6 @@ export function ConversationsPage({}: IProps) {
                 <div className="flex flex-col space-y-12 w-3/4">
                     <ChatWindow chats={chatsData} question={isTyping ? question : undefined} onClickReply={setSelectedChat} />
                     <ChatInput conversationId={conversationId} setQuestion={setQuestion} setIsTyping={setIsTyping} chatsData={chatsData} />
-                    <div ref={bottomRef} />
                     {selectedChat && <ChatContext chat={selectedChat} />}
                 </div>
             </div>
