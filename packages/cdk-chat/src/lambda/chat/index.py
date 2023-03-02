@@ -92,7 +92,7 @@ def lambda_handler(event, context):
 
         return make_error(msg)
 
-    query = utils.generate_query(history, question, max_characters)
+    query = utils.generate_query(history, question, max_characters, user_id)
     logger.info(f"Query = '{query}'")
 
     # Retrieve question context
@@ -129,7 +129,7 @@ def lambda_handler(event, context):
     # Generate context, response, and update the history
     context_text = utils.create_context(context)
 
-    chat = utils.generate_chat(history, question, context_text, max_characters)
+    chat = utils.generate_chat(history, question, context_text, max_characters, user_id)
     logger.info(f"Chat = '{chat}'")
 
     history.append({"human": question, "ai": chat, "chatId": chat_id})

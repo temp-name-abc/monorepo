@@ -28,7 +28,7 @@ def set_openai_api_key(api_key):
     openai.api_key = api_key
 
 
-def generate_query(history, question, max_characters):
+def generate_query(history, question, max_characters, user_id):
     messages = [
         {"role": "system", "content": "You will identify what information is required to answer a users question given a conversation. \
             For the given conversation, you will return a list of queries that the user could use to find the information to answer the question themselves. \
@@ -48,11 +48,12 @@ def generate_query(history, question, max_characters):
     return openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages,
-        max_tokens=max_characters // 4
+        max_tokens=max_characters // 4,
+        user=user_id
     )["choices"][0]["message"]["content"].strip()
 
 
-def generate_chat(history, question, context, max_characters):
+def generate_chat(history, question, context, max_characters, user_id):
     messages = [
         {"role": "system", "content": f"You will play the role of a tutor and answer questions given the context only. If the information is not within the context, \
             you will say that there is not enough information for you to answer, and then explain what information you would require to answer the question. \
@@ -67,7 +68,8 @@ def generate_chat(history, question, context, max_characters):
     return openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages,
-        max_tokens=max_characters // 4
+        max_tokens=max_characters // 4,
+        user=user_id
     )["choices"][0]["message"]["content"].strip()
 
 

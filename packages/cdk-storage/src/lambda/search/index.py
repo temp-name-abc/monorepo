@@ -72,7 +72,8 @@ def lambda_handler(event, context):
     # Find matching documents
     embeddings = openai.Embedding.create(
         input=query,
-        model="text-embedding-ada-002"
+        model="text-embedding-ada-002",
+        user=user_id
     )["data"][0]["embedding"]
 
     query_response = index.query(

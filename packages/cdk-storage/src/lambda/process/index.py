@@ -19,8 +19,6 @@ s3_client = boto3.client("s3")
 dynamodb_client = boto3.client("dynamodb")
 secrets_manager_client = boto3.client("secretsmanager")
 
-model_settings = {"model": "text-embedding-ada-002"}
-
 
 def make_request(url, method, data = None):
     session = boto3.session.Session()
@@ -146,7 +144,7 @@ def lambda_handler(event, context):
                 continue
 
             # Create the embeddings
-            embeddings_response = openai.Embedding.create(input=chunk, **model_settings)
+            embeddings_response = openai.Embedding.create(input=chunk, model="text-embedding-ada-002", user=user_id)
             embeddings = embeddings_response["data"][0]["embedding"]
 
             # Store pinecone embeddings with a composite key
