@@ -87,7 +87,7 @@ def lambda_handler(event, context):
         return make_error(msg)
 
     # Figure out the question and only answer if safe
-    if not utils.is_safe_text(history, question):
+    if not utils.is_safe_input(history, question):
         msg = f"User '{user_id}' sent unsafe text"
 
         return make_error(msg)
@@ -129,7 +129,7 @@ def lambda_handler(event, context):
     # Generate context, response, and update the history
     context_text = utils.create_context(context)
 
-    chat = utils.generate_chat(history, question, context_text)
+    chat = utils.generate_chat(history, question, context_text, max_characters)
     logger.info(f"Chat = '{chat}'")
 
     history.append({"human": question, "ai": chat, "chatId": chat_id})

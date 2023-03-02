@@ -19,14 +19,14 @@ export function ChatWindow({ conversationId, chats, onClickReply }: IProps) {
     useEffect(() => {
         // @ts-expect-error
         chatWindowRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-    }, [chats, question]);
+    }, [chats, question, isTyping]);
 
     if (!chats) return null;
 
     return (
         <div className="bg-gray-100 p-10 space-y-8 h-[640px] overflow-y-auto">
             <ChatBubble style="centernobubble">Beginning of conversation</ChatBubble>
-            <div className="flex flex-col space-y-8">
+            <div className="flex flex-col justify-evenly space-y-8">
                 {chats.chats.map((chat, i) => (
                     <Chat key={i} chat={chat} onClickReply={onClickReply} />
                 ))}
