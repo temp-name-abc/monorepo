@@ -9,6 +9,7 @@ import { TextCreate, ChatContext, SubAppShell } from "ui";
 import { IChat } from "types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBillingEnabled } from "hooks";
+import { useNotification } from "providers";
 
 interface IProps {}
 
@@ -16,6 +17,7 @@ export function ConversationsPage({}: IProps) {
     const session = useSession();
     const queryClient = useQueryClient();
     useBillingEnabled("chat.conversation.chat");
+    const { addNotification } = useNotification();
 
     const [conversationId, setConversationId] = useState<string>("");
     const [selectedChat, setSelectedChat] = useState<IChat | null>(null);
@@ -30,6 +32,14 @@ export function ConversationsPage({}: IProps) {
     const { mutate: conversationMutate, isLoading: isMutatingConversation } = useMutation({
         mutationFn: (args: { token: string; name: string }) => createConversation(args.token, args.name),
         onSuccess: () => queryClient.invalidateQueries([KEY_CONVERSATIONS]),
+        onError: (err) => {
+            addNotification({
+                title: "Could not create conversation",
+                // @ts-expect-error
+                description: `Not able to create new conversation for reason: '${err.message}'`,
+                severity: "error",
+            });
+        },
     });
 
     const { data: chatsData } = useQuery([KEY_CONVERSATION, conversationId], () => getChats(token as string, conversationId), {

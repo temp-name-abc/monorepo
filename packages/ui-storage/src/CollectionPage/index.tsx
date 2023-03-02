@@ -43,6 +43,14 @@ export function CollectionPage({}: IProps) {
                 severity: "success",
             });
         },
+        onError: (err) => {
+            addNotification({
+                title: "Could not upload document",
+                // @ts-expect-error
+                description: `Not able to upload document for reason: '${err.message}'`,
+                severity: "error",
+            });
+        },
     });
 
     return (

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createChat } from "helpers";
 import { useSession } from "next-auth/react";
+import { useNotification } from "providers";
 import { useEffect, useState } from "react";
 import { IChats } from "types";
 import { TextCreate } from "ui";
@@ -18,6 +19,7 @@ export function ChatInput({ conversationId, chatsData, setIsTyping, setQuestion 
     const session = useSession();
     const queryClient = useQueryClient();
     const [collectionId, setCollectionId] = useState<string>("");
+    const { addNotification } = useNotification();
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
@@ -26,6 +28,14 @@ export function ChatInput({ conversationId, chatsData, setIsTyping, setQuestion 
         mutationFn: (args: { token: string; conversationId: string; question: string; collectionId?: string; prevChatId?: string }) =>
             createChat(args.token, args.conversationId, args.question, args.collectionId, args.prevChatId),
         onSuccess: (_, { conversationId }) => queryClient.invalidateQueries([KEY_CONVERSATION, conversationId]),
+        onError: (err) => {
+            addNotification({
+                title: "Could not send message",
+                // @ts-expect-error
+                description: `Not able to send message for reason: '${err.message}'`,
+                severity: "error",
+            });
+        },
     });
 
     useEffect(() => {

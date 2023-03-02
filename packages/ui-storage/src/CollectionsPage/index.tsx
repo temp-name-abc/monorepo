@@ -5,12 +5,14 @@ import { SubAppShell, TextCreate } from "ui";
 import { createCollection, getCollections } from "helpers";
 import { Collections } from "./Collections";
 import { links } from "../links";
+import { useNotification } from "providers";
 
 interface IProps {}
 
 export function CollectionsPage({}: IProps) {
     const session = useSession();
     const queryClient = useQueryClient();
+    const { addNotification } = useNotification();
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
@@ -24,6 +26,14 @@ export function CollectionsPage({}: IProps) {
         onSuccess: (collection) => {
             queryClient.invalidateQueries([KEY_COLLECTIONS]);
             queryClient.setQueryData([KEY_COLLECTION, collection.collectionId], collection);
+        },
+        onError: (err) => {
+            addNotification({
+                title: "Could not create collection",
+                // @ts-expect-error
+                description: `Not able to create new collection for reason: '${err.message}'`,
+                severity: "error",
+            });
         },
     });
 
