@@ -9,7 +9,7 @@ interface IProps {
 }
 
 export function AppShell({ children }: IProps) {
-    const { notification } = useNotification();
+    const { currentNotification } = useNotification();
 
     return (
         <>
@@ -17,7 +17,7 @@ export function AppShell({ children }: IProps) {
             <div className="flex items-stretch">
                 <SideNav />
                 <div className="m-10 w-full space-y-10">
-                    <Notification notification={notification} />
+                    <Notification notification={currentNotification} />
                     <div className="bg-gray-50">{children}</div>
                 </div>
             </div>

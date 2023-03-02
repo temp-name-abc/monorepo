@@ -7,7 +7,7 @@ interface IProps {
 }
 
 export function Notification({ notification }: IProps) {
-    const { setNotification } = useNotification();
+    const { removeNotification } = useNotification();
 
     const mapping: { [key in INotificationSeverity]: { color: string; icon: any } } = {
         success: {
@@ -33,7 +33,7 @@ export function Notification({ notification }: IProps) {
                     <span>{mapping[notification.severity].icon}</span>
                     <span>{notification.title}</span>
                 </h3>
-                <button className="text-gray-900" onClick={() => setNotification(undefined)}>
+                <button className="text-gray-900" onClick={removeNotification}>
                     <X />
                 </button>
             </div>

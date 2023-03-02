@@ -7,7 +7,7 @@ import { useNotification } from "providers";
 
 export function useBillingEnabled(product: IProduct) {
     const session = useSession();
-    const { setNotification } = useNotification();
+    const { addNotification } = useNotification();
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
@@ -16,7 +16,7 @@ export function useBillingEnabled(product: IProduct) {
         enabled: !!token,
         onSuccess: (portal) =>
             !portal.active &&
-            setNotification({
+            addNotification({
                 title: "Billing not enabled",
                 description:
                     "You have not enabled billing for this feature. As a result, your access may be restricted. To fix this, navigate to the 'Billing' tab and enable the feature.",

@@ -7,9 +7,21 @@ interface IProps {
 }
 
 export function NotificationProvider({ children }: IProps) {
-    const state = useState<INotification | undefined>(undefined);
+    const [queue, setQueue] = useState<INotification[]>([]);
 
-    return <notificationCtx.Provider value={state}>{children}</notificationCtx.Provider>;
+    function addNotification(notification: INotification) {
+        setQueue((prev) => [...prev, notification]);
+    }
+
+    function removeNotification() {
+        if (queue.length === 0) return undefined;
+
+        setQueue((prev) => prev.slice(1));
+    }
+
+    const currentNotification = queue.length > 0 ? queue[0] : undefined;
+
+    return <notificationCtx.Provider value={{ addNotification, removeNotification, currentNotification }}>{children}</notificationCtx.Provider>;
 }
 
 export default NotificationProvider;

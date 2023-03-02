@@ -15,7 +15,7 @@ export function CollectionPage({}: IProps) {
     const session = useSession();
     const router = useRouter();
     const queryClient = useQueryClient();
-    const { setNotification } = useNotification();
+    const { addNotification } = useNotification();
     useBillingEnabled("storage.collection.document.process");
 
     // @ts-expect-error
@@ -37,9 +37,9 @@ export function CollectionPage({}: IProps) {
         onSuccess: (response) => {
             queryClient.invalidateQueries([KEY_DOCUMENTS, response.collectionId]);
 
-            setNotification({
+            addNotification({
                 title: "Document is uploading",
-                description: "Your document is now uploading. Please check back in a bit.",
+                description: `Your document '${response.fileName}' is now uploading. Please check back within 10 minutes.`,
                 severity: "success",
             });
         },

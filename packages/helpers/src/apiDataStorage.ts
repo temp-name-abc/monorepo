@@ -90,7 +90,7 @@ export async function uploadDocument(token: string, collectionId: string, file: 
             })
     );
 
-    return { collectionId };
+    return { collectionId, fileName: file.name };
 }
 
 export async function deleteDocument(token: string, collectionId: string, documentId: string) {

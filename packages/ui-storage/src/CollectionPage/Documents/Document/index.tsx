@@ -13,7 +13,7 @@ interface IProps {
 export function Document({ document }: IProps) {
     const session = useSession();
     const queryClient = useQueryClient();
-    const { setNotification } = useNotification();
+    const { addNotification } = useNotification();
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
@@ -24,7 +24,7 @@ export function Document({ document }: IProps) {
             queryClient.invalidateQueries([KEY_DOCUMENT, response.documentId]);
             queryClient.invalidateQueries([KEY_DOCUMENTS, response.collectionId]);
 
-            setNotification({
+            addNotification({
                 title: "Document deletion scheduled",
                 description: "Your document has been successfully scheduled for deletion. Please check back in a bit.",
                 severity: "success",

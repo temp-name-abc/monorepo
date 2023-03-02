@@ -11,7 +11,7 @@ export function Card({ title, description, url, icon }: IProps) {
     const halfTitle = Math.floor(title.length / 1.5);
 
     const titleFirst = title.slice(0, halfTitle);
-    const titleSecond = title.slice(halfTitle, title.length);
+    const titleSecond = title.slice(halfTitle);
 
     return (
         <Link href={url}>
