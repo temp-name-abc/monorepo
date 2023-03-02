@@ -1,5 +1,5 @@
 pinecone-client==2.1.0
-openai==0.26.5
+openai==0.27.0
 requests==2.22.0
 pypdf2==3.0.1
 numpy==1.23.4

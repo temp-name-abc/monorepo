@@ -28,49 +28,57 @@ def set_openai_api_key(api_key):
     openai.api_key = api_key
 
 
-def generate_text(prompt, max_characters, temperature = 0.7):
-    response = openai.Completion.create(prompt=prompt, temperature=temperature, max_tokens=max_characters // 4, model="text-davinci-003")
-    output = response["choices"][0]["text"].strip()
+def generate_query(history, question, max_characters):
+    messages = [
+        {"role": "system", "content": "You are able to identify what information is required to answer a question given a conversation. \
+            For the given conversation, you will return the query that can be used to find the information required to answer the most recent question."},
+    ]
 
-    return output
+    for item in history:
+        messages += [{"role": "user", "content": item["human"]}, {"role": "assistant", "content": item["ai"]}]
+
+    messages += [{"role": "user", "content": question}]
+
+    return openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        max_tokens=max_characters // 4
+    )["choices"][0]["message"]["content"].strip()
 
 
-def is_safe_text(text):
+def generate_chat(history, question, context, max_characters):
+    messages = [
+        {"role": "system", "content": f"You will play the role of a tutor and answer questions given the context only. If the information is not within the context, \
+            you will say that there is not enough information for you to answer, and then explain what information you would require to answer the question. \
+                Here is the context you will use to answer your questions:\n\nContext:\n{context}"},
+    ]
+
+    for item in history:
+        messages += [{"role": "user", "content": item["human"]}, {"role": "assistant", "content": item["ai"]}]
+
+    messages += [{"role": "user", "content": question}]
+
+    return openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        max_tokens=max_characters // 4
+    )["choices"][0]["message"]["content"].strip()
+
+
+def is_safe_input(history, question):
+    text = "" 
+
+    for item in history:
+        text += f"Human: {item['human']}"
+        text += f"AI: {item['ai']}"
+
+    text += f"Human: {question}"
+
     response = openai.Moderation.create(
         input=text
     )
 
     return not response["results"][0]["flagged"]
-
-
-def prompt_query(conversation, question):
-    return f"""the following outputs the question that can be used to find the information required to answer the most recent question.
-
-Current conversation:
-{conversation}
-Human: {question}
-
-Query:"""
-
-
-def prompt_chat(context, conversation, question):
-    return f"""The following is a friendly conversation between a human and an AI.
-The AI is talkative and provides lots of specific details from its context.
-The AI is only able to use information from its context to answer the question. If the context is not present, the AI cannot answer the question.
-If the AI does not have enough context to answer the question, it says it does not have enough information to answer the question, and does not try to make up an answer.
-
-Context:
-{context}
-
-Current conversation:
-{conversation}
-Human: {question}
-AI:"""
-
-
-def create_conversation(history):
-    return "\n".join(f"""Human: {conversation["human"]}
-AI: {conversation["ai"]}""" for conversation in history)
 
 
 def create_context(context):

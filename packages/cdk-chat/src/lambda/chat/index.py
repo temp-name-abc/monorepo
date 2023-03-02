@@ -81,28 +81,19 @@ def lambda_handler(event, context):
         logger.info(f"Loaded previous chat '{prev_chat_id}'")
 
     # Check the user can be billed
-    billable = utils.is_billable(api_url, user_id, product_id)
-
-    if not billable:
+    if not utils.is_billable(api_url, user_id, product_id):
         msg = f"User '{user_id}' has not subscribed to product '{product_id}'"
 
         return make_error(msg)
 
-    # Get the conversation
-    conversation_text = utils.create_conversation(history)
-
-    # Moderate text
-    is_safe = utils.is_safe_text(conversation_text)
-
-    if not is_safe:
+    # Figure out the question and only answer if safe
+    if not utils.is_safe_text(history, question):
         msg = f"User '{user_id}' sent unsafe text"
 
         return make_error(msg)
 
-    # Figure out the question
-    query_prompt = utils.prompt_query(conversation_text, question)
-    query = utils.generate_text(query_prompt, max_characters)
-    logger.info(f"Query prompt = '{query_prompt}', response = '{query}'")
+    query = utils.generate_query(history, question, max_characters)
+    logger.info(f"Query = '{query}'")
 
     # Retrieve question context
     documents = utils.get_documents(api_url, query, user_id, collection_id, documents_retrieved)
@@ -138,12 +129,11 @@ def lambda_handler(event, context):
     # Generate context, response, and update the history
     context_text = utils.create_context(context)
 
-    chat_prompt = utils.prompt_chat(context_text, conversation_text, question)
-    chat = utils.generate_text(chat_prompt, max_characters)
-    logger.info(f"Chat prompt = '{chat_prompt}', response = '{chat}'")
+    chat = utils.generate_chat(history, question, context_text)
+    logger.info(f"Chat = '{chat}'")
 
     history.append({"human": question, "ai": chat, "chatId": chat_id})
-    history = history[max(len(history) - chat_memory_size, 0):]
+    history = history[max(len(history) - chat_memory_size + 1, 0):]
 
     # Store the data
     dynamodb_client.put_item(

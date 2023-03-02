@@ -19,9 +19,7 @@ export function ConversationsPage({}: IProps) {
     useBillingEnabled("chat.conversation.chat");
 
     const [conversationId, setConversationId] = useState<string>("");
-    const [question, setQuestion] = useState<string>("");
     const [selectedChat, setSelectedChat] = useState<IChat | null>(null);
-    const [isTyping, setIsTyping] = useState<boolean>(false);
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
@@ -57,7 +55,6 @@ export function ConversationsPage({}: IProps) {
                 </div>
                 <div className="flex flex-col space-y-12 w-3/4">
                     <ChatWindow chats={chatsData} question={isTyping ? question : undefined} onClickReply={setSelectedChat} />
-                    <ChatInput conversationId={conversationId} setQuestion={setQuestion} setIsTyping={setIsTyping} chatsData={chatsData} />
                     {selectedChat && <ChatContext chat={selectedChat} />}
                 </div>
             </div>

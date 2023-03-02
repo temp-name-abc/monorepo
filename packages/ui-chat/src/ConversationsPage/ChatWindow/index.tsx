@@ -1,7 +1,8 @@
 import { IChat, IChats } from "types";
 import { ChatBubble } from "./ChatBubble";
 import { Chat } from "./Chat";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ChatInput } from "../ChatInput";
 
 interface IProps {
     chats?: IChats;
@@ -10,6 +11,9 @@ interface IProps {
 }
 
 export function ChatWindow({ chats, question, onClickReply }: IProps) {
+    const [isTyping, setIsTyping] = useState<boolean>(false);
+    const [question, setQuestion] = useState<string>("");
+
     const chatWindowRef = useRef(null);
 
     useEffect(() => {
@@ -32,6 +36,7 @@ export function ChatWindow({ chats, question, onClickReply }: IProps) {
                         <ChatBubble style="leftnobubble">Typing...</ChatBubble>
                     </div>
                 )}
+                <ChatInput conversationId={conversationId} setQuestion={setQuestion} setIsTyping={setIsTyping} chatsData={chatsData} />
                 <div ref={chatWindowRef} />
             </div>
         </div>
