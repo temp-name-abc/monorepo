@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { ChatWindow } from "./ChatWindow";
 import { TextCreate, ChatContext, SubAppShell } from "ui";
 import { IChat } from "types";
-import { ChatInput } from "./ChatInput";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBillingEnabled } from "hooks";
 
@@ -54,7 +53,7 @@ export function ConversationsPage({}: IProps) {
                     <Conversations conversations={conversationsData} conversationId={conversationId} setConversationId={setConversationId} />
                 </div>
                 <div className="flex flex-col space-y-12 w-3/4">
-                    <ChatWindow chats={chatsData} question={isTyping ? question : undefined} onClickReply={setSelectedChat} />
+                    <ChatWindow chats={chatsData} conversationId={conversationId} onClickReply={setSelectedChat} />
                     {selectedChat && <ChatContext chat={selectedChat} />}
                 </div>
             </div>
