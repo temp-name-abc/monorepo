@@ -1,17 +1,25 @@
 import { Nav } from "./Nav";
-import SideNav from "./SideNav";
+import { SideNav } from "./SideNav";
+import { Notification } from "./Notification";
+import { useNotification } from "providers";
+import { INotification } from "types";
 
 interface IProps {
     children: any;
 }
 
 export function AppShell({ children }: IProps) {
+    const { notification } = useNotification();
+
     return (
         <>
             <Nav />
             <div className="flex items-stretch">
                 <SideNav />
-                <div className="m-10 bg-gray-50 w-full">{children}</div>
+                <div className="m-10 w-full space-y-10">
+                    <Notification notification={notification} />
+                    <div className="bg-gray-50">{children}</div>
+                </div>
             </div>
         </>
     );

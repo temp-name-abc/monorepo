@@ -17,7 +17,8 @@
         "ui": "*",
         "ui-chat": "*",
         "ui-storage": "*",
-        "ui-index": "*"
+        "ui-index": "*",
+        "providers": "*"
     },
     "devDependencies": {
         "@babel/core": "^7.0.0",

@@ -1,5 +1,5 @@
 {
-    "name": "ui",
+    "name": "providers",
     "version": "0.0.0",
     "main": "./index.tsx",
     "types": "./index.tsx",
@@ -18,7 +18,6 @@
     "dependencies": {
         "next-auth": "^4.19.2",
         "tabler-icons-react": "^1.56.0",
-        "types": "*",
-        "providers": "*"
+        "types": "*"
     }
 }

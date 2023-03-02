@@ -12,3 +12,5 @@ export * from "./src/product";
 export * from "./src/productData";
 export * from "./src/portalData";
 export * from "./src/chatData";
+export * from "./src/notification";
+export * from "./src/notificationSeverity";
