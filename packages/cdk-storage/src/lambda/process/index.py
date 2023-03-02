@@ -72,34 +72,34 @@ def lambda_handler(event, context):
 
     # Process records
     for record in event["Records"]:
-        document_id = record["s3"]["object"]["key"]
-        bucket_name = record["s3"]["bucket"]["name"]
+        upload_id = record["s3"]["object"]["key"]
+        temp_bucket_name = record["s3"]["bucket"]["name"]
 
         now = datetime.utcnow()
         timestamp = int(now.timestamp())
 
         # Get the upload document
-        upload_data = dynamodb_client.get_item(TableName=upload_records_table, Key={"uploadId": {"S": document_id}})["Item"]
+        upload_data = dynamodb_client.get_item(TableName=upload_records_table, Key={"uploadId": {"S": upload_id}})["Item"]
 
         user_id = upload_data["userId"]["S"]
         collection_id = upload_data["collectionId"]["S"]
         name = upload_data["name"]["S"]
         file_type = upload_data["type"]["S"]
 
-        # Check if the user has subscribed
-        active_url = f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
-        active_request = make_request(active_url, "GET")
-        active_req = requests.get(active_url, headers=active_request.headers)
-
-        if not active_req.ok or not active_req.json()["active"]:
-            logger.error(f"User '{user_id}' has not subscribed to product '{product_id}' with status code '{active_req.status_code}'")
-
-            continue
-        
-        # Retrieve document text
-        obj_res = s3_client.get_object(Bucket=bucket_name, Key=document_id)
+        # Retrieve document text and generate id
+        obj_res = s3_client.get_object(Bucket=temp_bucket_name, Key=upload_id)
         raw_body = obj_res["Body"].read()
         body = ""
+
+        document_id = hashlib.sha256(f"{user_id}:{collection_id}:{hashlib.sha256(raw_body).hexdigest()}".encode()).hexdigest() 
+
+        # If the document exists then skip
+        document_response = dynamodb_client.get_document(TableName=document_table, Key={"collectionId": {"S": collection_id}, "documentId": {"S": document_id}})
+
+        if "Item" in document_response:
+            logger.info(f"Document '{document_id}' already exists - skipping")
+
+            continue
 
         # Process supported file types
         if file_type == "text/plain":
@@ -135,7 +135,15 @@ def lambda_handler(event, context):
 
         while remaining:
             chunk = remaining[:chunk_characters]
-            chunk_id = hashlib.sha256(f"{collection_id}:{document_id}:{chunk}".encode()).hexdigest()
+            chunk_id = hashlib.sha256(f"{document_id}:{chunk}".encode()).hexdigest()
+
+            # Skip if the chunk exists
+            chunk_response = dynamodb_client.get_document(TableName=chunk_table, Key={"chunkId": {"S": chunk_id}})
+
+            if "Item" in chunk_response:
+                logger.info(f"Chunk '{chunk_id}' already exists - skipping")
+
+                continue
 
             # Create the embeddings
             embeddings_response = openai.Embedding.create(input=chunk, **model_settings)

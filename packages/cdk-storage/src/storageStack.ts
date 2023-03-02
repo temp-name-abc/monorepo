@@ -293,21 +293,37 @@ export class StorageStack extends cdk.NestedStack {
         );
 
         // Create upload function
+        const product: IProduct = "storage.collection.document.process";
+
         const uploadFn = new lambda.Function(this, "uploadFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "upload")),
+            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "upload"), {
+                bundling: {
+                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
+                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
+                },
+            }),
             handler: "index.lambda_handler",
             environment: {
                 UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
                 COLLECTION_TABLE: collectionTable.tableName,
                 TEMP_BUCKET: tempBucket.bucketName,
+                PRODUCT_ID: product,
+                API_URL: API_BASE_URL,
             },
-            timeout: cdk.Duration.seconds(30),
+            timeout: cdk.Duration.minutes(1),
         });
 
         uploadRecordsTable.grantWriteData(uploadFn);
         collectionTable.grantReadData(uploadFn);
         tempBucket.grantWrite(uploadFn);
+        uploadFn.addToRolePolicy(
+            new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: ["execute-api:Invoke"],
+                resources: ["*"],
+            })
+        );
 
         documentResource.addMethod("POST", new apigw.LambdaIntegration(uploadFn), {
             authorizer: props.authorizer,
@@ -315,8 +331,6 @@ export class StorageStack extends cdk.NestedStack {
         });
 
         // Create object processing function
-        const product: IProduct = "storage.collection.document.process";
-
         const processFn = new lambda.DockerImageFunction(this, "processFn", {
             code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda", "process")),
             environment: {
@@ -339,10 +353,10 @@ export class StorageStack extends cdk.NestedStack {
         openAISecret.grantRead(processFn);
         uploadRecordsTable.grantReadData(processFn);
         tempBucket.grantRead(processFn);
-        documentTable.grantWriteData(processFn);
+        documentTable.grantReadWriteData(processFn);
         documentBucket.grantWrite(processFn);
         processedDocumentBucket.grantWrite(processFn);
-        chunkTable.grantWriteData(processFn);
+        chunkTable.grantReadWriteData(processFn);
         chunkBucket.grantWrite(processFn);
         processFn.addToRolePolicy(
             new iam.PolicyStatement({

@@ -55,9 +55,9 @@ def lambda_handler(event, context):
                 "collectionId": {"S": collection_id},
                 "documentId": {"S": document_id}
             }
-        )["Item"]
+        )
 
-        if document_response["userId"]["S"] != user_id:
+        if "Item" not in document_response or document_response["Item"]["userId"]["S"] != user_id:
             continue
 
         # Retrieve all document chunks
