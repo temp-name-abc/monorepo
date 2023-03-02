@@ -30,10 +30,9 @@ def set_openai_api_key(api_key):
 
 def generate_query(history, question, max_characters):
     messages = [
-        {"role": "system", "content": "You are able to identify what information is required to answer a question given a conversation. \
-            For the given conversation, you will only identify the information that you would need to know to be able to answer the users question. \
-                Apart from the information required to answer the question, you will not respond to the conversation. \
-                    Even if the information exists within the conversation, you will still return the information required to answer the question."},
+        {"role": "system", "content": "You will identify what information is required to answer a users question given a conversation. \
+            For the given conversation, you will return a list of queries that the user could use to find the information to answer the question themselves. \
+                If the information already exists within the conversation, you will still return a list of queries that they could use to find the answer themselves."},
     ]
 
     text = ""
@@ -44,7 +43,7 @@ def generate_query(history, question, max_characters):
 
     text += f"Human: {question}"
 
-    messages += [{"role": "user", "content": f"What would be a query that could be used to find the information required to answer the following conversation:\n\n{text}"}]
+    messages += [{"role": "user", "content": f"What would be a query that I could use to find the information required to answer the following conversation myself?\n\nConversation:\n{text}"}]
 
     return openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
