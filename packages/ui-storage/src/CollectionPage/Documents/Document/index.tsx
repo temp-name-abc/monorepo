@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteDocument } from "helpers";
 import { useSession } from "next-auth/react";
+import { useNotification } from "providers";
 import { Download, FileDownload, Trash } from "tabler-icons-react";
 import { IDocument } from "types";
 import { KEY_DOCUMENT, KEY_DOCUMENTS } from "utils";
@@ -12,6 +13,7 @@ interface IProps {
 export function Document({ document }: IProps) {
     const session = useSession();
     const queryClient = useQueryClient();
+    const { setNotification } = useNotification();
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
@@ -21,6 +23,12 @@ export function Document({ document }: IProps) {
         onSuccess: (response) => {
             queryClient.invalidateQueries([KEY_DOCUMENT, response.documentId]);
             queryClient.invalidateQueries([KEY_DOCUMENTS, response.collectionId]);
+
+            setNotification({
+                title: "Document deletion scheduled",
+                description: "Your document has been successfully scheduled for deletion. Please check back in a bit.",
+                severity: "success",
+            });
         },
     });
 

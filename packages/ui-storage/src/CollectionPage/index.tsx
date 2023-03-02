@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { links } from "../links";
 import { Documents } from "./Documents";
+import { useNotification } from "providers";
 
 interface IProps {}
 
@@ -13,6 +14,7 @@ export function CollectionPage({}: IProps) {
     const session = useSession();
     const router = useRouter();
     const queryClient = useQueryClient();
+    const { setNotification } = useNotification();
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
@@ -30,7 +32,15 @@ export function CollectionPage({}: IProps) {
 
     const { mutate, isLoading, isSuccess } = useMutation({
         mutationFn: (args: { token: string; collectionId: string; file: File }) => uploadDocument(args.token, args.collectionId, args.file),
-        onSuccess: (response) => queryClient.invalidateQueries([KEY_DOCUMENTS, response.collectionId]),
+        onSuccess: (response) => {
+            queryClient.invalidateQueries([KEY_DOCUMENTS, response.collectionId]);
+
+            setNotification({
+                title: "Document is uploading",
+                description: "Your document is now uploading. Please check back in a bit.",
+                severity: "success",
+            });
+        },
     });
 
     return (
