@@ -32,7 +32,8 @@ def generate_query(history, question, max_characters):
     messages = [
         {"role": "system", "content": "You are able to identify what information is required to answer a question given a conversation. \
             For the given conversation, you will only identify the information that you would need to know to be able to answer the users question. \
-                Apart from the information required to answer the question, you will not respond to the conversation."},
+                Apart from the information required to answer the question, you will not respond to the conversation. \
+                    Even if the information exists within the conversation, you will still return the information required to answer the question."},
     ]
 
     text = ""
