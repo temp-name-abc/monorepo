@@ -94,7 +94,7 @@ def lambda_handler(event, context):
         document_id = hashlib.sha256(f"{user_id}:{collection_id}:{hashlib.sha256(raw_body).hexdigest()}".encode()).hexdigest() 
 
         # If the document exists then skip
-        document_response = dynamodb_client.get_document(TableName=document_table, Key={"collectionId": {"S": collection_id}, "documentId": {"S": document_id}})
+        document_response = dynamodb_client.get_item(TableName=document_table, Key={"collectionId": {"S": collection_id}, "documentId": {"S": document_id}})
 
         if "Item" in document_response:
             logger.info(f"Document '{document_id}' already exists - skipping")
@@ -138,7 +138,7 @@ def lambda_handler(event, context):
             chunk_id = hashlib.sha256(f"{document_id}:{chunk}".encode()).hexdigest()
 
             # Skip if the chunk exists
-            chunk_response = dynamodb_client.get_document(TableName=chunk_table, Key={"chunkId": {"S": chunk_id}})
+            chunk_response = dynamodb_client.get_item(TableName=chunk_table, Key={"chunkId": {"S": chunk_id}})
 
             if "Item" in chunk_response:
                 logger.info(f"Chunk '{chunk_id}' already exists - skipping")
