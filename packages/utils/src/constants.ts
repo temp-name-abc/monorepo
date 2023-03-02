@@ -1,7 +1,7 @@
 import { IChatData, IProduct, IProductData } from "types";
 
 export const API_BASE_URL = "https://api.monostack.app";
-export const HOME_BASE_URL = "https://monostack.app";
+export const HOME_BASE_URL = "https://www.monostack.app";
 
 export const productData: { [key in IProduct]: IProductData } = {
     "chat.conversation.chat": {
