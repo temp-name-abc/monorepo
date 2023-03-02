@@ -12,7 +12,7 @@ export function ChatWindow({ chats, question, onClickReply }: IProps) {
     if (!chats) return null;
 
     return (
-        <div className="h-[576px] bg-gray-100 p-10 space-y-8 overflow-y-auto">
+        <div className="bg-gray-100 p-10 space-y-8 h-[576px] overflow-y-auto">
             <ChatBubble style="centernobubble">Beginning of conversation</ChatBubble>
             <div className="flex flex-col space-y-8">
                 {chats.chats.map((chat, i) => (
