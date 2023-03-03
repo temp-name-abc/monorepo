@@ -7,8 +7,14 @@ interface IProps {}
 export function IndexPage({}: IProps) {
     const router = useRouter();
 
-    // @ts-expect-error
-    if (router.query.success) fbq("track", "Subscribe", { value: "0.00", currency: "USD", predicted_ltv: "10.00" });
+    if (router.query.status) {
+        const status = router.query.status as "SUCCESS" | "FAILED";
+
+        // @ts-expect-error
+        if (status === "SUCCESS") fbq("track", "Subscribe", { value: "0.00", currency: "USD", predicted_ltv: "10.00" });
+        // @ts-expect-error
+        else if (status === "FAILED") fbq("trackCustom", "FailedCheckout", {});
+    }
 
     return (
         <SubAppShell

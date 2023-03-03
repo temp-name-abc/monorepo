@@ -83,7 +83,8 @@ def lambda_handler(event, context):
     subscription_data = None if stripe_partner_id == None else {"transfer_data": {"destination": stripe_partner_id, "amount_percent": partner_share}}
 
     session = stripe.checkout.Session.create(
-        success_url=f"{home_url}?success=true",
+        success_url=f"{home_url}?status=SUCCESS",
+        cancel_url=f"{home_url}?status=FAILED",
         line_items=[{"price": stripe_price_id}],
         mode="subscription",
         customer=customer_id,
