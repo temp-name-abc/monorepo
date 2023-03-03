@@ -17,9 +17,9 @@ export function useBillingEnabled(product: IProduct) {
         onSuccess: (portal) =>
             !portal.active &&
             addNotification({
-                title: "Billing not enabled",
+                title: "Not subscribed",
                 description:
-                    "You have not enabled billing for this feature. As a result, your access may be restricted. To fix this, navigate to the 'Billing' tab and enable the feature.",
+                    "You have not yet subscribed to this feature. As a result, your access may be restricted. To fix this, navigate to the 'Billing' tab and subscribe to the feature.",
                 severity: "warning",
             }),
     });
