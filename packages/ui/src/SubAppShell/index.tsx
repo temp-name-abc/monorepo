@@ -19,6 +19,7 @@ export function SubAppShell({ children, title, description, links }: IProps) {
             <Head>
                 <title>{`${title} - MonoStack`}</title>
                 <meta name="description" content={description} />
+                <link rel="shortcut icon" href="/images/favicon.ico" />
             </Head>
             <div className="p-10 space-y-10">
                 <nav className="flex space-x-8">
