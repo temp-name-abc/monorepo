@@ -41,6 +41,7 @@ export class StorageStack extends cdk.NestedStack {
             partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
             sortKey: { name: "collectionId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         });
 
         // Create collection function
@@ -102,11 +103,13 @@ export class StorageStack extends cdk.NestedStack {
             partitionKey: { name: "collectionId", type: dynamodb.AttributeType.STRING },
             sortKey: { name: "documentId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         });
 
         const uploadRecordsTable = new dynamodb.Table(this, "uploadRecordsTable", {
             partitionKey: { name: "uploadId", type: dynamodb.AttributeType.STRING },
             timeToLiveAttribute: "ttl",
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         });
 
         const tempBucket = new s3.Bucket(this, "tempBucket", {
@@ -144,6 +147,7 @@ export class StorageStack extends cdk.NestedStack {
         const chunkTable = new dynamodb.Table(this, "chunkTable", {
             partitionKey: { name: "chunkId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         });
 
         const chunkIndexName = "chunkIndex";

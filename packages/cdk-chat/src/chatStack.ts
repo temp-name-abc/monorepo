@@ -35,6 +35,7 @@ export class ChatStack extends cdk.NestedStack {
             partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
             sortKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         });
 
         conversationTable.addLocalSecondaryIndex({
@@ -84,6 +85,7 @@ export class ChatStack extends cdk.NestedStack {
             partitionKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
             sortKey: { name: "chatId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         });
 
         chatTable.addLocalSecondaryIndex({

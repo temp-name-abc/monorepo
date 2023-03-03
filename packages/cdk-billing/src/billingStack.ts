@@ -45,11 +45,13 @@ export class BillingStack extends cdk.NestedStack {
         const productsTable = new dynamodb.Table(this, "productsTable", {
             partitionKey: { name: "productId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         });
 
         const usageTable = new dynamodb.Table(this, "usageTable", {
             partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         });
 
         const setupFn = new lambda.Function(this, "setupFn", {
