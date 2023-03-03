@@ -32,7 +32,8 @@ def generate_query(history, question, max_characters, user_id):
     messages = [
         {"role": "system", "content": "You are an expert in summarizing conversations and explaining what a question is asking for given a conversation. \
             Whenever you receive a question, you will respond with an explanation of how the conversation relates to the new question provided. \
-                Do not respond to questions directly. Only provide the context for the question and explain what the newest question is asking."},
+                Do not respond to questions directly. Only provide the context for the question and explain what the newest question is asking. \
+                    If there is no conversation history provided, you will restate the question."},
     ]
 
     text = ""
