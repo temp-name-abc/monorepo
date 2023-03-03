@@ -30,9 +30,9 @@ def set_openai_api_key(api_key):
 
 def generate_query(history, question, max_characters, user_id):
     messages = [
-        {"role": "system", "content": "You will identify what information is required to answer a users question given a conversation. \
-            For the given conversation, you will return a list of queries that the user could use to find the information to answer the question themselves. \
-                If the information already exists within the conversation, you will still return a list of queries that they could use to find the answer themselves."},
+        {"role": "system", "content": "You are an expert in summarizing conversations and explaining what a question is asking for given a conversation. \
+            Whenever you receive a question, you will respond with an explanation of how the conversation relates to the new question provided. \
+                Do not respond to questions directly. Only provide the context for the question and explain what the newest question is asking."},
     ]
 
     text = ""
@@ -43,7 +43,7 @@ def generate_query(history, question, max_characters, user_id):
 
     text += f"Human: {question}"
 
-    messages += [{"role": "user", "content": f"What would be a query that I could use to find the information required to answer the following conversation myself?\n\nConversation:\n{text}"}]
+    messages += [{"role": "user", "content": f"Given the following conversation, what is the most recent question asking?\n\nConversation:\n{text}"}]
 
     return openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
