@@ -130,10 +130,12 @@ def lambda_handler(event, context):
 
         # Record the chunks of the document for indexing
         remaining = body
+        chunk_num = 0
 
         while remaining:
             chunk = remaining[:chunk_characters]
             chunk_id = hashlib.sha256(f"{document_id}:{chunk}".encode()).hexdigest()
+            chunk_num += 1
 
             # Skip if the chunk exists
             chunk_response = dynamodb_client.get_item(TableName=chunk_table, Key={"chunkId": {"S": chunk_id}})
@@ -164,6 +166,7 @@ def lambda_handler(event, context):
                     "documentId": {"S": document_id},
                     "userId": {"S": user_id},
                     "embedding": {"S": json.dumps(embeddings)},
+                    "chunkNum": {"N": str(chunk_num)},
                     "timestamp": {"N": str(timestamp)}
                 }
             )
