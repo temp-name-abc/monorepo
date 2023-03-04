@@ -10,6 +10,25 @@ logger.setLevel(logging.INFO)
 secrets_manager_client = boto3.client("secretsmanager")
 dynamodb_client = boto3.client("dynamodb")
 
+def route_to_portal(customer_id: str, home_url: str, user_id: str):
+    portal = stripe.billing_portal.Session.create(
+        customer=customer_id,
+        return_url=home_url
+    )
+
+    logger.info(f"Created portal session for user `{user_id}`")
+
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Access-Control-Allow-Origin": "*",
+        },
+        "body": json.dumps({
+            "url": portal["url"],
+            "active": True
+        })
+    }
+
 
 def lambda_handler(event, context):
     logger.info(f"Retrieving user portal for '{event}'")
@@ -39,23 +58,7 @@ def lambda_handler(event, context):
 
     # Retrieve the product
     if product_ids == None:
-        portal = stripe.billing_portal.Session.create(
-            customer=customer_id,
-            return_url=home_url
-        )
-
-        logger.info(f"Created portal session for user `{user_id}`")
-
-        return {
-            "statusCode": 200,
-            "headers": {
-                "Access-Control-Allow-Origin": "*",
-            },
-            "body": json.dumps({
-                "url": portal["url"],
-                "active": True
-            })
-        }
+        return route_to_portal(customer_id, home_url, user_id)
 
     # Check if the customer already has a subscription to the provided product ids
     customer = stripe.Customer.retrieve(customer_id, expand=["subscriptions"])
@@ -77,6 +80,10 @@ def lambda_handler(event, context):
                 subscribed_ids.add(product_id)
                 
                 break
+
+
+    if len(subscribed_ids) == len(product_ids):
+        return route_to_portal(customer_id, home_url, user_id)
 
     # Route to checkout
     line_items = [{"price": price_mappings[product_id]} for product_id in product_ids if product_id not in subscribed_ids]
