@@ -1,8 +1,5 @@
-import { DotsCircleHorizontal, Send, CreditCard } from "tabler-icons-react";
+import { Send } from "tabler-icons-react";
 
-export const links = [
-    { href: "/chat/conversations", children: "Conversations", icon: <Send /> },
-    { href: "/chat/billing", children: "Billing", icon: <CreditCard /> },
-];
+export const links = [{ href: "/chat/conversations", children: "Conversations", icon: <Send /> }];
 
 export default links;

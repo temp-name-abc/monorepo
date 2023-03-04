@@ -16,7 +16,7 @@ export function CollectionPage({}: IProps) {
     const router = useRouter();
     const queryClient = useQueryClient();
     const { addNotification } = useNotification();
-    useBillingEnabled("storage.collection.document.process");
+    useBillingEnabled();
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;

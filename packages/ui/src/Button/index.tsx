@@ -16,9 +16,8 @@ export function Button({ children, type, variant, onClick, href, icon, thick, ne
     const color = variant === "dull" ? "text-gray-400 bg-gray-100 hover:bg-gray-200" : "text-gray-50 bg-violet-600 hover:bg-violet-700";
     const paddingY = thick ? "py-4" : "py-2";
     const spacing = icon ? "space-x-8" : "";
-    const weight = thick ? "font-medium" : "font-base";
 
-    const style = `text-left px-4 flex justify-between ${spacing} ${paddingY} ${color} ${weight}`;
+    const style = `text-left px-4 font-medium flex justify-between ${spacing} ${paddingY} ${color}`;
 
     if (type === "button")
         return (

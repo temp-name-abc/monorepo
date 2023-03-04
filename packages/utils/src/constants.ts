@@ -23,3 +23,5 @@ export const chatData: IChatData = {
     matchingThreshold: 0.75,
     maxCharacters: 600,
 };
+
+export const products: IProduct[] = ["chat.conversation.chat", "storage.collection.document.process"];

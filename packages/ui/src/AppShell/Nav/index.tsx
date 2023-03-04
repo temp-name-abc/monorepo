@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "../../Button";
+import { Subscription } from "../../Subscription";
 
 interface IProps {}
 
@@ -16,10 +17,11 @@ export function Nav({}: IProps) {
                 </h1>
             </Link>
             {session.data ? (
-                <div className="flex items-center justify-between space-x-5">
+                <div className="flex items-center justify-between space-x-8">
                     <p className="text-gray-800">
                         Welcome, <span className="font-medium">{session.data.user?.email?.split("@")[0].slice(0, 3)}...</span>
                     </p>
+                    <Subscription />
                     <Button type="button" variant="dull" onClick={() => signOut()}>
                         Sign Out
                     </Button>

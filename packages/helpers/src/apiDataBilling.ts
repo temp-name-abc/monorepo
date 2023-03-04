@@ -6,8 +6,10 @@ const instance = axios.create({
     baseURL: API_BASE_URL,
 });
 
-export async function getPortal(token: string, product?: IProduct) {
-    const { data } = await instance.get<IPortalData>(`/billing/portal${product ? "?productId=" + product : ""}`, {
+export async function getPortal(token: string, product: IProduct[]) {
+    const queryString = "?" + product.map((prd) => `product=${prd}`).join("&");
+
+    const { data } = await instance.get<IPortalData>(`/billing/portal${product.length > 0 ? queryString : ""}`, {
         headers: {
             Authorization: token,
         },

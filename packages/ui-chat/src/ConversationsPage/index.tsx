@@ -16,7 +16,7 @@ interface IProps {}
 export function ConversationsPage({}: IProps) {
     const session = useSession();
     const queryClient = useQueryClient();
-    useBillingEnabled("chat.conversation.chat");
+    useBillingEnabled();
     const { addNotification } = useNotification();
 
     const [conversationId, setConversationId] = useState<string>("");
