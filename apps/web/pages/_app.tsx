@@ -1,7 +1,7 @@
 import { AppProps } from "next/app";
 import { SessionProvider } from "next-auth/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { NotificationProvider } from "providers";
+import { NotificationProvider, TutorialProvider } from "providers";
 import { AppShell } from "ui";
 import "../styles.css";
 import Script from "next/script";
@@ -44,11 +44,13 @@ export function MyApp({ Component, pageProps: { session, ...pageProps } }: AppPr
             </noscript>
             <QueryClientProvider client={queryClient}>
                 <SessionProvider session={session}>
-                    <NotificationProvider>
-                        <AppShell>
-                            <Component {...pageProps} />
-                        </AppShell>
-                    </NotificationProvider>
+                    <TutorialProvider>
+                        <NotificationProvider>
+                            <AppShell>
+                                <Component {...pageProps} />
+                            </AppShell>
+                        </NotificationProvider>
+                    </TutorialProvider>
                 </SessionProvider>
             </QueryClientProvider>
         </>
