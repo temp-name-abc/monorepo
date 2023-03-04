@@ -40,6 +40,7 @@ def lambda_handler(event, context):
     temp_bucket = os.getenv("TEMP_BUCKET")
     product_id = os.getenv("PRODUCT_ID")
     api_url = os.getenv("API_URL")
+    max_file_size = int(os.getenv("MAX_FILE_SIZE"))
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     collection_id = event["pathParameters"]["collectionId"]
@@ -48,6 +49,20 @@ def lambda_handler(event, context):
     file_type = body["type"]
     file_name = body["name"]
     file = base64.b64decode(body["file"])
+
+    # Check the file size is not too large
+    if len(file) > max_file_size:
+        msg = f"User '{user_id}' upload file which exceeded maximum upload size"
+
+        logger.error(msg)
+
+        return {
+            "statusCode": 400,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+            },
+            "body": msg
+        }
 
     # Check the collection is valid
     response = dynamodb_client.get_item(

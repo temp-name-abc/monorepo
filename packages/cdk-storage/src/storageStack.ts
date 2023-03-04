@@ -314,6 +314,7 @@ export class StorageStack extends cdk.NestedStack {
                 TEMP_BUCKET: tempBucket.bucketName,
                 PRODUCT_ID: product,
                 API_URL: API_BASE_URL,
+                MAX_FILE_SIZE: (5e9).toString(),
             },
             timeout: cdk.Duration.minutes(1),
         });
