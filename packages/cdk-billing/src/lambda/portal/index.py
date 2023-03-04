@@ -11,27 +11,6 @@ secrets_manager_client = boto3.client("secretsmanager")
 dynamodb_client = boto3.client("dynamodb")
 
 
-# Route to a portal
-def route_to_portal(customer_id: str, home_url: str, user_id: str):
-    portal = stripe.billing_portal.Session.create(
-        customer=customer_id,
-        return_url=home_url
-    )
-
-    logger.info(f"Created portal session for user `{user_id}`")
-
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Access-Control-Allow-Origin": "*",
-        },
-        "body": json.dumps({
-            "url": portal["url"],
-            "active": True
-        })
-    }
-
-
 def lambda_handler(event, context):
     logger.info(f"Retrieving user portal for '{event}'")
 
@@ -44,9 +23,12 @@ def lambda_handler(event, context):
     
     query_params = event["queryStringParameters"]
 
-    product_id = None
+    product_ids = None
     if query_params != None and "productId" in query_params:
-        product_id = query_params["productId"]
+        product_ids = query_params["productId"]
+
+        if type(product_ids) == str:
+            product_ids = [product_ids]
 
     # Load the Stripe key
     stripe.api_key = secrets_manager_client.get_secret_value(SecretId=stripe_secret)["SecretString"]
@@ -56,39 +38,55 @@ def lambda_handler(event, context):
     customer_id = customer_item["stripeCustomerId"]["S"]
 
     # Retrieve the product
-    if product_id == None:
-        return route_to_portal(customer_id, home_url, user_id)
+    if product_ids == None:
+        portal = stripe.billing_portal.Session.create(
+            customer=customer_id,
+            return_url=home_url
+        )
 
-    product_item = dynamodb_client.get_item(TableName=products_table, Key={"productId": {"S": product_id}})["Item"]
+        logger.info(f"Created portal session for user `{user_id}`")
 
-    stripe_product_id = product_item["stripeProductId"]["S"]
-    stripe_price_id = product_item["stripePriceId"]["S"]
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+            },
+            "body": json.dumps({
+                "url": portal["url"],
+                "active": True
+            })
+        }
 
-    # Add the partner share amount
-    stripe_partner_id = None
-    partner_share = None
-    if "stripePartnerId" in product_item and "partnerShare" in product_item:
-        stripe_partner_id = product_item["stripePartnerId"]["S"]
-        partner_share = product_item["partnerShare"]["S"]
-
-    # Check if the customer already has a subscription
+    # Check if the customer already has a subscription to the provided product ids
     customer = stripe.Customer.retrieve(customer_id, expand=["subscriptions"])
     subscription_items = customer["subscriptions"]["data"]
 
-    for subscription_item in subscription_items:
-        if subscription_item["items"]["data"][0]["price"]["product"] == stripe_product_id:
-            return route_to_portal(customer_id, home_url, user_id)
+    subscribed_ids = set()
+    price_mappings = {}
+
+    for product_id in product_ids:
+        product_item = dynamodb_client.get_item(TableName=products_table, Key={"productId": {"S": product_id}})["Item"]
+
+        stripe_product_id = product_item["stripeProductId"]["S"]
+        stripe_price_id = product_item["stripePriceId"]["S"]
+
+        price_mappings[product_id] = stripe_price_id
+
+        for subscription_item in subscription_items:
+            if subscription_item["items"]["data"][0]["price"]["product"] == stripe_product_id:
+                subscribed_ids.add(product_id)
+                
+                break
 
     # Route to checkout
-    subscription_data = None if stripe_partner_id == None else {"transfer_data": {"destination": stripe_partner_id, "amount_percent": partner_share}}
+    line_items = [{"price": price_mappings[product_id]} for product_id in product_ids if product_id not in subscribed_ids]
 
     session = stripe.checkout.Session.create(
         success_url=f"{home_url}?status=SUCCESS",
         cancel_url=f"{home_url}?status=FAILED",
-        line_items=[{"price": stripe_price_id}],
+        line_items=line_items,
         mode="subscription",
-        customer=customer_id,
-        subscription_data=subscription_data
+        customer=customer_id
     )
 
     logger.info(f"Created checkout session for user `{user_id}`")
