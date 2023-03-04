@@ -8,7 +8,6 @@ import { ChatWindow } from "./ChatWindow";
 import { TextCreate, ChatContext, SubAppShell } from "ui";
 import { IChat } from "types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useBilling } from "hooks";
 import { useNotification } from "providers";
 
 interface IProps {}
@@ -16,7 +15,6 @@ interface IProps {}
 export function ConversationsPage({}: IProps) {
     const session = useSession();
     const queryClient = useQueryClient();
-    useBilling();
     const { addNotification } = useNotification();
 
     const [conversationId, setConversationId] = useState<string>("");

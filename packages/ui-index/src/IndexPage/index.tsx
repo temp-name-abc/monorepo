@@ -1,3 +1,4 @@
+import { useTutorial } from "hooks";
 import { useRouter } from "next/router";
 import { Database, Messages } from "tabler-icons-react";
 import { Card, CardLayout, SubAppShell } from "ui";
@@ -6,12 +7,18 @@ interface IProps {}
 
 export function IndexPage({}: IProps) {
     const router = useRouter();
+    const { completeTutorial } = useTutorial();
+
+    console.log("Here");
 
     if (router.query.status) {
         const status = router.query.status as "SUCCESS" | "FAILED";
 
-        // @ts-expect-error
-        if (status === "SUCCESS") fbq("track", "Subscribe", { value: "0.00", currency: "USD", predicted_ltv: "10.00" });
+        if (status === "SUCCESS") {
+            // @ts-expect-error
+            fbq("track", "Subscribe", { value: "0.00", currency: "USD", predicted_ltv: "10.00" });
+            completeTutorial();
+        }
         // @ts-expect-error
         else if (status === "FAILED") fbq("trackCustom", "FailedCheckout", {});
     }

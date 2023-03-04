@@ -23,7 +23,6 @@
         "utils": "*",
         "helpers": "*",
         "next": "^13.1.1",
-        "providers": "*",
-        "hooks": "*"
+        "providers": "*"
     }
 }

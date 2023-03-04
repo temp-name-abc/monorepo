@@ -8,3 +8,4 @@ export * from "./src/ChatContext";
 export * from "./src/CardLayout";
 export * from "./src/Card";
 export * from "./src/Subscription";
+export * from "./src/Tutorial";
