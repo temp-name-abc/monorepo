@@ -4,7 +4,7 @@ import { KEY_PORTAL, products } from "utils";
 import { getPortal } from "helpers";
 import { useNotification } from "providers";
 
-export function useBillingEnabled() {
+export function useBilling() {
     const session = useSession();
     const { addNotification } = useNotification();
 
@@ -23,4 +23,4 @@ export function useBillingEnabled() {
     });
 }
 
-export default useBillingEnabled;
+export default useBilling;

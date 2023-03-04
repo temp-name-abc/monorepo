@@ -1,1 +1,2 @@
-export * from "./src/useBillingEnabled";
+export * from "./src/useBilling";
+export * from "./src/useTutorial";

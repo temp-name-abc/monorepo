@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { links } from "../links";
 import { Documents } from "./Documents";
 import { useNotification } from "providers";
-import { useBillingEnabled } from "hooks";
+import { useBilling } from "hooks";
 
 interface IProps {}
 
@@ -16,7 +16,7 @@ export function CollectionPage({}: IProps) {
     const router = useRouter();
     const queryClient = useQueryClient();
     const { addNotification } = useNotification();
-    useBillingEnabled();
+    useBilling();
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
