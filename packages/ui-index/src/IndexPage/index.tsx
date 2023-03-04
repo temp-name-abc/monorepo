@@ -32,7 +32,7 @@ export function IndexPage({}: IProps) {
                     />,
                     <Card
                         title="Chat"
-                        description="Select a collection. Ask a question. Receive the respone. Verify the information used to create the response."
+                        description="Select a collection. Ask a question. Receive the respone. Verify the sources used."
                         icon={<Messages />}
                         url="/chat/conversations"
                     />,
