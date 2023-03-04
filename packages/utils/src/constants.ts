@@ -24,7 +24,4 @@ export const chatData: IChatData = {
     maxCharacters: 600,
 };
 
-export const products: IProduct[] = [
-    // "chat.conversation.chat",
-    // "storage.collection.document.process",
-];
+export const products: IProduct[] = ["chat.conversation.chat", "storage.collection.document.process"];

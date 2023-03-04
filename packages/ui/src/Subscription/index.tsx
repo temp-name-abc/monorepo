@@ -3,7 +3,7 @@ import { getPortal } from "helpers";
 import { useSession } from "next-auth/react";
 import { CreditCard } from "tabler-icons-react";
 import { KEY_PORTAL, products } from "utils";
-import Button from "../Button";
+import { Button } from "../Button";
 
 interface IProps {}
 

@@ -19,7 +19,7 @@ export function Nav({}: IProps) {
             {session.data ? (
                 <div className="flex items-center justify-between space-x-8">
                     <p className="text-gray-800">
-                        Welcome, <span className="font-medium">{session.data.user?.email?.split("@")[0].slice(0, 3)}...</span>
+                        Welcome, <span className="font-medium">{session.data.user?.email?.split("@")[0].slice(0, 4)}...</span>
                     </p>
                     <Subscription />
                     <Button type="button" variant="dull" onClick={() => signOut()}>
