@@ -18,7 +18,7 @@ export function Button({ children, type, variant, onClick, href, icon, thick, ne
     const spacing = icon ? "space-x-8" : "";
     const weight = thick ? "font-medium" : "font-base";
 
-    const style = `px-4 flex justify-between ${spacing} ${paddingY} ${color} ${weight}`;
+    const style = `text-left px-4 flex justify-between ${spacing} ${paddingY} ${color} ${weight}`;
 
     if (type === "button")
         return (
