@@ -36,7 +36,7 @@ export function Tutorial({ children }: IProps) {
             descriptions={[
                 "Now that you've created a collection and uploaded your documents, it's time to start a conversation!",
                 <>
-                    Navigate to <span className="font-medium">Chat</span>, create a new conversation, then ask away!
+                    Navigate to <span className="font-medium">Chat</span>, create a new conversation, choose your collection, then ask away!
                 </>,
             ]}
         />,

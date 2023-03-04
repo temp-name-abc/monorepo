@@ -49,7 +49,11 @@ export function ConversationsPage({}: IProps) {
     }, [conversationId, setSelectedChat]);
 
     return (
-        <SubAppShell title="Chat / Conversations" description="View all your conversations." links={links}>
+        <SubAppShell
+            title="Chat / Conversations"
+            description="View all your conversations. Pick a collection, ask the AI questions about it, and get instant replies."
+            links={links}
+        >
             <div className="flex space-x-10">
                 <div className={`flex flex-col space-y-12 ${chatsData ? "w-1/4" : "w-full"}`}>
                     <TextCreate
