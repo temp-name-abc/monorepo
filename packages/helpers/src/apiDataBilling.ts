@@ -7,7 +7,7 @@ const instance = axios.create({
 });
 
 export async function getPortal(token: string, product: IProduct[]) {
-    const queryString = "?" + product.map((prd) => `product=${prd}`).join("&");
+    const queryString = "?" + product.map((prd) => `productId=${prd}`).join("&");
 
     const { data } = await instance.get<IPortalData>(`/billing/portal${product.length > 0 ? queryString : ""}`, {
         headers: {
