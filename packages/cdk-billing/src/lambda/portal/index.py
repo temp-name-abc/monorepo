@@ -40,14 +40,11 @@ def lambda_handler(event, context):
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     
-    query_params = event["queryStringParameters"]
+    query_params = event["multiValueQueryStringParameters"]
 
     product_ids = None
     if query_params != None and "productId" in query_params:
         product_ids = query_params["productId"]
-
-        if type(product_ids) == str:
-            product_ids = [product_ids]
 
     # Load the Stripe key
     stripe.api_key = secrets_manager_client.get_secret_value(SecretId=stripe_secret)["SecretString"]
