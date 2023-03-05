@@ -7,6 +7,8 @@ import { HOME_BASE_URL } from "utils";
 interface IStackProps extends cdk.NestedStackProps {
     googleClientId: string;
     googleClientSecret: string;
+    facebookClientId: string;
+    facebookClientSecret: string;
 }
 
 export class CoreStack extends cdk.NestedStack {
@@ -36,6 +38,18 @@ export class CoreStack extends cdk.NestedStack {
             })
         );
 
+        this.userPool.registerIdentityProvider(
+            new cognito.UserPoolIdentityProviderFacebook(this, "facebookIdentityProvider", {
+                userPool: this.userPool,
+                clientId: props.facebookClientId,
+                clientSecret: props.facebookClientSecret,
+                scopes: ["email", "public_profile"],
+                attributeMapping: {
+                    email: cognito.ProviderAttribute.FACEBOOK_EMAIL,
+                },
+            })
+        );
+
         this.userPool.addDomain("userPoolDomain", {
             cognitoDomain: {
                 domainPrefix: "monorepo-app-domain",
@@ -45,7 +59,11 @@ export class CoreStack extends cdk.NestedStack {
         const callbackPath = "api/auth/callback/cognito";
 
         this.userPool.addClient("userPoolClient", {
-            supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.COGNITO, cognito.UserPoolClientIdentityProvider.GOOGLE],
+            supportedIdentityProviders: [
+                cognito.UserPoolClientIdentityProvider.COGNITO,
+                cognito.UserPoolClientIdentityProvider.GOOGLE,
+                cognito.UserPoolClientIdentityProvider.FACEBOOK,
+            ],
             oAuth: {
                 callbackUrls: [`${HOME_BASE_URL}/${callbackPath}`, `http://localhost:3000/${callbackPath}`],
             },

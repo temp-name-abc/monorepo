@@ -45,7 +45,7 @@ def lambda_handler(event, context):
     )
 
     # Subscribe user to the mailing list
-    resp = requests.post("https://connect.mailerlite.com/api/subscribers", data=json.loads({"email": user_email}), headers={
+    resp = requests.post("https://connect.mailerlite.com/api/subscribers", data=json.dumps({"email": user_email}), headers={
         "Authorization": f"Bearer {mailerlite_token}",
         "Content-Type": "application/json",
         "Accept": "application/json"
