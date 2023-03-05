@@ -112,7 +112,7 @@ def lambda_handler(event, context):
 
             context.append(document)
 
-            logger.info(f"Retrieved context chunk '{document['chunkId']}' for document '{document['documentId']}'")
+            logger.info(f"Retrieved context chunk for document '{document['documentId']}'")
 
     # Generate context, response, and update the history
     context_text = utils.create_context(context)
