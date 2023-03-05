@@ -54,8 +54,8 @@ export function ConversationsPage({}: IProps) {
             description="View all your conversations. Pick a collection, ask the AI questions about it, and get instant replies."
             links={links}
         >
-            <div className="flex space-x-10">
-                <div className={`flex flex-col space-y-12 ${chatsData ? "w-1/4" : "w-full"}`}>
+            <div className="flex flex-col xl:flex-row xl:space-x-10 space-y-10 xl:space-y-0">
+                <div className={`flex flex-col space-y-12 ${chatsData ? "w-full xl:w-1/4" : "w-full"}`}>
                     <TextCreate
                         onClick={(name) => token && conversationMutate({ token, name })}
                         cta="Create"
@@ -64,7 +64,7 @@ export function ConversationsPage({}: IProps) {
                     />
                     <Conversations conversations={conversationsData} conversationId={conversationId} setConversationId={setConversationId} />
                 </div>
-                <div className="flex flex-col space-y-12 w-3/4">
+                <div className="flex flex-col space-y-12 w-full xl:w-3/4">
                     <ChatWindow chats={chatsData} conversationId={conversationId} onClickReply={setSelectedChat} />
                     {selectedChat && <ChatContext chat={selectedChat} />}
                 </div>

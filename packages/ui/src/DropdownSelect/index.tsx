@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 
 interface IProps {
     options: [string, string][];
+    placeholder: string;
     onChange: (value: string) => void;
     selected?: string;
 }
 
-export function DropdownSelect({ options, onChange, selected: _selected }: IProps) {
+export function DropdownSelect({ options, placeholder, onChange, selected: _selected }: IProps) {
     const [selected, setSelected] = useState<string>("");
 
     useEffect(() => {
@@ -18,8 +19,8 @@ export function DropdownSelect({ options, onChange, selected: _selected }: IProp
     }, [_selected, setSelected]);
 
     return (
-        <select className="outline-none bg-gray-100 px-4 py-2 text-gray-400 w-full" value={selected} onChange={(e) => setSelected(e.target.value)}>
-            <option value="">Choose a collection</option>
+        <select className="outline-none bg-gray-200 px-4 py-2 text-gray-400 w-full cursor-pointer" value={selected} onChange={(e) => setSelected(e.target.value)}>
+            <option value="">{placeholder}</option>
             {options.map((option, i) => (
                 <option key={i} value={option[0]}>
                     {option[1]}

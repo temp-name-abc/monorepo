@@ -45,8 +45,7 @@ export function ChatInput({ conversationId, chatsData, setIsTyping, setQuestion 
     if (!chatsData) return null;
 
     return (
-        <div className="w-full flex space-x-8">
-            <SelectCollection chatsData={chatsData} setCollectionId={setCollectionId} />
+        <div className="w-full flex flex-col space-y-4">
             <TextCreate
                 onClick={(question) => {
                     const chats = chatsData.chats;
@@ -66,6 +65,7 @@ export function ChatInput({ conversationId, chatsData, setIsTyping, setQuestion 
                 disabled={isTyping || !collectionId}
                 maxCharacters={chatData.maxCharacters}
             />
+            <SelectCollection chatsData={chatsData} setCollectionId={setCollectionId} />
         </div>
     );
 }

@@ -34,8 +34,9 @@ export function SelectCollection({ setCollectionId, chatsData }: IProps) {
     if (!collectionsData) return null;
 
     return (
-        <div className="w-1/4">
+        <div className="w-full">
             <DropdownSelect
+                placeholder="Choose a collection before sending a message"
                 options={collectionsData.collections.map((collection) => [collection.collectionId, collection.name])}
                 onChange={setCollectionId}
                 selected={selectedCollectionId}
