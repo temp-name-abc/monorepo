@@ -1,11 +1,12 @@
 import { z } from "zod";
 
 export const context = z.object({
-    body: z.string(),
+    score: z.number(),
     documentId: z.string(),
     collectionId: z.string(),
-    chunkId: z.string(),
-    score: z.number(),
+    startChunkNum: z.number(),
+    endChunkNum: z.number(),
+    body: z.string(),
 });
 
 export type IContext = z.infer<typeof context>;
