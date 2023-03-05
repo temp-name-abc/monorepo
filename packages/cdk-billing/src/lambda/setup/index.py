@@ -52,7 +52,7 @@ def lambda_handler(event, context):
     })
 
     if not resp.ok:
-        logger.warning(f"Unable to subscribe user '{user_id}' to mailing list with status '{resp.status_code}'")
+        logger.error(f"Unable to subscribe user '{user_id}' to mailing list with status '{resp.status_code}'")
 
     logger.info(f"Created and stored customer '{customer_id}' for user '{user_id}' with email '{user_email}'")
 

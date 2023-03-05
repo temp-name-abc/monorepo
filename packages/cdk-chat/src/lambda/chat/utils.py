@@ -94,9 +94,9 @@ def create_context(context):
     return ". ".join(ctx["body"] for ctx in context)
 
 
-def get_documents(api_url, query, user_id, collection_id, documents_retrieved):
+def get_documents(api_url, query, user_id, collection_id, documents_retrieved, extend_down):
     query_encoded = urllib.parse.quote(query)
-    documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults={documents_retrieved}&query={query_encoded}"
+    documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults={documents_retrieved}&query={query_encoded}&extendDown={extend_down}"
     documents_request = make_request(documents_url, "GET")
     documents_req = requests.get(documents_url, headers=documents_request.headers)
 

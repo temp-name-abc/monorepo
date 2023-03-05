@@ -69,7 +69,7 @@ export class BillingStack extends cdk.NestedStack {
                 MAILERLITE_SECRET: mailerliteSecret.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
             },
-            timeout: cdk.Duration.seconds(30),
+            timeout: cdk.Duration.minutes(1),
         });
 
         stripeSecret.grantRead(setupFn);
@@ -94,7 +94,7 @@ export class BillingStack extends cdk.NestedStack {
                 PRODUCTS_TABLE: productsTable.tableName,
                 HOME_URL: HOME_BASE_URL,
             },
-            timeout: cdk.Duration.seconds(30),
+            timeout: cdk.Duration.minutes(1),
         });
 
         stripeSecret.grantRead(portalFn);
@@ -121,7 +121,7 @@ export class BillingStack extends cdk.NestedStack {
                 USER_BILLING_TABLE: userBillingTable.tableName,
                 PRODUCTS_TABLE: productsTable.tableName,
             },
-            timeout: cdk.Duration.seconds(30),
+            timeout: cdk.Duration.minutes(1),
         });
 
         stripeSecret.grantRead(statusFn);

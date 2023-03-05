@@ -52,7 +52,7 @@ export class StorageStack extends cdk.NestedStack {
             environment: {
                 COLLECTION_TABLE: collectionTable.tableName,
             },
-            timeout: cdk.Duration.seconds(30),
+            timeout: cdk.Duration.minutes(1),
         });
 
         collectionTable.grantWriteData(createCollectionFn);
@@ -70,7 +70,7 @@ export class StorageStack extends cdk.NestedStack {
             environment: {
                 COLLECTION_TABLE: collectionTable.tableName,
             },
-            timeout: cdk.Duration.seconds(30),
+            timeout: cdk.Duration.minutes(1),
         });
 
         collectionTable.grantReadData(userCollectionsFn);
@@ -88,7 +88,7 @@ export class StorageStack extends cdk.NestedStack {
             environment: {
                 COLLECTION_TABLE: collectionTable.tableName,
             },
-            timeout: cdk.Duration.seconds(30),
+            timeout: cdk.Duration.minutes(1),
         });
 
         collectionTable.grantReadData(getCollectionFn);
@@ -178,7 +178,7 @@ export class StorageStack extends cdk.NestedStack {
                 DOCUMENT_BUCKET: documentBucket.bucketName,
                 PROCESSED_DOCUMENT_BUCKET: processedDocumentBucket.bucketName,
             },
-            timeout: cdk.Duration.seconds(30),
+            timeout: cdk.Duration.minutes(1),
         });
 
         collectionTable.grantReadData(collectionDocumentsFn);
@@ -202,7 +202,7 @@ export class StorageStack extends cdk.NestedStack {
                 DOCUMENT_BUCKET: documentBucket.bucketName,
                 PROCESSED_DOCUMENT_BUCKET: processedDocumentBucket.bucketName,
             },
-            timeout: cdk.Duration.seconds(30),
+            timeout: cdk.Duration.minutes(1),
         });
 
         collectionTable.grantReadData(getDocumentFn);
@@ -388,6 +388,8 @@ export class StorageStack extends cdk.NestedStack {
                 OPENAI_SECRET: openAISecret.secretName,
                 COLLECTION_TABLE: collectionTable.tableName,
                 CHUNK_BUCKET: chunkBucket.bucketName,
+                CHUNK_TABLE: chunkTable.tableName,
+                CHUNK_DOCUMENT_INDEX_NAME: chunkDocumentIndexName,
             },
             timeout: cdk.Duration.minutes(1),
         });
@@ -396,6 +398,7 @@ export class StorageStack extends cdk.NestedStack {
         openAISecret.grantRead(searchFn);
         collectionTable.grantReadData(searchFn);
         chunkBucket.grantRead(searchFn);
+        chunkTable.grantReadData(searchFn);
 
         searchResource.addMethod("GET", new apigw.LambdaIntegration(searchFn), {
             authorizationType: apigw.AuthorizationType.IAM,

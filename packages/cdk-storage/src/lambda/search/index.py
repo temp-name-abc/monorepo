@@ -22,6 +22,8 @@ def lambda_handler(event, context):
     openai_secret = os.getenv("OPENAI_SECRET")
     collection_table = os.getenv("COLLECTION_TABLE")
     chunk_bucket = os.getenv("CHUNK_BUCKET")
+    chunk_table = os.getenv("CHUNK_TABLE")
+    chunk_document_index_name = os.getenv("CHUNK_DOCUMENT_INDEX_NAME")
 
     query_params = event["queryStringParameters"]
 
@@ -29,6 +31,8 @@ def lambda_handler(event, context):
     user_id = query_params["userId"]
     collection_id = query_params["collectionId"]
     num_results = int(query_params["numResults"])
+    extend_down = int(query_params["extendDown"] if "extendDown" in query_params else 0)
+    extend_up = int(query_params["extendUp"] if "extendUp" in query_params else 0)
 
     # Load the OpenAI API key
     openai.api_key = secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"]
@@ -90,20 +94,40 @@ def lambda_handler(event, context):
     documents = []
 
     for match in query_response["matches"]:
-        document = {}
+        document = {
+            "score": match["score"]
+        }
 
-        chunk_id = match["id"]
+        chunk_data = dynamodb_client.get_item(TableName=chunk_table, Key={"chunkId": {"S": match["id"]}})["Item"]
 
-        document["chunkId"] = chunk_id
-        document["score"] = match["score"]
-        document["documentId"] = match["metadata"]["documentId"]
+        chunk_num = int(chunk_data["chunkNum"]["N"])
 
-        obj_res = s3_client.get_object(Bucket=chunk_bucket, Key=chunk_id)
-        body = obj_res["Body"].read().decode("utf-8")
+        document["documentId"] = chunk_data["documentId"]["S"]
+        document["collectionId"] = chunk_data["collectionId"]["S"]
+        document["startChunkNum"] = chunk_num - extend_up
+        document["endChunkNum"] = chunk_num + extend_down
 
-        document["body"] = body
+        document["body"] = ""
+
+        # Retrieve the chunk range
+        chunk_response = dynamodb_client.query(
+            TableName=chunk_table,
+            IndexName=chunk_document_index_name,
+            KeyConditionExpression="documentId = :documentId and chunkNum BETWEEN :minChunkNum and :maxChunkNum",
+            ExpressionAttributeValues={
+                ":documentId": {"S": document["documentId"]},
+                ":minChunkNum": {"N": str(document["startChunkNum"])},
+                ":maxChunkNum": {"N": str(document["endChunkNum"])},
+            },
+        )
+
+        for item in chunk_response["Items"]:
+            obj_res = s3_client.get_object(Bucket=chunk_bucket, Key=item["chunkId"]["S"])
+            document["body"] += obj_res["Body"].read().decode("utf-8")
 
         documents.append(document)
+
+    logger.info(f"Processed search query and returned documents '{documents}'")
 
     return {
         "statusCode": 200,

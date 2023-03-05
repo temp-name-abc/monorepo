@@ -206,6 +206,6 @@ def lambda_handler(event, context):
         )
 
         if not usage_req.ok:
-            logger.warning(f"Unable to record usage for user '{user_id}' with product '{product_id}' with status code '{usage_req.status_code}'")
+            logger.error(f"Unable to record usage for user '{user_id}' with product '{product_id}' with status code '{usage_req.status_code}'")
 
         logger.info(f"Processed file with key '{document_id}'")

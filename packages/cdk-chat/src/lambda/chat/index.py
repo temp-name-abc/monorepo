@@ -38,6 +38,7 @@ def lambda_handler(event, context):
     documents_retrieved = int(os.getenv("DOCUMENTS_RETRIEVED"))
     matching_threshold = float(os.getenv("MATCHING_THRESHOLD"))
     max_characters = int(os.getenv("MAX_CHARACTERS"))
+    extend_down = int(os.getenv("EXTEND_DOWN"))
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     conversation_id = event["pathParameters"]["conversationId"]
@@ -96,7 +97,7 @@ def lambda_handler(event, context):
     logger.info(f"Query = '{query}'")
 
     # Retrieve question context
-    documents = utils.get_documents(api_url, query, user_id, collection_id, documents_retrieved)
+    documents = utils.get_documents(api_url, query, user_id, collection_id, documents_retrieved, extend_down)
 
     if documents == None:
         logger.error(f"Unable to find documents")
@@ -105,24 +106,11 @@ def lambda_handler(event, context):
         logger.warning(f"No documents found")
     
     else:
-        chunks = {}
-
         for document in documents:
             if document["score"] < matching_threshold:
                 break
 
-            if document["chunkId"] in chunks:
-                continue
-
-            context.append({
-                "body": document["body"],
-                "documentId": document["documentId"],
-                "collectionId": collection_id,
-                "chunkId": document["chunkId"],
-                "score": document["score"]
-            })
-
-            chunks[document["chunkId"]] = True
+            context.append(document)
 
             logger.info(f"Retrieved context chunk '{document['chunkId']}' for document '{document['documentId']}'")
 
@@ -152,7 +140,7 @@ def lambda_handler(event, context):
     reported = utils.record_usage(api_url, user_id, timestamp, product_id)
 
     if not reported:
-        logger.warning(f"Unable to record usage for user '{user_id}' with product '{product_id}'")
+        logger.error(f"Unable to record usage for user '{user_id}' with product '{product_id}'")
 
     logger.info(f"Generated chat '{chat_id}' for conversation '{conversation_id}' for user '{user_id}'")
 

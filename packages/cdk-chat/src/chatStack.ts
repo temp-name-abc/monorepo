@@ -115,6 +115,7 @@ export class ChatStack extends cdk.NestedStack {
                 DOCUMENTS_RETRIEVED: chatData.documentsRetrieved.toString(),
                 MATCHING_THRESHOLD: chatData.matchingThreshold.toString(),
                 MAX_CHARACTERS: chatData.maxCharacters.toString(),
+                EXTEND_DOWN: chatData.extendDown.toString(),
             },
             timeout: cdk.Duration.minutes(1),
         });
