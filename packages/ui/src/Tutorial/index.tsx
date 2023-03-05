@@ -78,7 +78,7 @@ export function Tutorial({ children }: IProps) {
                         <div className="fixed inset-0 transition-opacity bg-gray-500 opacity-50" />
                         <div className="relative z-10 w-full max-w-lg bg-white shadow-lg p-6 space-y-6">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-gray-900 font-bold">Tutorial</h3>
+                                <h3 className="text-gray-600 font-medium">Getting started</h3>
                                 {isLastSlide && (
                                     <button className="text-gray-900 font-bold" onClick={completeTutorial}>
                                         <X />
