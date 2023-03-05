@@ -20,7 +20,7 @@ def lambda_handler(event, context):
     document_bucket = os.getenv("DOCUMENT_BUCKET")
     processed_document_bucket = os.getenv("PROCESSED_DOCUMENT_BUCKET")
     chunk_table = os.getenv("CHUNK_TABLE")
-    chunk_index_name = os.getenv("CHUNK_INDEX_NAME")
+    chunk_document_index_name = os.getenv("CHUNK_DOCUMENT_INDEX_NAME")
     chunk_bucket = os.getenv("CHUNK_BUCKET")
 
 
@@ -63,7 +63,7 @@ def lambda_handler(event, context):
         # Retrieve all document chunks
         chunk_response = dynamodb_client.query(
             TableName=chunk_table,
-            IndexName=chunk_index_name,
+            IndexName=chunk_document_index_name,
             KeyConditionExpression="documentId = :documentId",
             ExpressionAttributeValues={
                 ":documentId": {"S": document_id},
@@ -75,7 +75,7 @@ def lambda_handler(event, context):
         while "LastEvaluatedKey" in chunk_response:
             chunk_response = dynamodb_client.query(
                 TableName=chunk_table,
-                IndexName=chunk_index_name,
+                IndexName=chunk_document_index_name,
                 KeyConditionExpression="documentId = :documentId",
                 ExpressionAttributeValues={
                     ":documentId": {"S": document_id},

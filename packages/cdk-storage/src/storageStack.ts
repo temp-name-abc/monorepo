@@ -150,11 +150,12 @@ export class StorageStack extends cdk.NestedStack {
             billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         });
 
-        const chunkIndexName = "chunkIndex";
+        const chunkDocumentIndexName = "chunkDocumentIndex";
 
         chunkTable.addGlobalSecondaryIndex({
-            indexName: chunkIndexName,
+            indexName: chunkDocumentIndexName,
             partitionKey: { name: "documentId", type: dynamodb.AttributeType.STRING },
+            sortKey: { name: "chunkNum", type: dynamodb.AttributeType.NUMBER },
         });
 
         const chunkBucket = new s3.Bucket(this, "chunkBucket", {
@@ -232,7 +233,7 @@ export class StorageStack extends cdk.NestedStack {
                 DOCUMENT_BUCKET: documentBucket.bucketName,
                 PROCESSED_DOCUMENT_BUCKET: processedDocumentBucket.bucketName,
                 CHUNK_TABLE: chunkTable.tableName,
-                CHUNK_INDEX_NAME: chunkIndexName,
+                CHUNK_DOCUMENT_INDEX_NAME: chunkDocumentIndexName,
                 CHUNK_BUCKET: chunkBucket.bucketName,
             },
             timeout: deleteDocumentTimeout,
