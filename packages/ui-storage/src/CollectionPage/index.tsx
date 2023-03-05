@@ -37,7 +37,7 @@ export function CollectionPage({}: IProps) {
 
             addNotification({
                 title: "Document is uploading",
-                description: `Your document '${response.fileName}' is now uploading. Please check back within 10 minutes.`,
+                description: `Your document '${response.fileName}' is now uploading. Please check back soon!`,
                 severity: "success",
             });
         },
