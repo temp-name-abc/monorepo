@@ -23,6 +23,7 @@ export class BillingStack extends cdk.NestedStack {
 
         // Create secret
         const stripeSecret = new secretsmanager.Secret(this, "stripeSecret");
+        const mailerliteSecret = new secretsmanager.Secret(this, "mailerliteSecret");
 
         // Create the REST API
         const billingResource = props.api.root.addResource("billing");
@@ -65,13 +66,15 @@ export class BillingStack extends cdk.NestedStack {
             handler: "index.lambda_handler",
             environment: {
                 STRIPE_SECRET: stripeSecret.secretName,
+                MAILERLITE_SECRET: mailerliteSecret.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
             },
             timeout: cdk.Duration.seconds(30),
         });
 
-        userBillingTable.grantWriteData(setupFn);
         stripeSecret.grantRead(setupFn);
+        mailerliteSecret.grantRead(setupFn);
+        userBillingTable.grantWriteData(setupFn);
 
         props.userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, setupFn);
 
