@@ -14,6 +14,7 @@ export function Documents({ documents }: IProps) {
             elements={documents.documents.map((document, i) => (
                 <Document key={i} document={document} />
             ))}
+            emptyText="No documents yet. Upload one to get started!"
         />
     );
 }

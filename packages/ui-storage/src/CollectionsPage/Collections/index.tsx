@@ -14,6 +14,7 @@ export function Collections({ collections }: IProps) {
             elements={collections.collections.map((collection, i) => (
                 <Collection key={i} collection={collection} />
             ))}
+            emptyText="No collections yet. Create one to get started!"
         />
     );
 }
