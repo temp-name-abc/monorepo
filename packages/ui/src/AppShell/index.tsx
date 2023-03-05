@@ -2,7 +2,9 @@ import { Nav } from "./Nav";
 import { SideNav } from "./SideNav";
 import { Notification } from "./Notification";
 import { useNotification } from "providers";
-import { INotification } from "types";
+import { NavSmall } from "./NavSmall";
+import { SideNavSmall } from "./SideNavSmall";
+import { useState } from "react";
 
 interface IProps {
     children: any;
@@ -10,10 +12,13 @@ interface IProps {
 
 export function AppShell({ children }: IProps) {
     const { currentNotification } = useNotification();
+    const [showSideNav, setShowSideNav] = useState<boolean>(false);
 
     return (
         <>
             <Nav />
+            <NavSmall showSideNav={showSideNav} setShowSideNav={setShowSideNav} />
+            {showSideNav && <SideNavSmall />}
             <div className="flex items-stretch">
                 <SideNav />
                 <div className="m-10 w-full space-y-10">
