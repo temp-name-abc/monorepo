@@ -14,3 +14,4 @@ export * from "./src/portalData";
 export * from "./src/chatData";
 export * from "./src/notification";
 export * from "./src/notificationSeverity";
+export * from "./src/link";

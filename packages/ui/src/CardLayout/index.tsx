@@ -13,7 +13,7 @@ export function CardLayout({ elements, emptyText }: IProps) {
             </div>
         );
 
-    return <p className="text-center font-medium text-gray-900">{emptyText}</p>;
+    return <p className="text-center font-medium text-gray-600">{emptyText}</p>;
 }
 
 export default CardLayout;

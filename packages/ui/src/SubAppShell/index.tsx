@@ -1,16 +1,12 @@
 import Head from "next/head";
-import { ReactNode } from "react";
+import { ILink } from "types";
 import { Button } from "../Button";
 
 interface IProps {
     children: any;
     title: string;
     description: string;
-    links: {
-        href: string;
-        children: any;
-        icon: ReactNode;
-    }[];
+    links: ILink[];
 }
 
 export function SubAppShell({ children, title, description, links }: IProps) {
