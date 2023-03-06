@@ -1,15 +1,13 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as cognito from "aws-cdk-lib/aws-cognito";
-import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as path from "path";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as apigw from "aws-cdk-lib/aws-apigateway";
-import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
-import * as iam from "aws-cdk-lib/aws-iam";
-import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
-import { HOME_BASE_URL } from "utils";
+import { Portal } from "./portal";
+import { Setup } from "./setup";
+import { Status } from "./status";
+import { Usage } from "./usage";
 
 interface IStackProps extends cdk.NestedStackProps {
     api: apigw.RestApi;
@@ -34,9 +32,7 @@ export class BillingStack extends cdk.NestedStack {
         const statusResource = iamResource.addResource("status");
         const usageResource = iamResource.addResource("usage");
 
-        // ==== Billing ====
-
-        // Create billing setup function for new accounts
+        // Create billing storage
         const userBillingTable = new dynamodb.Table(this, "userBillingTable", {
             partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
             pointInTimeRecovery: true,
@@ -55,155 +51,10 @@ export class BillingStack extends cdk.NestedStack {
             billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         });
 
-        const setupFn = new lambda.Function(this, "setupFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "setup"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
-            handler: "index.lambda_handler",
-            environment: {
-                STRIPE_SECRET: stripeSecret.secretName,
-                MAILERLITE_SECRET: mailerliteSecret.secretName,
-                USER_BILLING_TABLE: userBillingTable.tableName,
-            },
-            timeout: cdk.Duration.minutes(1),
-        });
-
-        stripeSecret.grantRead(setupFn);
-        mailerliteSecret.grantRead(setupFn);
-        userBillingTable.grantWriteData(setupFn);
-
-        props.userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, setupFn);
-
-        // Create account portal function
-        const portalFn = new lambda.Function(this, "portalFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "portal"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
-            handler: "index.lambda_handler",
-            environment: {
-                STRIPE_SECRET: stripeSecret.secretName,
-                USER_BILLING_TABLE: userBillingTable.tableName,
-                PRODUCTS_TABLE: productsTable.tableName,
-                HOME_URL: HOME_BASE_URL,
-            },
-            timeout: cdk.Duration.minutes(1),
-        });
-
-        stripeSecret.grantRead(portalFn);
-        userBillingTable.grantReadData(portalFn);
-        productsTable.grantReadData(portalFn);
-
-        portalResource.addMethod("GET", new apigw.LambdaIntegration(portalFn), {
-            authorizer: props.authorizer,
-            authorizationType: apigw.AuthorizationType.COGNITO,
-        });
-
-        // Create IAM account status function
-        const statusFn = new lambda.Function(this, "statusFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "status"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
-            handler: "index.lambda_handler",
-            environment: {
-                STRIPE_SECRET: stripeSecret.secretName,
-                USER_BILLING_TABLE: userBillingTable.tableName,
-                PRODUCTS_TABLE: productsTable.tableName,
-            },
-            timeout: cdk.Duration.minutes(1),
-        });
-
-        stripeSecret.grantRead(statusFn);
-        userBillingTable.grantReadData(statusFn);
-        productsTable.grantReadData(statusFn);
-
-        statusResource.addMethod("GET", new apigw.LambdaIntegration(statusFn), {
-            authorizationType: apigw.AuthorizationType.IAM,
-        });
-
-        // Setup usage records
-        const usageFnTimeout = cdk.Duration.minutes(5);
-
-        const usageFn = new lambda.Function(this, "usageFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "usage"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
-            handler: "index.lambda_handler",
-            environment: {
-                STRIPE_SECRET: stripeSecret.secretName,
-                USER_BILLING_TABLE: userBillingTable.tableName,
-                PRODUCTS_TABLE: productsTable.tableName,
-                USAGE_TABLE: usageTable.tableName,
-            },
-            timeout: usageFnTimeout,
-        });
-
-        stripeSecret.grantRead(usageFn);
-        userBillingTable.grantReadData(usageFn);
-        productsTable.grantReadData(usageFn);
-        usageTable.grantWriteData(usageFn);
-
-        const usageQueue = new sqs.Queue(this, "usageQueue", {
-            visibilityTimeout: usageFnTimeout,
-        });
-
-        usageFn.addEventSource(new lambdaEventSources.SqsEventSource(usageQueue));
-
-        const credentialsRole = new iam.Role(this, "usageApiSqsRole", {
-            assumedBy: new iam.ServicePrincipal("apigateway.amazonaws.com"),
-        });
-        usageQueue.grantSendMessages(credentialsRole);
-
-        usageResource.addMethod(
-            "POST",
-            new apigw.AwsIntegration({
-                service: "sqs",
-                path: `${process.env.CDK_DEFAULT_ACCOUNT}/${usageQueue.queueName}`,
-                integrationHttpMethod: "POST",
-                options: {
-                    credentialsRole,
-                    requestParameters: {
-                        "integration.request.header.Content-Type": "'application/x-www-form-urlencoded'",
-                    },
-                    requestTemplates: {
-                        "application/json": "Action=SendMessage&MessageBody=$input.body",
-                    },
-                    integrationResponses: [
-                        {
-                            statusCode: "200",
-                            responseParameters: {
-                                "method.response.header.Access-Control-Allow-Origin": "'*'",
-                            },
-                        },
-                    ],
-                },
-            }),
-            {
-                methodResponses: [
-                    {
-                        statusCode: "200",
-                        responseParameters: {
-                            "method.response.header.Access-Control-Allow-Origin": true,
-                        },
-                    },
-                ],
-                authorizationType: apigw.AuthorizationType.IAM,
-            }
-        );
+        // Create functions
+        new Setup(this, stripeSecret, mailerliteSecret, userBillingTable, props.userPool);
+        new Portal(this, props.authorizer, portalResource, stripeSecret, userBillingTable, productsTable);
+        new Status(this, stripeSecret, userBillingTable, productsTable, statusResource);
+        new Usage(this, stripeSecret, userBillingTable, productsTable, usageTable, usageResource);
     }
 }
