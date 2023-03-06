@@ -52,6 +52,7 @@ def lambda_handler(event, context):
     # Retrieve customer account
     customer_item = dynamodb_client.get_item(TableName=user_billing_table, Key={"userId": {"S": user_id}})["Item"]
     customer_id = customer_item["stripeCustomerId"]["S"]
+    sandbox_mode = customer_item["sandbox"]["BOOL"] if "sandbox" in customer_item else False
 
     # Retrieve the product
     if product_ids == None:
@@ -102,7 +103,7 @@ def lambda_handler(event, context):
         },
         "body": json.dumps({
             "url": session["url"],
-            "active": False
+            "active": sandbox_mode
         })
     }
 
