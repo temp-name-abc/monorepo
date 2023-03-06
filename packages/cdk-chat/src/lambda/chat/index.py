@@ -87,7 +87,7 @@ def lambda_handler(event, context):
 
         return make_error(msg)
 
-    # Figure out the question and only answer if safe
+    # Figure out what the user is requesting and only answer if safe
     if not utils.is_safe_input(history, question):
         msg = f"User '{user_id}' sent unsafe text"
 
