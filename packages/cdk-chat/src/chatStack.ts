@@ -8,6 +8,10 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as path from "path";
 import { IProduct } from "types";
 import { API_BASE_URL, chatData } from "utils";
+import { Chat } from "./chat";
+import { GetChats } from "./getChats";
+import { CreateConversation } from "./createConversation";
+import { UserConversations } from "./userConversations";
 
 interface IStackProps extends cdk.NestedStackProps {
     api: apigw.RestApi;
@@ -30,57 +34,10 @@ export class ChatStack extends cdk.NestedStack {
 
         const timestampIndexName = "timestampIndex";
 
-        // ==== Conversation ====
-        const conversationTable = new dynamodb.Table(this, "conversationTable", {
-            partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
-            sortKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
-            pointInTimeRecovery: true,
-            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-        });
+        // Select product for stack
+        const product: IProduct = "chat.conversation.chat";
 
-        conversationTable.addLocalSecondaryIndex({
-            indexName: timestampIndexName,
-            sortKey: { name: "timestamp", type: dynamodb.AttributeType.NUMBER },
-        });
-
-        // Create conversation
-        const createConversationFn = new lambda.Function(this, "createConversationFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "createConversation")),
-            handler: "index.lambda_handler",
-            environment: {
-                CONVERSATION_TABLE: conversationTable.tableName,
-            },
-            timeout: cdk.Duration.minutes(1),
-        });
-
-        conversationTable.grantWriteData(createConversationFn);
-
-        conversationResource.addMethod("POST", new apigw.LambdaIntegration(createConversationFn), {
-            authorizer: props.authorizer,
-            authorizationType: apigw.AuthorizationType.COGNITO,
-        });
-
-        // Get user conversations
-        const userConversationsFn = new lambda.Function(this, "userConversationsFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "userConversations")),
-            handler: "index.lambda_handler",
-            environment: {
-                CONVERSATION_TABLE: conversationTable.tableName,
-                TIMESTAMP_INDEX_NAME: timestampIndexName,
-            },
-            timeout: cdk.Duration.minutes(1),
-        });
-
-        conversationTable.grantReadData(userConversationsFn);
-
-        conversationResource.addMethod("GET", new apigw.LambdaIntegration(userConversationsFn), {
-            authorizer: props.authorizer,
-            authorizationType: apigw.AuthorizationType.COGNITO,
-        });
-
-        // ==== Chat ====
+        // Create data storage
         const chatTable = new dynamodb.Table(this, "chatTable", {
             partitionKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
             sortKey: { name: "chatId", type: dynamodb.AttributeType.STRING },
@@ -93,68 +50,21 @@ export class ChatStack extends cdk.NestedStack {
             sortKey: { name: "timestamp", type: dynamodb.AttributeType.NUMBER },
         });
 
-        // Create chat function
-        const product: IProduct = "chat.conversation.chat";
-
-        const chatFn = new lambda.Function(this, "chatFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "chat"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
-            handler: "index.lambda_handler",
-            environment: {
-                OPENAI_SECRET: openAISecret.secretName,
-                CONVERSATION_TABLE: conversationTable.tableName,
-                CHAT_TABLE: chatTable.tableName,
-                API_URL: API_BASE_URL,
-                PRODUCT_ID: product,
-                CHAT_MEMORY_SIZE: chatData.chatMemoryLength.toString(),
-                DOCUMENTS_RETRIEVED: chatData.documentsRetrieved.toString(),
-                MATCHING_THRESHOLD: chatData.matchingThreshold.toString(),
-                MAX_CHARACTERS: chatData.maxCharacters.toString(),
-                EXTEND_DOWN: chatData.extendDown.toString(),
-            },
-            timeout: cdk.Duration.minutes(1),
+        const conversationTable = new dynamodb.Table(this, "conversationTable", {
+            partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+            sortKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
+            pointInTimeRecovery: true,
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         });
 
-        openAISecret.grantRead(chatFn);
-        conversationTable.grantReadData(chatFn);
-        chatTable.grantReadWriteData(chatFn);
-        chatFn.addToRolePolicy(
-            new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: ["execute-api:Invoke"],
-                resources: ["*"],
-            })
-        );
-
-        convChatResource.addMethod("POST", new apigw.LambdaIntegration(chatFn), {
-            authorizer: props.authorizer,
-            authorizationType: apigw.AuthorizationType.COGNITO,
+        conversationTable.addLocalSecondaryIndex({
+            indexName: timestampIndexName,
+            sortKey: { name: "timestamp", type: dynamodb.AttributeType.NUMBER },
         });
 
-        // Get chats
-        const getChatsFn = new lambda.Function(this, "getChatsFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "getChats")),
-            handler: "index.lambda_handler",
-            environment: {
-                CONVERSATION_TABLE: conversationTable.tableName,
-                CHAT_TABLE: chatTable.tableName,
-                TIMESTAMP_INDEX_NAME: timestampIndexName,
-            },
-            timeout: cdk.Duration.minutes(1),
-        });
-
-        conversationTable.grantReadData(getChatsFn);
-        chatTable.grantReadData(getChatsFn);
-
-        convChatResource.addMethod("GET", new apigw.LambdaIntegration(getChatsFn), {
-            authorizer: props.authorizer,
-            authorizationType: apigw.AuthorizationType.COGNITO,
-        });
+        new CreateConversation(this, props.authorizer, conversationResource, conversationTable);
+        new UserConversations(this, props.authorizer, conversationResource, conversationTable, timestampIndexName);
+        new Chat(this, props.authorizer, convChatResource, openAISecret, conversationTable, chatTable, product);
+        new GetChats(this, props.authorizer, convChatResource, conversationTable, chatTable, timestampIndexName);
     }
 }
