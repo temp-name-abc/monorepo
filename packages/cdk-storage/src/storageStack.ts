@@ -11,6 +11,12 @@ import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
 import { IProduct } from "types";
 import { API_BASE_URL, chatData } from "utils";
+import { CollectionDocuments } from "./collectionDocuments";
+import { GetDocument } from "./getDocument";
+import { CreateCollection } from "./createCollection";
+import { UserCollections } from "./userCollections";
+import { GetCollection } from "./getCollection";
+import { DeleteDocument } from "./deleteDocument";
 
 interface IStackProps extends cdk.NestedStackProps {
     api: apigw.RestApi;
@@ -44,59 +50,9 @@ export class StorageStack extends cdk.NestedStack {
             billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         });
 
-        // Create collection function
-        const createCollectionFn = new lambda.Function(this, "createCollectionFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "createCollection")),
-            handler: "index.lambda_handler",
-            environment: {
-                COLLECTION_TABLE: collectionTable.tableName,
-            },
-            timeout: cdk.Duration.minutes(1),
-        });
-
-        collectionTable.grantWriteData(createCollectionFn);
-
-        collectionResource.addMethod("POST", new apigw.LambdaIntegration(createCollectionFn), {
-            authorizer: props.authorizer,
-            authorizationType: apigw.AuthorizationType.COGNITO,
-        });
-
-        // Retrieve collections function
-        const userCollectionsFn = new lambda.Function(this, "userCollectionsFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "userCollections")),
-            handler: "index.lambda_handler",
-            environment: {
-                COLLECTION_TABLE: collectionTable.tableName,
-            },
-            timeout: cdk.Duration.minutes(1),
-        });
-
-        collectionTable.grantReadData(userCollectionsFn);
-
-        collectionResource.addMethod("GET", new apigw.LambdaIntegration(userCollectionsFn), {
-            authorizer: props.authorizer,
-            authorizationType: apigw.AuthorizationType.COGNITO,
-        });
-
-        // Get the collection
-        const getCollectionFn = new lambda.Function(this, "getCollectionFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "getCollection")),
-            handler: "index.lambda_handler",
-            environment: {
-                COLLECTION_TABLE: collectionTable.tableName,
-            },
-            timeout: cdk.Duration.minutes(1),
-        });
-
-        collectionTable.grantReadData(getCollectionFn);
-
-        collectionIdResource.addMethod("GET", new apigw.LambdaIntegration(getCollectionFn), {
-            authorizer: props.authorizer,
-            authorizationType: apigw.AuthorizationType.COGNITO,
-        });
+        new CreateCollection(this, props.authorizer, collectionResource, collectionTable);
+        new UserCollections(this, props.authorizer, collectionResource, collectionTable);
+        new GetCollection(this, props.authorizer, collectionIdResource, collectionTable);
 
         // ==== Documents ====
         const documentTable = new dynamodb.Table(this, "documentTable", {
@@ -167,134 +123,20 @@ export class StorageStack extends cdk.NestedStack {
             },
         });
 
-        // Retrieve collection documents
-        const collectionDocumentsFn = new lambda.Function(this, "collectionDocumentsFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "collectionDocuments")),
-            handler: "index.lambda_handler",
-            environment: {
-                COLLECTION_TABLE: collectionTable.tableName,
-                DOCUMENT_TABLE: documentTable.tableName,
-                DOCUMENT_BUCKET: documentBucket.bucketName,
-                PROCESSED_DOCUMENT_BUCKET: processedDocumentBucket.bucketName,
-            },
-            timeout: cdk.Duration.minutes(1),
-        });
+        new CollectionDocuments(this, props.authorizer, documentResource, collectionTable, documentTable, documentBucket, processedDocumentBucket);
+        new GetDocument(this, props.authorizer, documentIdResource, collectionTable, documentTable, documentBucket, processedDocumentBucket);
 
-        collectionTable.grantReadData(collectionDocumentsFn);
-        documentTable.grantReadData(collectionDocumentsFn);
-        documentBucket.grantRead(collectionDocumentsFn);
-        processedDocumentBucket.grantRead(collectionDocumentsFn);
-
-        documentResource.addMethod("GET", new apigw.LambdaIntegration(collectionDocumentsFn), {
-            authorizer: props.authorizer,
-            authorizationType: apigw.AuthorizationType.COGNITO,
-        });
-
-        // Get a document
-        const getDocumentFn = new lambda.Function(this, "getDocumentFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "getDocument")),
-            handler: "index.lambda_handler",
-            environment: {
-                COLLECTION_TABLE: collectionTable.tableName,
-                DOCUMENT_TABLE: documentTable.tableName,
-                DOCUMENT_BUCKET: documentBucket.bucketName,
-                PROCESSED_DOCUMENT_BUCKET: processedDocumentBucket.bucketName,
-            },
-            timeout: cdk.Duration.minutes(1),
-        });
-
-        collectionTable.grantReadData(getDocumentFn);
-        documentTable.grantReadData(getDocumentFn);
-        documentBucket.grantRead(getDocumentFn);
-        processedDocumentBucket.grantRead(getDocumentFn);
-
-        documentIdResource.addMethod("GET", new apigw.LambdaIntegration(getDocumentFn), {
-            authorizer: props.authorizer,
-            authorizationType: apigw.AuthorizationType.COGNITO,
-        });
-
-        // Delete a document
-        const deleteDocumentTimeout = cdk.Duration.minutes(15);
-
-        const deleteDocumentFn = new lambda.Function(this, "deleteDocumentFn", {
-            runtime: lambda.Runtime.PYTHON_3_8,
-            code: lambda.Code.fromAsset(path.join(__dirname, "lambda", "deleteDocument"), {
-                bundling: {
-                    image: lambda.Runtime.PYTHON_3_8.bundlingImage,
-                    command: ["bash", "-c", "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"],
-                },
-            }),
-            handler: "index.lambda_handler",
-            environment: {
-                PINECONE_SECRET: pineconeSecret.secretName,
-                DOCUMENT_TABLE: documentTable.tableName,
-                DOCUMENT_BUCKET: documentBucket.bucketName,
-                PROCESSED_DOCUMENT_BUCKET: processedDocumentBucket.bucketName,
-                CHUNK_TABLE: chunkTable.tableName,
-                CHUNK_DOCUMENT_INDEX_NAME: chunkDocumentIndexName,
-                CHUNK_BUCKET: chunkBucket.bucketName,
-            },
-            timeout: deleteDocumentTimeout,
-        });
-
-        // Grant permissions
-        pineconeSecret.grantRead(deleteDocumentFn);
-        documentTable.grantReadWriteData(deleteDocumentFn);
-        documentBucket.grantDelete(deleteDocumentFn);
-        processedDocumentBucket.grantDelete(deleteDocumentFn);
-        chunkTable.grantReadWriteData(deleteDocumentFn);
-        chunkBucket.grantDelete(deleteDocumentFn);
-
-        // Add API integration
-        const deleteQueue = new sqs.Queue(this, "deleteQueue", {
-            visibilityTimeout: deleteDocumentTimeout,
-        });
-
-        deleteDocumentFn.addEventSource(new lambdaEventSources.SqsEventSource(deleteQueue));
-
-        const credentialsRole = new iam.Role(this, "deleteApiSqsRole", {
-            assumedBy: new iam.ServicePrincipal("apigateway.amazonaws.com"),
-        });
-        deleteQueue.grantSendMessages(credentialsRole);
-
-        documentIdResource.addMethod(
-            "DELETE",
-            new apigw.AwsIntegration({
-                service: "sqs",
-                path: `${process.env.CDK_DEFAULT_ACCOUNT}/${deleteQueue.queueName}`,
-                integrationHttpMethod: "POST",
-                options: {
-                    credentialsRole,
-                    requestParameters: {
-                        "integration.request.header.Content-Type": "'application/x-www-form-urlencoded'",
-                    },
-                    requestTemplates: {
-                        "application/json": `Action=SendMessage&MessageBody={"pathParams": "$input.params().path", "userId": "$context.authorizer.claims.sub"}`,
-                    },
-                    integrationResponses: [
-                        {
-                            statusCode: "200",
-                            responseParameters: {
-                                "method.response.header.Access-Control-Allow-Origin": "'*'",
-                            },
-                        },
-                    ],
-                },
-            }),
-            {
-                methodResponses: [
-                    {
-                        statusCode: "200",
-                        responseParameters: {
-                            "method.response.header.Access-Control-Allow-Origin": true,
-                        },
-                    },
-                ],
-                authorizer: props.authorizer,
-                authorizationType: apigw.AuthorizationType.COGNITO,
-            }
+        new DeleteDocument(
+            this,
+            pineconeSecret,
+            props.authorizer,
+            chunkDocumentIndexName,
+            documentIdResource,
+            chunkTable,
+            documentTable,
+            documentBucket,
+            processedDocumentBucket,
+            chunkBucket
         );
 
         // Create upload function
