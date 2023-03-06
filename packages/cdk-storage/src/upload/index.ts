@@ -33,7 +33,7 @@ export class Upload {
                 TEMP_BUCKET: tempBucket.bucketName,
                 PRODUCT_ID: product,
                 API_URL: API_BASE_URL,
-                MAX_FILE_SIZE: (5e9).toString(),
+                MAX_FILE_SIZE: (5e8).toString(),
             },
             timeout: cdk.Duration.minutes(1),
         });
