@@ -25,7 +25,11 @@ export function Context({ context }: IProps) {
 
     return (
         <div className="w-full flex flex-col space-y-4 bg-gray-100 px-8 py-4">
-            <div className="italic text-gray-600 text-sm">{context.body}</div>
+            <div className="italic text-gray-600 text-sm">
+                {context.body.split(/\n|\\n/).map((elem, i) => (
+                    <p key={i}>{elem}</p>
+                ))}
+            </div>
             <div className="flex space-x-2">
                 <Link className="cursor-pointer font-bold text-gray-600 hover:text-gray-700" href={`/storage/collections/${context.collectionId}`}>
                     {collectionData?.name ? collectionData.name : "Collection"}

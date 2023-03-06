@@ -15,7 +15,7 @@ export function Conversation({ conversation, conversationId, setConversationId }
             thick={true}
             onClick={() => setConversationId(conversation.conversationId)}
         >
-            {conversation.name}
+            <span title={conversation.name}>{conversation.name}</span>
         </Button>
     );
 }

@@ -6,7 +6,7 @@ interface IProps {
 export function CardLayout({ elements, emptyText }: IProps) {
     if (elements.length > 0 || !emptyText)
         return (
-            <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-10">
+            <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-2 lg:gap-4">
                 {elements.map((Element, i) => (
                     <div key={i}>{Element}</div>
                 ))}
