@@ -93,11 +93,8 @@ def lambda_handler(event, context):
 
         return make_error(msg)
 
-    query = utils.generate_query(history, question, max_characters, user_id)
-    logger.info(f"Query = '{query}'")
-
     # Retrieve question context
-    documents = utils.get_documents(api_url, query, user_id, collection_id, documents_retrieved, extend_down)
+    documents = utils.get_documents(api_url, question, user_id, collection_id, documents_retrieved, extend_down, matching_threshold)
 
     if documents == None:
         logger.error(f"Unable to find documents")
@@ -107,9 +104,6 @@ def lambda_handler(event, context):
     
     else:
         for document in documents:
-            if document["score"] < matching_threshold:
-                break
-
             context.append(document)
 
             logger.info(f"Retrieved context chunk for document '{document['documentId']}'")

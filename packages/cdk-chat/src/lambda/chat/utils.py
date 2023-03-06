@@ -28,32 +28,6 @@ def set_openai_api_key(api_key):
     openai.api_key = api_key
 
 
-def generate_query(history, question, max_characters, user_id):
-    messages = [
-        {"role": "system", "content": "You are an expert in summarizing conversations and explaining what a question is asking for given a conversation. \
-            Whenever you receive a question, you will respond with an explanation of how the conversation relates to the new question provided. \
-                Do not respond to questions directly. Only provide the context for the question and explain what the newest question is asking. \
-                    If there is no conversation history provided, you will restate the question."},
-    ]
-
-    text = ""
-
-    for item in history:
-        text += f"Human: {item['human']}"
-        text += f"AI: {item['ai']}"
-
-    text += f"Human: {question}"
-
-    messages += [{"role": "user", "content": f"Given the following conversation, what is the most recent question asking?\n\nConversation:\n{text}"}]
-
-    return openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=messages,
-        max_tokens=max_characters // 4,
-        user=user_id
-    )["choices"][0]["message"]["content"].strip()
-
-
 def generate_chat(history, question, context, max_characters, user_id):
     messages = [
         {"role": "system", "content": f"You will play the role of a tutor and answer questions given the context only. If the information is not within the context, \
@@ -94,9 +68,9 @@ def create_context(context):
     return ". ".join(ctx["body"] for ctx in context)
 
 
-def get_documents(api_url, query, user_id, collection_id, documents_retrieved, extend_down):
+def get_documents(api_url, query, user_id, collection_id, documents_retrieved, extend_down, min_threshold):
     query_encoded = urllib.parse.quote(query)
-    documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults={documents_retrieved}&query={query_encoded}&extendDown={extend_down}"
+    documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults={documents_retrieved}&query={query_encoded}&extendDown={extend_down}&minThreshold={min_threshold}"
     documents_request = make_request(documents_url, "GET")
     documents_req = requests.get(documents_url, headers=documents_request.headers)
 

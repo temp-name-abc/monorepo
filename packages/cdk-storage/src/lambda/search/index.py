@@ -33,6 +33,7 @@ def lambda_handler(event, context):
     num_results = int(query_params["numResults"])
     extend_down = int(query_params["extendDown"] if "extendDown" in query_params else 0)
     extend_up = int(query_params["extendUp"] if "extendUp" in query_params else 0)
+    min_threshold = float(query_params["minThreshold"])
 
     # Load the OpenAI API key
     openai.api_key = secrets_manager_client.get_secret_value(SecretId=openai_secret)["SecretString"]
@@ -94,6 +95,9 @@ def lambda_handler(event, context):
     documents = []
 
     for match in query_response["matches"]:
+        if match["score"] < min_threshold:
+            break
+
         document = {
             "score": match["score"]
         }
