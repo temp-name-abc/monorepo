@@ -108,6 +108,8 @@ def lambda_handler(event, context):
             "conversationId": {"S": conversation_id},
             "chatId": {"S": chat_id},
             "userId": {"S": user_id},
+            "question": {"S": question},
+            "answer": {"S": chat},
             "context": {"S": json.dumps(context)},
             "timestamp": {"N": str(timestamp)}
         }
@@ -130,6 +132,8 @@ def lambda_handler(event, context):
         "body": json.dumps({
             "conversationId": conversation_id,
             "chatId": chat_id,
+            "question": question,
+            "answer": chat,
             "context": context,
             "timestamp": timestamp
         })

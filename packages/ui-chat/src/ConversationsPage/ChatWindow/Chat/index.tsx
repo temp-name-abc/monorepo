@@ -7,13 +7,11 @@ interface IProps {
 }
 
 export function Chat({ chat, onClickReply }: IProps) {
-    const history = chat.history[chat.history.length - 1];
-
     return (
-        <div className="flex flex-col space-y-8">
-            <ChatBubble style="right">{history.human}</ChatBubble>
-            <ChatBubble style="left" onClick={() => onClickReply && onClickReply(chat)}>
-                {history.ai}
+        <div className="flex flex-col items-start space-y-8">
+            <ChatBubble style="accent">{chat.question}</ChatBubble>
+            <ChatBubble style="dull" onClick={() => onClickReply && onClickReply(chat)}>
+                {chat.answer}
             </ChatBubble>
         </div>
     );

@@ -28,9 +28,25 @@ def lambda_handler(event, context):
         ScanIndexForward=False
     )
 
+    items = response["Items"]
+
+    while "LastEvaluatedKey" in response:
+        response = dynamodb_client.query(
+            TableName=conversation_table,
+            IndexName=timestamp_index_name,
+            KeyConditionExpression="userId = :userId",
+            ExpressionAttributeValues={
+                ":userId": {"S": user_id},
+            },
+            ScanIndexForward=False,
+            ExclusiveStartKey=response["LastEvaluatedKey"]
+        )
+
+        items.extend(response["Items"])
+
     conversations = []
 
-    for item in response["Items"]:
+    for item in items:
         collection = {}
 
         collection["conversationId"] = item["conversationId"]["S"]

@@ -25,7 +25,7 @@
         },
         "cdk": {
             "dependsOn": ["^cdk"],
-            "env": ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
+            "env": ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "CDK_DEFAULT_ACCOUNT"],
             "outputs": ["cdk.out/**"]
         }
     }

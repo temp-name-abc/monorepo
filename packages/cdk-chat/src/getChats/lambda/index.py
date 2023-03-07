@@ -52,19 +52,33 @@ def lambda_handler(event, context):
         },
     )
 
+    items = chats_response["Items"]
+
+    while "LastEvaluatedKey" in chats_response:
+        chats_response = dynamodb_client.query(
+            TableName=chat_table,
+            IndexName=timestamp_index_name,
+            KeyConditionExpression="conversationId = :conversationId",
+            ExpressionAttributeValues={
+                ":conversationId": {"S": conversation_id},
+            },
+            ExclusiveStartKey=chats_response["LastEvaluatedKey"]
+        )
+
+        items.extend(chats_response["Items"])
+
     # Create list of chats
     chats = []
 
-    for item in chats_response["Items"]:
+    for item in items:
         chat = {}
 
         chat["conversationId"] = item["conversationId"]["S"]
         chat["chatId"] = item["chatId"]["S"]
         chat["context"] = json.loads(item["context"]["S"])
         chat["timestamp"] = int(item["timestamp"]["N"])
-
-        history = json.loads(item["history"]["S"])
-        chat["history"] = history[max(len(history) - 2, 0):]
+        chat["question"] = item["question"]["S"]
+        chat["answer"] = item["answer"]["S"]
 
         chats.append(chat)
 

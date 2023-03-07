@@ -7,7 +7,6 @@ export * from "./src/conversations";
 export * from "./src/chat";
 export * from "./src/chats";
 export * from "./src/context";
-export * from "./src/history";
 export * from "./src/product";
 export * from "./src/productData";
 export * from "./src/portalData";

@@ -25,15 +25,15 @@ export function ChatWindow({ conversationId, chats, onClickReply }: IProps) {
 
     return (
         <div className="bg-gray-100 p-10 space-y-8 h-[640px] overflow-y-auto">
-            <ChatBubble style="centernobubble">Beginning of conversation</ChatBubble>
+            <p className="px-8 py-4 font-medium text-gray-400 text-sm text-center">Beginning of conversation</p>
             <div className="flex flex-col justify-evenly space-y-8">
                 {chats.chats.map((chat, i) => (
                     <Chat key={i} chat={chat} onClickReply={onClickReply} />
                 ))}
                 {question && isTyping && (
-                    <div className="flex flex-col space-y-8">
-                        <ChatBubble style="right">{question}</ChatBubble>
-                        <ChatBubble style="leftnobubble">Typing...</ChatBubble>
+                    <div className="flex flex-col items-start space-y-8">
+                        <ChatBubble style="accent">{question}</ChatBubble>
+                        <p className="px-8 py-4 font-medium text-gray-400 text-sm">Typing...</p>
                     </div>
                 )}
                 <ChatInput conversationId={conversationId} setQuestion={setQuestion} setIsTyping={setIsTyping} chatsData={chats} />

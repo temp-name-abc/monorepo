@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { context } from "./context";
-import { history } from "./history";
 
 export const chat = z.object({
     conversationId: z.string(),
     chatId: z.string(),
-    history: z.array(history),
+    question: z.string(),
+    answer: z.string(),
     context: z.array(context),
     timestamp: z.number(),
 });

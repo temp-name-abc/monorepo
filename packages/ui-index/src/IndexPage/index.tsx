@@ -22,7 +22,7 @@ export function IndexPage({}: IProps) {
         }
         // @ts-expect-error
         else if (status === "FAILED") fbq("trackCustom", "FailedCheckout", {});
-    }, [router]);
+    }, [router, completeTutorial]);
 
     return (
         <SubAppShell
