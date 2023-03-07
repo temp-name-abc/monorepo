@@ -10,7 +10,7 @@ interface IProps {
 
 export function SideNav({ navigationLinks, externalLinks }: IProps) {
     return (
-        <nav className="h-screen flex-col bg-gray-50 py-5 px-10 space-y-[448px] hidden lg:flex">
+        <nav className="h-screen flex-col bg-gray-50 py-5 px-10 space-y-10 hidden lg:flex">
             <div className="flex flex-col space-y-5">
                 <h3 className="font-bold text-gray-600 text-sm">Navigation</h3>
                 {navigationLinks.map((link, i) => (
