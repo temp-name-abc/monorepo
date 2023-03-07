@@ -18,7 +18,6 @@ export const productData: { [key in IProduct]: IProductData } = {
 
 export const chatData: IChatData = {
     chunkCharacters: 1000,
-    chatMemoryLength: 5,
     documentsRetrieved: 2,
     matchingThreshold: 0.7,
     maxCharacters: 600,

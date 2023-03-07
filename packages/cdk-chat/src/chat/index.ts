@@ -33,7 +33,6 @@ export class Chat {
                 CHAT_TABLE: chatTable.tableName,
                 API_URL: API_BASE_URL,
                 PRODUCT_ID: product,
-                CHAT_MEMORY_SIZE: chatData.chatMemoryLength.toString(),
                 DOCUMENTS_RETRIEVED: chatData.documentsRetrieved.toString(),
                 MATCHING_THRESHOLD: chatData.matchingThreshold.toString(),
                 MAX_CHARACTERS: chatData.maxCharacters.toString(),
