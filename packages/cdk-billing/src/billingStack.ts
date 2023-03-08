@@ -53,7 +53,7 @@ export class BillingStack extends cdk.NestedStack {
 
         // Create functions
         new Setup(this, stripeSecret, mailerliteSecret, userBillingTable, props.userPool);
-        new Portal(this, props.authorizer, portalResource, stripeSecret, userBillingTable, productsTable);
+        new Portal(this, props.authorizer, portalResource, stripeSecret, userBillingTable);
         new Status(this, stripeSecret, userBillingTable, productsTable, statusResource);
         new Usage(this, stripeSecret, userBillingTable, productsTable, usageTable, usageResource);
     }

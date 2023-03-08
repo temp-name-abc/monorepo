@@ -10,25 +10,6 @@ logger.setLevel(logging.INFO)
 secrets_manager_client = boto3.client("secretsmanager")
 dynamodb_client = boto3.client("dynamodb")
 
-def route_to_portal(customer_id: str, home_url: str, user_id: str):
-    portal = stripe.billing_portal.Session.create(
-        customer=customer_id,
-        return_url=home_url
-    )
-
-    logger.info(f"Created portal session for user `{user_id}`")
-
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Access-Control-Allow-Origin": "*",
-        },
-        "body": json.dumps({
-            "url": portal["url"],
-            "active": True
-        })
-    }
-
 
 def lambda_handler(event, context):
     logger.info(f"Retrieving user portal for '{event}'")

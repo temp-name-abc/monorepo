@@ -12,8 +12,7 @@ export class Portal {
         authorizer: apigw.CognitoUserPoolsAuthorizer,
         portalResource: apigw.Resource,
         stripeSecret: secretsmanager.Secret,
-        userBillingTable: dynamodb.Table,
-        productsTable: dynamodb.Table
+        userBillingTable: dynamodb.Table
     ) {
         // Create account portal function
         const portalFn = new lambda.Function(stack, "portalFn", {
@@ -28,7 +27,6 @@ export class Portal {
             environment: {
                 STRIPE_SECRET: stripeSecret.secretName,
                 USER_BILLING_TABLE: userBillingTable.tableName,
-                PRODUCTS_TABLE: productsTable.tableName,
                 HOME_URL: HOME_BASE_URL,
             },
             timeout: cdk.Duration.minutes(1),
@@ -36,7 +34,6 @@ export class Portal {
 
         stripeSecret.grantRead(portalFn);
         userBillingTable.grantReadData(portalFn);
-        productsTable.grantReadData(portalFn);
 
         portalResource.addMethod("GET", new apigw.LambdaIntegration(portalFn), {
             authorizer,
