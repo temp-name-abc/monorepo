@@ -51,14 +51,14 @@ def lambda_handler(event, context):
     active = False
     status = None
 
-    subscriptions = stripe.Subscription.list(customer=customer_id).data
+    subscriptions = stripe.Subscription.list(customer=customer_id, status="canceled").data
 
     active_subscriptions = []
     other_subscriptions = []
 
     for subscription in subscriptions:
-        if subscription.items.data[0].product.id == stripe_product_id:
-            if subscription.status == "active":
+        if subscription["items"]["data"][0]["price"]["product"] == stripe_product_id:
+            if subscription["status"] in ["active", "trialing"]:
                 active_subscriptions.append(subscription)
             else:
                 other_subscriptions.append(subscription)
@@ -66,8 +66,8 @@ def lambda_handler(event, context):
     if active_subscriptions:
         # Customer has an active subscription to the given product ID
         subscription = active_subscriptions[0]
-        has_card = bool(subscription.default_payment_method)
-        is_trialing = subscription.status == "trialing"
+        has_card = bool(subscription["default_payment_method"])
+        is_trialing = subscription["status"] == "trialing"
 
         if is_trialing:
             if has_card:
