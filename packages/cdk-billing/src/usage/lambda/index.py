@@ -25,23 +25,27 @@ def lambda_handler(event, context):
     stripe.api_key = stripe_data["apiKey"]
 
     stripe_product_id = stripe_data["productId"]
-    stripe_price_id = stripe_data["priceId"]
 
     # Process records
     for record in event["Records"]:
         body = json.loads(record["body"])
 
-        # Extract data
         user_id = body["userId"]
         usage_records = body["usage"]
 
+        # Get customer data
         user_data = dynamodb_client.get_item(TableName=user_billing_table, Key={"userId": {"S": user_id}})["Item"]
 
+        customer = stripe.Customer.retrieve(user_data["stripeCustomerId"]["S"], expand=["subscriptions"])
+        subscriptions = customer["subscriptions"]["data"]
+
+
         if "sandbox" in user_data and user_data["sandbox"]["BOOL"]:
-            logger.error(f"User is in sandbox mode - skipping")
+            logger.info(f"User is in sandbox mode - skipping")
 
             continue
 
+        # Process records
         for usage_record in usage_records:
             key = hashlib.sha256(f"{body}:{json.dumps(usage_record)}".encode()).hexdigest()
 
@@ -61,15 +65,17 @@ def lambda_handler(event, context):
                     ConditionExpression="attribute_not_exists(id)"
                 )
             except dynamodb_client.exceptions.ConditionalCheckFailedException:
-                logger.error(f"Already reported usage for key '{key}'")
+                logger.warning(f"Already reported usage for key '{key}'")
 
                 continue
 
             # Report usage to Stripe
-            customer = stripe.Customer.retrieve(user_data["stripeCustomerId"]["S"], expand=["subscriptions"])
-            subscriptions = customer["subscriptions"]["data"]
-
             for subscription in subscriptions:
+                if subscription["status"] != "active":
+                    logger.info(f"Subscription status is not active - skipping")
+
+                    continue
+
                 subscription_item = subscription["items"]["data"][0]
 
                 if subscription_item["price"]["product"] == stripe_product_id:
