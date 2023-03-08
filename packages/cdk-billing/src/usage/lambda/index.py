@@ -21,7 +21,11 @@ def lambda_handler(event, context):
     usage_table = os.getenv("USAGE_TABLE")
 
     # Load the Stripe key
-    stripe.api_key = secrets_manager_client.get_secret_value(SecretId=stripe_secret)["SecretString"]
+    stripe_data = json.loads(secrets_manager_client.get_secret_value(SecretId=stripe_secret)["SecretString"])
+    stripe.api_key = stripe_data["apiKey"]
+
+    stripe_product_id = stripe_data["productId"]
+    stripe_price_id = stripe_data["priceId"]
 
     # Process records
     for record in event["Records"]:
@@ -29,53 +33,52 @@ def lambda_handler(event, context):
 
         # Extract data
         user_id = body["userId"]
-        timestamp = body["timestamp"]
-        product_id = body["productId"]
-        quantity = body["quantity"]
+        usage_records = body["usage"]
 
-        key = hashlib.sha256(f"{user_id}:{timestamp}:{product_id}:{quantity}".encode()).hexdigest()
-
-        # Retrieve user and product data
         user_data = dynamodb_client.get_item(TableName=user_billing_table, Key={"userId": {"S": user_id}})["Item"]
-        product_data = dynamodb_client.get_item(TableName=products_table, Key={"productId": {"S": product_id}})["Item"]
 
-        # Create record and report usage if not exists
-        try:
-            dynamodb_client.put_item(
-                TableName=usage_table,
-                Item={
-                    "id": {"S": key},
-                    "timestamp": {"N": str(timestamp)},
-                    "productId": {"S": product_id},
-                    "userId": {"S": user_id},
-                    "quantity": {"N": str(quantity)}
-                },
-                ConditionExpression="attribute_not_exists(id)"
-            )
-        except dynamodb_client.exceptions.ConditionalCheckFailedException:
-            logger.error(f"Already reported usage for key '{key}'")
+        if "sandbox" in user_data and user_data["sandbox"]["BOOL"]:
+            logger.error(f"User is in sandbox mode - skipping")
 
             continue
 
-        # Don't bill in some cases
-        if quantity == 0 or ("sandbox" in user_data and user_data["sandbox"]["BOOL"]):
-            logger.info(f"Nothing to bill as user '{user_id}' is on sandbox mode or has reported quantity '0'")
+        for usage_record in usage_records:
+            key = hashlib.sha256(f"{body}:{json.dumps(usage_record)}".encode()).hexdigest()
 
-            continue
+            product_data = dynamodb_client.get_item(TableName=products_table, Key={"productId": {"S": usage_record["productId"]}})["Item"]
 
-        customer = stripe.Customer.retrieve(user_data["stripeCustomerId"]["S"], expand=["subscriptions"])
-        subscriptions = customer["subscriptions"]["data"]
-
-        for subscription in subscriptions:
-            subscription_item = subscription["items"]["data"][0]
-
-            if subscription_item["price"]["product"] == product_data["stripeProductId"]["S"]:
-                stripe.SubscriptionItem.create_usage_record(
-                    subscription_item["id"],
-                    quantity=quantity,
-                    timestamp=timestamp
+            # Create record and report usage if not exists
+            try:
+                dynamodb_client.put_item(
+                    TableName=usage_table,
+                    Item={
+                        "id": {"S": key},
+                        "timestamp": {"N": str(usage_record["timestamp"])},
+                        "productId": {"S": usage_record["productId"]},
+                        "userId": {"S": user_id},
+                        "quantity": {"N": str(usage_record["quantity"])}
+                    },
+                    ConditionExpression="attribute_not_exists(id)"
                 )
+            except dynamodb_client.exceptions.ConditionalCheckFailedException:
+                logger.error(f"Already reported usage for key '{key}'")
 
-                logger.info(f"Reported usage for user '{user_id}' at time '{timestamp}' with product id '{product_id}'")
+                continue
 
-                break
+            # Report usage to Stripe
+            customer = stripe.Customer.retrieve(user_data["stripeCustomerId"]["S"], expand=["subscriptions"])
+            subscriptions = customer["subscriptions"]["data"]
+
+            for subscription in subscriptions:
+                subscription_item = subscription["items"]["data"][0]
+
+                if subscription_item["price"]["product"] == stripe_product_id:
+                    stripe.SubscriptionItem.create_usage_record(
+                        subscription_item["id"],
+                        quantity=usage_record["quantity"] * product_data["credits"]["N"],
+                        timestamp=usage_record["timestamp"]
+                    )
+
+                    logger.info(f"Reported usage for user '{user_id}' at time '{usage_record['timestamp']}' with product id '{usage_record['productId']}'")
+
+                    break

@@ -16,7 +16,6 @@ def lambda_handler(event, context):
 
     stripe_secret = os.getenv("STRIPE_SECRET")
     user_billing_table = os.getenv("USER_BILLING_TABLE")
-    products_table = os.getenv("PRODUCTS_TABLE")
     home_url = os.getenv("HOME_URL")
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
@@ -42,7 +41,7 @@ def lambda_handler(event, context):
                 "Access-Control-Allow-Origin": "*",
             },
             "body": json.dumps({
-                "url": session["url"],
+                "url": home_url,
                 "active": sandbox_mode,
                 "status": "SANDBOX"
             })
