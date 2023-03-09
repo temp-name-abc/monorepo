@@ -30,9 +30,6 @@ export class ChatStack extends cdk.NestedStack {
 
         const timestampIndexName = "timestampIndex";
 
-        // Select product for stack
-        const product: IProduct = "chat.conversation.chat";
-
         // Create data storage
         const chatTable = new dynamodb.Table(this, "chatTable", {
             partitionKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
@@ -60,7 +57,7 @@ export class ChatStack extends cdk.NestedStack {
 
         new CreateConversation(this, props.authorizer, conversationResource, conversationTable);
         new UserConversations(this, props.authorizer, conversationResource, conversationTable, timestampIndexName);
-        new Chat(this, props.authorizer, convChatResource, openAISecret, conversationTable, chatTable, product);
+        new Chat(this, props.authorizer, convChatResource, openAISecret, conversationTable, chatTable);
         new GetChats(this, props.authorizer, convChatResource, conversationTable, chatTable, timestampIndexName);
     }
 }

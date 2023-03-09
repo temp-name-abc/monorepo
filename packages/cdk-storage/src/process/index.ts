@@ -20,9 +20,10 @@ export class Process {
         chunkTable: dynamodb.Table,
         chunkBucket: s3.Bucket,
         uploadRecordsTable: dynamodb.Table,
-        tempBucket: s3.Bucket,
-        product: IProduct
+        tempBucket: s3.Bucket
     ) {
+        const storagePerChar: IProduct = "storage.per_char";
+
         // Create object processing function
         const processFn = new lambda.DockerImageFunction(stack, "processFn", {
             code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "lambda")),
@@ -36,7 +37,7 @@ export class Process {
                 CHUNK_TABLE: chunkTable.tableName,
                 CHUNK_BUCKET: chunkBucket.bucketName,
                 API_URL: API_BASE_URL,
-                PRODUCT_ID: product,
+                STORAGE_PER_CHAR_PRODUCT_ID: storagePerChar,
                 CHUNK_CHARACTERS: chatData.chunkCharacters.toString(),
             },
             timeout: cdk.Duration.minutes(15),

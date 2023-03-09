@@ -15,9 +15,12 @@ export class Chat {
         convChatResource: apigw.Resource,
         openAISecret: secretsmanager.Secret,
         conversationTable: dynamodb.Table,
-        chatTable: dynamodb.Table,
-        product: IProduct
+        chatTable: dynamodb.Table
     ) {
+        const chatPerCtxChunk: IProduct = "chat.per_ctx_chunk";
+        const chatPerCharIn: IProduct = "chat.per_char_in";
+        const chatPerCharOut: IProduct = "chat.per_char_out";
+
         const chatFn = new lambda.Function(stack, "chatFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
             code: lambda.Code.fromAsset(path.join(__dirname, "lambda"), {
@@ -32,11 +35,9 @@ export class Chat {
                 CONVERSATION_TABLE: conversationTable.tableName,
                 CHAT_TABLE: chatTable.tableName,
                 API_URL: API_BASE_URL,
-                PRODUCT_ID: product,
-                DOCUMENTS_RETRIEVED: chatData.documentsRetrieved.toString(),
-                MATCHING_THRESHOLD: chatData.matchingThreshold.toString(),
-                MAX_CHARACTERS: chatData.maxCharacters.toString(),
-                EXTEND_DOWN: chatData.extendDown.toString(),
+                PER_CTX_CHUNK_PRODUCT_ID: chatPerCtxChunk,
+                PER_CHAR_IN_PRODUCT_ID: chatPerCharIn,
+                PER_CHAR_OUT_PRODUCT_ID: chatPerCharOut,
             },
             timeout: cdk.Duration.minutes(1),
         });

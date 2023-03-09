@@ -15,8 +15,7 @@ export class Upload {
         documentResource: apigw.Resource,
         collectionTable: dynamodb.Table,
         uploadRecordsTable: dynamodb.Table,
-        tempBucket: s3.Bucket,
-        product: IProduct
+        tempBucket: s3.Bucket
     ) {
         const uploadFn = new lambda.Function(stack, "uploadFn", {
             runtime: lambda.Runtime.PYTHON_3_8,
@@ -31,7 +30,6 @@ export class Upload {
                 UPLOAD_RECORDS_TABLE: uploadRecordsTable.tableName,
                 COLLECTION_TABLE: collectionTable.tableName,
                 TEMP_BUCKET: tempBucket.bucketName,
-                PRODUCT_ID: product,
                 API_URL: API_BASE_URL,
                 MAX_FILE_SIZE: (5e8).toString(),
             },

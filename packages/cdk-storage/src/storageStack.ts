@@ -28,9 +28,6 @@ export class StorageStack extends cdk.NestedStack {
         const pineconeSecret = new secretsmanager.Secret(this, "pineconeSecret");
         const openAISecret = new secretsmanager.Secret(this, "openAISecret");
 
-        // Product for stack
-        const product: IProduct = "storage.collection.document.process";
-
         // Create the REST API
         const storageResource = props.api.root.addResource("storage");
 
@@ -138,20 +135,8 @@ export class StorageStack extends cdk.NestedStack {
             chunkBucket
         );
 
-        new Upload(this, props.authorizer, documentResource, collectionTable, uploadRecordsTable, tempBucket, product);
-        new Process(
-            this,
-            pineconeSecret,
-            openAISecret,
-            documentTable,
-            documentBucket,
-            processedDocumentBucket,
-            chunkTable,
-            chunkBucket,
-            uploadRecordsTable,
-            tempBucket,
-            product
-        );
+        new Upload(this, props.authorizer, documentResource, collectionTable, uploadRecordsTable, tempBucket);
+        new Process(this, pineconeSecret, openAISecret, documentTable, documentBucket, processedDocumentBucket, chunkTable, chunkBucket, uploadRecordsTable, tempBucket);
 
         new Search(this, pineconeSecret, openAISecret, searchResource, collectionTable, chunkTable, chunkBucket, chunkDocumentIndexName);
     }

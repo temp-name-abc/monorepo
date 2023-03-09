@@ -8,7 +8,6 @@ export * from "./src/chat";
 export * from "./src/chats";
 export * from "./src/context";
 export * from "./src/product";
-export * from "./src/productData";
 export * from "./src/portalData";
 export * from "./src/chatData";
 export * from "./src/notification";

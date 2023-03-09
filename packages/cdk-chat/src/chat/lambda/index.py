@@ -12,7 +12,6 @@ logger.setLevel(logging.INFO)
 dynamodb_client = boto3.client("dynamodb")
 secrets_manager_client = boto3.client("secretsmanager")
 
-model_settings = {"max_tokens": 2048, "temperature": 0.5, "model": "text-davinci-003"}
 
 def make_error(msg):
         logger.error(msg)
@@ -33,11 +32,9 @@ def lambda_handler(event, context):
     conversation_table = os.getenv("CONVERSATION_TABLE")
     chat_table = os.getenv("CHAT_TABLE")
     api_url = os.getenv("API_URL")
-    product_id = os.getenv("PRODUCT_ID")
-    documents_retrieved = int(os.getenv("DOCUMENTS_RETRIEVED"))
-    matching_threshold = float(os.getenv("MATCHING_THRESHOLD"))
-    max_characters = int(os.getenv("MAX_CHARACTERS"))
-    extend_down = int(os.getenv("EXTEND_DOWN"))
+    per_ctx_chunk_product_id = os.getenv("PER_CTX_CHUNK_PRODUCT_ID")
+    per_char_in_product_id = os.getenv("PER_CHAR_IN_PRODUCT_ID")
+    per_char_out_product_id = os.getenv("PER_CHAR_OUT_PRODUCT_ID")
 
     user_id = event["requestContext"]["authorizer"]["claims"]["sub"]
     conversation_id = event["pathParameters"]["conversationId"]
@@ -46,12 +43,11 @@ def lambda_handler(event, context):
 
     collection_id = body["collectionId"]
     question = body["question"]
-
-    # Validate inputs
-    if len(question) > max_characters:
-        msg = f"User '{user_id}' exceeded character limit '{max_characters}'"
-
-        return make_error(msg)
+    max_documents = int(body["maxDocuments"])
+    matching_threshold = float(body["matchingThreshold"])
+    extend_down = int(body["extendDown"])
+    extend_up = int(body["extendUp"])
+    max_char_out = int(body["maxCharOut"])
 
     # Validate conversation
     conversation_response = dynamodb_client.get_item(TableName=conversation_table, Key={"userId": {"S": user_id}, "conversationId": {"S": conversation_id}})
@@ -71,19 +67,19 @@ def lambda_handler(event, context):
     timestamp = int(now.timestamp())
 
     # Check the user can be billed
-    if not utils.is_billable(api_url, user_id, product_id):
-        msg = f"User '{user_id}' has not subscribed to product '{product_id}'"
+    if not utils.is_billable(api_url, user_id):
+        msg = f"User '{user_id}' has not subscribed"
 
         return make_error(msg)
 
     # Figure out what the user is requesting and only answer if safe
-    if not utils.is_safe_input(question):
+    if not utils.is_safe_text(question):
         msg = f"User '{user_id}' sent unsafe text"
 
         return make_error(msg)
 
     # Retrieve question context
-    documents = utils.get_documents(api_url, question, user_id, collection_id, documents_retrieved, extend_down, matching_threshold)
+    documents = utils.get_documents(api_url, question, user_id, collection_id, max_documents, extend_down, matching_threshold, extend_up)
 
     if documents == None:
         logger.error(f"Unable to find documents")
@@ -97,9 +93,27 @@ def lambda_handler(event, context):
 
             logger.info(f"Retrieved context chunk for document '{document['documentId']}'")
 
+    # Record the input usage
+    reported = utils.record_usage(
+        api_url,
+        user_id,
+        [timestamp, timestamp],
+        [per_ctx_chunk_product_id, per_char_in_product_id],
+        [len(documents) * (1 + extend_down + extend_up), len(question)]
+    )
+
+    if not reported:
+        logger.error(f"Unable to record chat request usage for user '{user_id}'")
+
     # Generate context, response, and update the history
-    chat = utils.generate_chat(question, context, max_characters, user_id)
+    chat = utils.generate_chat(question, context, max_char_out, user_id)
     logger.info(f"Chat = '{chat}'")
+
+    # Check the output text is safe
+    if not utils.is_safe_text(chat):
+        msg = f"Output was unsafe text"
+
+        return make_error(msg)
 
     # Store the data
     dynamodb_client.put_item(
@@ -116,10 +130,10 @@ def lambda_handler(event, context):
     )
 
     # Record the usage
-    reported = utils.record_usage(api_url, user_id, timestamp, product_id)
+    reported = utils.record_usage(api_url, user_id, [timestamp], [per_char_out_product_id], [max_char_out])
 
     if not reported:
-        logger.error(f"Unable to record usage for user '{user_id}' with product '{product_id}'")
+        logger.error(f"Unable to record chat creation usage for user '{user_id}'")
 
     logger.info(f"Generated chat '{chat_id}' for conversation '{conversation_id}' for user '{user_id}'")
 

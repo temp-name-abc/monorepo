@@ -48,7 +48,7 @@ def lambda_handler(event, context):
     chunk_table = os.getenv("CHUNK_TABLE")
     chunk_bucket = os.getenv("CHUNK_BUCKET")
     api_url = os.getenv("API_URL")
-    product_id = os.getenv("PRODUCT_ID")
+    storage_per_char_product_id = os.getenv("STORAGE_PER_CHAR_PRODUCT_ID")
     chunk_characters = int(os.getenv("CHUNK_CHARACTERS"))
 
     # Load the OpenAI API key
@@ -195,9 +195,13 @@ def lambda_handler(event, context):
         usage_url = f"{api_url}/billing/iam/usage"
         usage_request = make_request(usage_url, "POST", json.dumps({
             "userId": user_id,
-            "timestamp": timestamp,
-            "productId": product_id,
-            "quantity": len(body)
+            "usage": [
+                {
+                    "timestamp": timestamp,
+                    "productId": storage_per_char_product_id,
+                    "quantity": len(body)
+                }
+            ]
         }))
         usage_req = requests.post(
             usage_url,
@@ -206,6 +210,6 @@ def lambda_handler(event, context):
         )
 
         if not usage_req.ok:
-            logger.error(f"Unable to record usage for user '{user_id}' with product '{product_id}' with status code '{usage_req.status_code}'")
+            logger.error(f"Unable to record usage for user '{user_id}' with status code '{usage_req.status_code}'")
 
         logger.info(f"Processed file with key '{document_id}'")

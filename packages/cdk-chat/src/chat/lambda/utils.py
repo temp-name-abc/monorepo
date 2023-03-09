@@ -45,15 +45,15 @@ def generate_chat(question, context, max_characters, user_id):
     )["choices"][0]["message"]["content"].strip()
 
 
-def is_safe_input(question):
+def is_safe_text(question):
     response = openai.Moderation.create(input=question)
 
     return not response["results"][0]["flagged"]
 
 
-def get_documents(api_url, query, user_id, collection_id, documents_retrieved, extend_down, min_threshold):
+def get_documents(api_url, query, user_id, collection_id, max_documents, extend_down, min_threshold, extend_up):
     query_encoded = urllib.parse.quote(query)
-    documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults={documents_retrieved}&query={query_encoded}&extendDown={extend_down}&minThreshold={min_threshold}"
+    documents_url = f"{api_url}/storage/iam/search?userId={user_id}&collectionId={collection_id}&numResults={max_documents}&query={query_encoded}&extendDown={extend_down}&minThreshold={min_threshold}&extendUp={extend_up}"
     documents_request = make_request(documents_url, "GET")
     documents_req = requests.get(documents_url, headers=documents_request.headers)
 
@@ -63,13 +63,13 @@ def get_documents(api_url, query, user_id, collection_id, documents_retrieved, e
     return documents_req.json()
 
 
-def record_usage(api_url, user_id, timestamp, product_id):
+def record_usage(api_url, user_id, timestamp, product_id, quantity):
+    usage = [{"timestamp": elem[0], "productId": elem[1], "quantity": elem[2]} for elem in zip(timestamp, product_id, quantity)]
+
     usage_url = f"{api_url}/billing/iam/usage"
     usage_request = make_request(usage_url, "POST", json.dumps({
         "userId": user_id,
-        "timestamp": timestamp,
-        "productId": product_id,
-        "quantity": 1
+        "usage": usage
     }))
     usage_req = requests.post(
         usage_url,
@@ -80,8 +80,8 @@ def record_usage(api_url, user_id, timestamp, product_id):
     return usage_req.ok
 
 
-def is_billable(api_url, user_id, product_id):
-    active_url = f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
+def is_billable(api_url, user_id):
+    active_url = f"{api_url}/billing/iam/status?userId={user_id}"
     active_request = make_request(active_url, "GET")
     active_req = requests.get(active_url, headers=active_request.headers)
 
