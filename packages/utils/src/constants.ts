@@ -8,7 +8,7 @@ export const FACEBOOK_URL = "https://www.facebook.com/monostack";
 export const chatData: IChatData = {
     chunkCharacters: 1000,
     maxDocuments: 2,
-    matchingThreshold: 0.7,
+    minThreshold: 0.7,
     maxCharOut: 2000,
     extendDown: 1,
     extendUp: 0,

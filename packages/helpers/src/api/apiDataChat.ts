@@ -49,7 +49,7 @@ export async function createChat(token: string, conversationId: string, question
             collectionId,
             question,
             maxDocuments: chatData.maxDocuments,
-            matchingThreshold: chatData.matchingThreshold,
+            minThreshold: chatData.minThreshold,
             maxCharOut: chatData.maxCharOut,
             extendDown: chatData.extendDown,
             extendUp: chatData.extendUp,

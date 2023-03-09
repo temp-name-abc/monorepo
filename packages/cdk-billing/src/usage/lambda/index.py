@@ -71,7 +71,7 @@ def lambda_handler(event, context):
 
             # Report usage to Stripe
             for subscription in subscriptions:
-                if subscription["status"] != "active" or usage_record["quantity"] <= 0:
+                if subscription["status"] != "active" or int(usage_record["quantity"]) <= 0:
                     logger.info(f"Cannot report with status '{subscription['status']}' and quantity '{usage_record['quantity']}' - skipping")
 
                     continue
@@ -81,7 +81,7 @@ def lambda_handler(event, context):
                 if subscription_item["price"]["product"] == stripe_product_id:
                     stripe.SubscriptionItem.create_usage_record(
                         subscription_item["id"],
-                        quantity=usage_record["quantity"] * product_data["credits"]["N"],
+                        quantity=int(usage_record["quantity"]) * int(product_data["credits"]["N"]),
                         timestamp=usage_record["timestamp"]
                     )
 

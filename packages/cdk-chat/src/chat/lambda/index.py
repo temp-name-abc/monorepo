@@ -43,11 +43,11 @@ def lambda_handler(event, context):
 
     collection_id = body["collectionId"]
     question = body["question"]
-    max_documents = body["maxDocuments"]
-    matching_threshold = body["matchingThreshold"]
-    extend_down = body["extendDown"]
-    extend_up = body["extendUp"]
-    max_char_out = body["maxCharOut"]
+    max_documents = int(body["maxDocuments"])
+    min_threshold = float(body["minThreshold"])
+    extend_down = int(body["extendDown"])
+    extend_up = int(body["extendUp"])
+    max_char_out = int(body["maxCharOut"])
 
     # Validate conversation
     conversation_response = dynamodb_client.get_item(TableName=conversation_table, Key={"userId": {"S": user_id}, "conversationId": {"S": conversation_id}})
@@ -79,7 +79,7 @@ def lambda_handler(event, context):
         return make_error(msg)
 
     # Retrieve question context
-    documents = utils.get_documents(api_url, question, user_id, collection_id, max_documents, extend_down, matching_threshold, extend_up)
+    documents = utils.get_documents(api_url, question, user_id, collection_id, max_documents, extend_down, min_threshold, extend_up)
 
     if documents == None:
         logger.error(f"Unable to find documents")

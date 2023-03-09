@@ -31,8 +31,8 @@ def lambda_handler(event, context):
     user_id = query_params["userId"]
     collection_id = query_params["collectionId"]
     num_results = int(query_params["numResults"])
-    extend_down = int(query_params["extendDown"] if "extendDown" in query_params else 0)
-    extend_up = int(query_params["extendUp"] if "extendUp" in query_params else 0)
+    extend_down = int(query_params["extendDown"])
+    extend_up = int(query_params["extendUp"])
     min_threshold = float(query_params["minThreshold"])
 
     # Load the OpenAI API key
