@@ -46,8 +46,8 @@ def lambda_handler(event, context):
             continue
 
         # Process records
-        for usage_record in usage_records:
-            key = hashlib.sha256(f"{body}:{json.dumps(usage_record)}".encode()).hexdigest()
+        for i, usage_record in enumerate(usage_records):
+            key = hashlib.sha256(f"{body}:{i}:{json.dumps(usage_record)}".encode()).hexdigest()
 
             product_data = dynamodb_client.get_item(TableName=products_table, Key={"productId": {"S": usage_record["productId"]}})["Item"]
 

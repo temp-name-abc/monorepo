@@ -1,7 +1,6 @@
 import axios from "axios";
 import { chat, chats, conversation, conversations, IChat, IChats, IConversation, IConversations } from "types";
-
-import { API_BASE_URL } from "utils";
+import { API_BASE_URL, chatData } from "utils";
 
 const instance = axios.create({
     baseURL: API_BASE_URL,
@@ -43,15 +42,24 @@ export async function getChats(token: string, conversationId: string) {
     return chats.parse(data);
 }
 
-export async function createChat(token: string, conversationId: string, question: string, collectionId?: string) {
-    const body: any = { question };
-    if (collectionId) body.collectionId = collectionId;
-
-    const { data } = await instance.post<IChat>(`/chat/conversation/${conversationId}/chat`, body, {
-        headers: {
-            Authorization: token,
+export async function createChat(token: string, conversationId: string, question: string, collectionId: string) {
+    const { data } = await instance.post<IChat>(
+        `/chat/conversation/${conversationId}/chat`,
+        {
+            collectionId,
+            question,
+            maxDocuments: chatData.maxDocuments,
+            matchingThreshold: chatData.matchingThreshold,
+            maxCharOut: chatData.maxCharOut,
+            extendDown: chatData.extendDown,
+            extendUp: chatData.extendUp,
         },
-    });
+        {
+            headers: {
+                Authorization: token,
+            },
+        }
+    );
 
     return chat.parse(data);
 }

@@ -50,7 +50,7 @@ def lambda_handler(event, context):
     active = False
     status = None
 
-    subscriptions = stripe.Subscription.list(customer=customer_id, status="canceled").data
+    subscriptions = stripe.Subscription.list(customer=customer_id, status="all").data
 
     active_subscriptions = []
     other_subscriptions = []

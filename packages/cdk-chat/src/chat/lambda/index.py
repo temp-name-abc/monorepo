@@ -43,11 +43,11 @@ def lambda_handler(event, context):
 
     collection_id = body["collectionId"]
     question = body["question"]
-    max_documents = int(body["maxDocuments"])
-    matching_threshold = float(body["matchingThreshold"])
-    extend_down = int(body["extendDown"])
-    extend_up = int(body["extendUp"])
-    max_char_out = int(body["maxCharOut"])
+    max_documents = body["maxDocuments"]
+    matching_threshold = body["matchingThreshold"]
+    extend_down = body["extendDown"]
+    extend_up = body["extendUp"]
+    max_char_out = body["maxCharOut"]
 
     # Validate conversation
     conversation_response = dynamodb_client.get_item(TableName=conversation_table, Key={"userId": {"S": user_id}, "conversationId": {"S": conversation_id}})
