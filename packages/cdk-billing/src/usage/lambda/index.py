@@ -71,8 +71,8 @@ def lambda_handler(event, context):
 
             # Report usage to Stripe
             for subscription in subscriptions:
-                if subscription["status"] != "active":
-                    logger.info(f"Subscription status is not active - skipping")
+                if subscription["status"] != "active" or usage_record["quantity"] <= 0:
+                    logger.info(f"Cannot report with status '{subscription['status']}' and quantity '{usage_record['quantity']}' - skipping")
 
                     continue
 
