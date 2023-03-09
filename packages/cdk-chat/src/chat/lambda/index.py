@@ -130,7 +130,7 @@ def lambda_handler(event, context):
     )
 
     # Record the usage
-    reported = utils.record_usage(api_url, user_id, [timestamp], [min(max_char_out, len(chat))], [max_char_out])
+    reported = utils.record_usage(api_url, user_id, [timestamp], [per_char_out_product_id], [min(max_char_out, len(chat))])
 
     if not reported:
         logger.error(f"Unable to record chat creation usage for user '{user_id}'")
