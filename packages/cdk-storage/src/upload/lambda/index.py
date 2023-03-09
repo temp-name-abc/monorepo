@@ -38,7 +38,6 @@ def lambda_handler(event, context):
     upload_records_table = os.getenv("UPLOAD_RECORDS_TABLE")
     collection_table = os.getenv("COLLECTION_TABLE")
     temp_bucket = os.getenv("TEMP_BUCKET")
-    product_id = os.getenv("PRODUCT_ID")
     api_url = os.getenv("API_URL")
     max_file_size = int(os.getenv("MAX_FILE_SIZE"))
 
@@ -87,12 +86,12 @@ def lambda_handler(event, context):
         }
 
     # Check if the user has subscribed
-    active_url = f"{api_url}/billing/iam/status?userId={user_id}&productId={product_id}"
+    active_url = f"{api_url}/billing/iam/status?userId={user_id}"
     active_request = make_request(active_url, "GET")
     active_req = requests.get(active_url, headers=active_request.headers)
 
     if not active_req.ok or not active_req.json()["active"]:
-        logger.error(f"User '{user_id}' has not subscribed to product '{product_id}' with status code '{active_req.status_code}'")
+        logger.error(f"User '{user_id}' has not subscribed with status code '{active_req.status_code}'")
 
     # Create a new key for the request
     key = str(uuid.uuid4())
