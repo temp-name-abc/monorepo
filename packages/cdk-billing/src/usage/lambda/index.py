@@ -79,12 +79,18 @@ def lambda_handler(event, context):
                 subscription_item = subscription["items"]["data"][0]
 
                 if subscription_item["price"]["product"] == stripe_product_id:
-                    stripe.SubscriptionItem.create_usage_record(
-                        subscription_item["id"],
-                        quantity=int(usage_record["quantity"]) * int(product_data["credits"]["N"]),
-                        timestamp=usage_record["timestamp"]
-                    )
+                    try:
+                        stripe.SubscriptionItem.create_usage_record(
+                            subscription_item["id"],
+                            quantity=int(usage_record["quantity"]) * int(product_data["credits"]["N"]),
+                            timestamp=usage_record["timestamp"]
+                        )
 
-                    logger.info(f"Reported usage for user '{user_id}' at time '{usage_record['timestamp']}' with product id '{usage_record['productId']}'")
+                        logger.info(f"Reported usage for user '{user_id}' at time '{usage_record['timestamp']}' with product id '{usage_record['productId']}'")
 
-                    break
+                        break
+                    
+                    except stripe.error.StripeError:
+                        dynamodb_client.delete_item(TableName=usage_table, Key={"id": {"S": key}})
+
+                        raise Exception(f"Could not record usage for user '{user_id}' at time '{usage_record['timestamp']}' with product id '{usage_record['productId']}'")
