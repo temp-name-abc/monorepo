@@ -19,8 +19,8 @@ export function CustomCard({}: IProps) {
                 <CardSection
                     title="Chat"
                     pricing={[
-                        { heading: "Messages sent:", price: "custom" },
-                        { heading: "Messages received:", price: "custom" },
+                        { heading: "Chats sent:", price: "custom" },
+                        { heading: "Chats received:", price: "custom" },
                         { heading: "Contexts retrieved:", price: "custom" },
                     ]}
                 />

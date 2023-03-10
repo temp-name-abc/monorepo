@@ -19,8 +19,8 @@ export function StandardCard({}: IProps) {
                 <CardSection
                     title="Chat"
                     pricing={[
-                        { heading: "Messages sent:", price: "$0.0005 AUD / 1,000 characters" },
-                        { heading: "Messages received:", price: "$0.0005 AUD / 1,000 characters" },
+                        { heading: "Chats sent:", price: "$0.0005 AUD / 1,000 characters" },
+                        { heading: "Chats received:", price: "$0.0005 AUD / 1,000 characters" },
                         { heading: "Contexts retrieved:", price: "$0.00075 AUD / context chunk" },
                     ]}
                 />
