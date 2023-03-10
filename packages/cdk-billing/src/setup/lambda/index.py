@@ -23,7 +23,8 @@ def lambda_handler(event, context):
     user_email = event["request"]["userAttributes"]["email"]
 
     # Load the Stripe key
-    stripe.api_key = secrets_manager_client.get_secret_value(SecretId=stripe_secret)["SecretString"]
+    stripe_data = json.loads(secrets_manager_client.get_secret_value(SecretId=stripe_secret)["SecretString"])
+    stripe.api_key = stripe_data["apiKey"]
 
     # Load Mailerlite key
     mailerlite_token = secrets_manager_client.get_secret_value(SecretId=mailerlite_secret)["SecretString"]
