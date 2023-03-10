@@ -5,8 +5,8 @@ interface IProps {}
 
 export function UseCases({}: IProps) {
     return (
-        <div className="p-16 bg-gray-900 w-full space-y-12">
-            <h1 className="text-3xl font-extrabold text-gray-200">Use Cases</h1>
+        <div className="p-16 bg-gray-900 w-full space-y-16">
+            <h2 className="text-3xl font-extrabold text-gray-200">Use Cases</h2>
             <div className="flex flex-col xl:flex-row space-y-16 xl:space-y-0 xl:space-x-10 justify-evenly">
                 <UseCase
                     title="Education"

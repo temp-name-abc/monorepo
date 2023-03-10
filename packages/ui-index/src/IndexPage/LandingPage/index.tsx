@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { Header } from "./Header";
 import { Instructions } from "./Instructions";
+import { Pricing } from "./Pricing";
 import { UseCases } from "./UseCases";
 
 interface IProps {}
@@ -20,6 +21,7 @@ export function LandingPage({}: IProps) {
                 <Header />
                 <Instructions />
                 <UseCases />
+                <Pricing />
             </div>
         </>
     );

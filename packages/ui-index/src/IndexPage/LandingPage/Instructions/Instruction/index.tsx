@@ -9,7 +9,7 @@ export function Instruction({ title, description, card }: IProps) {
         <div className="space-y-12 w-full">
             <div className="space-y-6">
                 <h2 className="font-extrabold text-gray-900 text-4xl">{title}</h2>
-                <p className="text-gray-600 text-lg max-w-xl">{description}</p>
+                <p className="text-gray-600 text-lg w-4/5">{description}</p>
             </div>
             {card}
         </div>
