@@ -10,7 +10,7 @@ export function UseCases({}: IProps) {
             <div className="flex flex-col xl:flex-row space-y-16 xl:space-y-0 xl:space-x-10 justify-evenly">
                 <UseCase
                     title="Education"
-                    description="Access quick and accurate answers to your uni course questions by uploading your notes to our AI chatbot."
+                    description="Get quick and accurate answers to your uni course questions by uploading your notes to our AI chatbot."
                     icon={<School size={48} />}
                 />
                 <UseCase

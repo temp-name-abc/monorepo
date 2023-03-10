@@ -2,9 +2,9 @@ import Link from "next/link";
 import { ReactNode } from "react";
 
 interface IProps {
-    children: any;
     type: "button" | "link";
     variant: "dull" | "accent";
+    children?: any;
     onClick?: (e: any) => any;
     href?: string;
     icon?: ReactNode;
@@ -22,15 +22,15 @@ export function Button({ children, type, variant, onClick, href, icon, thick, ne
     if (type === "button")
         return (
             <button className={style} onClick={onClick}>
-                <span>{children}</span>
-                <span>{icon}</span>
+                {children && <span>{children}</span>}
+                {icon && <span>{icon}</span>}
             </button>
         );
     else if (type === "link" && !!href)
         return (
             <Link className={style} onClick={onClick} href={href} target={newTab ? "_blank" : undefined} rel={newTab ? "noreferrer" : undefined}>
-                <span>{children}</span>
-                <span>{icon}</span>
+                {children && <span>{children}</span>}
+                {icon && <span>{icon}</span>}
             </Link>
         );
     else throw Error("Invalid props for component 'Button'");

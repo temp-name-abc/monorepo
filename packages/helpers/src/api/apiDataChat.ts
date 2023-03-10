@@ -42,16 +42,7 @@ export async function getChats(token: string, conversationId: string) {
     return chats.parse(data);
 }
 
-export async function createChat(token: string, conversationId: string, question: string, collectionId: string, chatData?: IChatData) {
-    if (!chatData)
-        chatData = {
-            maxDocuments: 2,
-            minThreshold: 0.7,
-            maxCharOut: 2000,
-            extendDown: 1,
-            extendUp: 0,
-        };
-
+export async function createChat(token: string, conversationId: string, question: string, collectionId: string, chatData: IChatData) {
     const { data } = await instance.post<IChat>(
         `/chat/conversation/${conversationId}/chat`,
         { ...{ collectionId, question }, ...chatData },

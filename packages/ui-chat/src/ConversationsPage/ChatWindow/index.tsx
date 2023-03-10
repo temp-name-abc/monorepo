@@ -24,7 +24,7 @@ export function ChatWindow({ conversationId, chats, onClickReply }: IProps) {
     if (!chats) return null;
 
     return (
-        <div className="bg-gray-100 p-10 space-y-8 h-[640px] overflow-y-auto">
+        <div className="bg-gray-100 p-10 space-y-8 h-[768px] overflow-y-auto">
             <p className="px-8 py-4 font-medium text-gray-400 text-sm text-center">Beginning of conversation</p>
             <div className="flex flex-col justify-evenly space-y-8">
                 {chats.chats.map((chat, i) => (
