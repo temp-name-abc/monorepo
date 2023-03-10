@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getPortal } from "helpers";
 import { useSession } from "next-auth/react";
-import { CreditCard } from "tabler-icons-react";
+import { Coin, CreditCard, CreditCardOff } from "tabler-icons-react";
 import { KEY_PORTAL } from "utils";
 import { Button } from "../Button";
 
@@ -19,11 +19,31 @@ export function Subscription({}: IProps) {
 
     if (!data) return null;
 
-    return (
-        <Button type="link" variant={data.active ? "dull" : "accent"} icon={<CreditCard />} href={data.url}>
-            {data.active ? "Manage" : "Subscribe"}
-        </Button>
-    );
+    if (data.status === "CARD" || data.status === "TRIALING_CARD")
+        return (
+            <Button type="link" variant="dull" icon={<Coin />} href={data.url}>
+                Manage
+            </Button>
+        );
+    else if (data.status === "SANDBOX") return null;
+    else if (data.status === "NOT_SUBSCRIBED")
+        return (
+            <Button type="link" variant="accent" icon={<CreditCardOff />} href={data.url}>
+                Free Trial
+            </Button>
+        );
+    else if (data.status === "TRIALING_NO_CARD")
+        return (
+            <Button type="link" variant="accent" icon={<CreditCard />} href={data.url}>
+                Add Payment
+            </Button>
+        );
+    else
+        return (
+            <Button type="link" variant="accent" icon={<CreditCard />} href={data.url}>
+                Subscribe
+            </Button>
+        );
 }
 
 export default Subscription;

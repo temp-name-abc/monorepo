@@ -22,7 +22,7 @@ export function SideNav({ navigationLinks, externalLinks }: IProps) {
             <div className="flex flex-col space-y-5">
                 <h3 className="font-bold text-gray-600 text-sm">External</h3>
                 {externalLinks.map((link, i) => (
-                    <Button key={i} variant="dull" type="link" href={link.href} icon={link.icon} thick={true}>
+                    <Button key={i} variant="dull" type="link" href={link.href} icon={link.icon} thick={true} newTab={true}>
                         {link.children}
                     </Button>
                 ))}
