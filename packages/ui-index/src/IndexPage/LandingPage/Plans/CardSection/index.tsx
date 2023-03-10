@@ -11,7 +11,7 @@ export function CardSection({ title, pricing }: IProps) {
                 {pricing.map((price, i) => (
                     <p className="text-gray-600 flex items-start justify-between w-full" key={i}>
                         <span>{price.heading}</span>
-                        <span className="font-medium">{price.price}</span>
+                        <span className="font-medium text-right">{price.price}</span>
                     </p>
                 ))}
             </div>
