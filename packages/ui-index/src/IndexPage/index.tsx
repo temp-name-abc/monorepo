@@ -34,7 +34,11 @@ export function IndexPage({}: IProps) {
         }
         // @ts-expect-error
         else if (status === "CHECKOUT_FAILED") fbq("trackCustom", "FailedCheckout", {});
-        else if (status === "LOGGED_IN" && portalData && !portalData.active) router.push(portalData.url);
+        else if (status === "LOGGED_IN") {
+            completeTutorial();
+
+            if (portalData && !portalData.active) router.push(portalData.url);
+        }
     }, [router, completeTutorial, portalData]);
 
     return (

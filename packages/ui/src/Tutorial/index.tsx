@@ -2,13 +2,13 @@ import { useState } from "react";
 import { ArrowBack, ArrowForward, X } from "tabler-icons-react";
 import { useTutorial } from "hooks";
 import { TutorialSlide } from "./TutorialSlide";
-import { Button, SignIn } from "ui";
+import { Button } from "../Button";
+import { SignIn } from "../SignIn";
+import { Modal } from "../Modal";
 
-interface IProps {
-    children: any;
-}
+interface IProps {}
 
-export function Tutorial({ children }: IProps) {
+export function Tutorial({}: IProps) {
     const { isActive, completeTutorial } = useTutorial();
     const [position, setPosition] = useState<number>(0);
 
@@ -45,8 +45,7 @@ export function Tutorial({ children }: IProps) {
             descriptions={[
                 "Congratulations on taking the first step towards unlocking the full potential of our platform!",
                 <>
-                    Our flexible payment model means you only pay for what you use. Simply <span className="font-medium">add your card</span> and start having
-                    conversations using your data today!
+                    To get started, <span className="font-medium">sign in</span> below!
                 </>,
             ]}
         />,
@@ -71,32 +70,15 @@ export function Tutorial({ children }: IProps) {
         );
 
     return (
-        <>
-            {isActive && (
-                <div className="fixed z-10 inset-0 overflow-y-auto">
-                    <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20">
-                        <div className="fixed inset-0 transition-opacity bg-gray-500 opacity-50" />
-                        <div className="relative z-10 w-full max-w-lg bg-white shadow-lg p-6 space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-gray-600 font-medium">Getting started</h3>
-                                {isLastSlide && (
-                                    <button className="text-gray-900 font-bold" onClick={completeTutorial}>
-                                        <X />
-                                    </button>
-                                )}
-                            </div>
-                            <div className="pb-6">{slides[position]}</div>
-                            <div className={`flex items-center ${buttons.length > 1 ? "justify-between" : "justify-end"}`}>
-                                {buttons.map((btn, i) => (
-                                    <div key={i}>{btn}</div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {children}
-        </>
+        <Modal title="Getting Started" isActive={isActive} setIsActive={isLastSlide ? () => completeTutorial() : undefined}>
+            <></>
+            <div className="pb-6">{slides[position]}</div>
+            <div className={`flex items-center ${buttons.length > 1 ? "justify-between" : "justify-end"}`}>
+                {buttons.map((btn, i) => (
+                    <div key={i}>{btn}</div>
+                ))}
+            </div>
+        </Modal>
     );
 }
 

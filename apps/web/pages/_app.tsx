@@ -44,13 +44,12 @@ export function MyApp({ Component, pageProps: { session, ...pageProps } }: AppPr
             </noscript>
             <QueryClientProvider client={queryClient}>
                 <SessionProvider session={session}>
-                    <Tutorial>
-                        <NotificationProvider>
-                            <AppShell>
-                                <Component {...pageProps} />
-                            </AppShell>
-                        </NotificationProvider>
-                    </Tutorial>
+                    <Tutorial />
+                    <NotificationProvider>
+                        <AppShell>
+                            <Component {...pageProps} />
+                        </AppShell>
+                    </NotificationProvider>
                 </SessionProvider>
             </QueryClientProvider>
         </>

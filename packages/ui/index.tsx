@@ -10,3 +10,4 @@ export * from "./src/Card";
 export * from "./src/Subscription";
 export * from "./src/Tutorial";
 export * from "./src/SignIn";
+export * from "./src/Modal";
