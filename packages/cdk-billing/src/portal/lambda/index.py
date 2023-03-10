@@ -124,8 +124,8 @@ def lambda_handler(event, context):
 
 
     session = stripe.checkout.Session.create(
-        success_url=f"{home_url}?status=SUCCESS",
-        cancel_url=f"{home_url}?status=FAILED",
+        success_url=f"{home_url}?status=CHECKOUT_SUCCESS",
+        cancel_url=f"{home_url}?status=CHECKOUT_FAILED",
         line_items=[{"price": stripe_price_id}],
         mode="subscription",
         customer=customer_id,
