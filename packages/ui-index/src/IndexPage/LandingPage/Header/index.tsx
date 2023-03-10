@@ -15,7 +15,9 @@ export function Header({}: IProps) {
                     <span className="font-medium">search</span> for information, let them <span className="font-medium">ask</span> for it.
                 </p>
             </div>
-            <StartTrial />
+            <div className="flex">
+                <StartTrial />
+            </div>
         </header>
     );
 }

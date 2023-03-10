@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { getPortal } from "helpers";
 import { signIn, useSession } from "next-auth/react";
-import { Coin, CreditCardOff } from "tabler-icons-react";
+import { Coin, CreditCard, CreditCardOff } from "tabler-icons-react";
 import { KEY_PORTAL } from "utils";
-import Button from "../Button";
+import { Button } from "../Button";
 
 interface IProps {}
 
@@ -24,10 +24,17 @@ export function StartTrial({}: IProps) {
             </Button>
         );
 
-    if (!data.active)
+    if (data.active)
         return (
             <Button type="link" variant="dull" icon={<Coin />} href={data.url} thick={true}>
                 Manage
+            </Button>
+        );
+
+    if (data.status === "NOT_SUBSCRIBED_TRIAL_ENDED")
+        return (
+            <Button type="link" variant="accent" icon={<CreditCard />} href={data.url} thick={true}>
+                Subscribe
             </Button>
         );
 
