@@ -117,7 +117,7 @@ def lambda_handler(event, context):
     subscription_data = {
         "subscription_data": {
             "trial_settings": {"end_behavior": {"missing_payment_method": "cancel"}},
-            "trial_period_days": 4,
+            "trial_period_days": 5,
         },
         "payment_method_collection": "if_required"
     } if status == "NOT_SUBSCRIBED" else {}
