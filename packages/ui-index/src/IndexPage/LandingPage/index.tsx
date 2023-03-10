@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { Header } from "./Header";
 import { Instructions } from "./Instructions";
+import { UseCases } from "./UseCases";
 
 interface IProps {}
 
@@ -18,28 +19,10 @@ export function LandingPage({}: IProps) {
             <div className="space-y-10">
                 <Header />
                 <Instructions />
+                <UseCases />
             </div>
         </>
     );
 }
-
-// import { Database, Messages } from "tabler-icons-react";
-
-// <CardLayout
-//     elements={[
-//         <Card
-//             title="Storage"
-//             description="Create a collection. Upload your documents. Use the collection as a knowledgebase for chatting."
-//             icon={<Database />}
-//             url="/storage/collections"
-//         />,
-//         <Card
-//             title="Chat"
-//             description="Select a collection. Ask a question. Receive the respone. Verify the sources used."
-//             icon={<Messages />}
-//             url="/chat/conversations"
-//         />,
-//     ]}
-// />
 
 export default LandingPage;

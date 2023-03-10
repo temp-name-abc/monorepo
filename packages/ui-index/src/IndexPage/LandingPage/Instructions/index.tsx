@@ -7,7 +7,7 @@ interface IProps {}
 
 export function Instructions({}: IProps) {
     return (
-        <div className="p-16 flex items-start justify-between space-x-10">
+        <div className="p-16 flex flex-col xl:flex-row items-start justify-between space-y-16 xl:space-x-10 xl:space-y-0">
             <Instruction
                 title={
                     <>
@@ -43,9 +43,9 @@ export function Instructions({}: IProps) {
                 }
                 description={
                     <>
-                        Next, <span className="font-medium">ask questions</span> specific to the documents you uploaded to our AI and receive{" "}
-                        <span className="font-medium">accurate responses within seconds!</span> We also show you the sources used to generate the response, so you can{" "}
-                        <span className="font-medium">verify your answer</span> is correct.
+                        Now that you've uploaded some documents, <span className="font-medium">ask questions</span> specific to those documents and receive{" "}
+                        <span className="font-medium">accurate responses within seconds!</span> We also show you the sources the AI used to generate the response, so you
+                        can <span className="font-medium">verify your answer</span> is correct.
                     </>
                 }
                 card={

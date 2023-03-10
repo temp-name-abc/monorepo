@@ -4,7 +4,7 @@ interface IProps {}
 
 export function Header({}: IProps) {
     return (
-        <header className="py-24 px-16 space-y-16">
+        <header className="p-16 space-y-16">
             <div className="space-y-6">
                 <h1 className="text-6xl font-extrabold text-gray-900">
                     <span className="block">Welcome, to</span>
