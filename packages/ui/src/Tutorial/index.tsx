@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ArrowBack, ArrowForward, X } from "tabler-icons-react";
 import { useTutorial } from "hooks";
 import { TutorialSlide } from "./TutorialSlide";
-import { Button, Subscription } from "ui";
+import { Button, SignIn } from "ui";
 
 interface IProps {
     children: any;
@@ -62,7 +62,7 @@ export function Tutorial({ children }: IProps) {
                 Back
             </Button>
         );
-    if (isLastSlide) buttons.push(<Subscription />);
+    if (isLastSlide) buttons.push(<SignIn />);
     else
         buttons.push(
             <Button type="button" variant="accent" onClick={() => setPosition((pos) => pos + 1)} icon={<ArrowForward />}>
