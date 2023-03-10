@@ -13,12 +13,12 @@ export function StandardCard({}: IProps) {
                 <p className="text-gray-900">Only pay for what you use, when you use it.</p>
             </div>
             <div className="flex flex-col w-full p-8 space-y-4">
-                <CardSection title="Storage" pricing={[{ heading: "Upload document:", price: "$0.0001 AUD / 1k characters" }]} />
+                <CardSection title="Storage" pricing={[{ heading: "Documents uploaded:", price: "$0.0001 AUD / 1k characters" }]} />
                 <CardSection
                     title="Chat"
                     pricing={[
-                        { heading: "Message length:", price: "$0.0005 AUD / 1k characters" },
-                        { heading: "Response length:", price: "$0.0005 AUD / 1k characters" },
+                        { heading: "Messages sent:", price: "$0.0005 AUD / 1k characters" },
+                        { heading: "Messages received:", price: "$0.0005 AUD / 1k characters" },
                         { heading: "Contexts retrieved:", price: "$0.00075 AUD / context chunk" },
                     ]}
                 />
