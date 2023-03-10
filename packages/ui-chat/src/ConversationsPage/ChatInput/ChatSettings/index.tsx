@@ -27,7 +27,7 @@ export function ChatSettings({ chatData, setChatData }: IProps) {
                     step={1}
                     min={0}
                     max={10000}
-                    defaultValue={chatData.maxDocuments}
+                    defaultValue={chatData.maxCharOut}
                     onChange={(value) => setChatData((prev) => ({ ...prev, maxCharOut: value }))}
                 />
                 <Slider
