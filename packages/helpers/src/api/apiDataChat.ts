@@ -1,6 +1,6 @@
 import axios from "axios";
-import { chat, chats, conversation, conversations, IChat, IChats, IConversation, IConversations } from "types";
-import { API_BASE_URL, chatData } from "utils";
+import { chat, chats, conversation, conversations, IChat, IChatData, IChats, IConversation, IConversations } from "types";
+import { API_BASE_URL } from "utils";
 
 const instance = axios.create({
     baseURL: API_BASE_URL,
@@ -42,18 +42,19 @@ export async function getChats(token: string, conversationId: string) {
     return chats.parse(data);
 }
 
-export async function createChat(token: string, conversationId: string, question: string, collectionId: string) {
+export async function createChat(token: string, conversationId: string, question: string, collectionId: string, chatData?: IChatData) {
+    if (!chatData)
+        chatData = {
+            maxDocuments: 2,
+            minThreshold: 0.7,
+            maxCharOut: 2000,
+            extendDown: 1,
+            extendUp: 0,
+        };
+
     const { data } = await instance.post<IChat>(
         `/chat/conversation/${conversationId}/chat`,
-        {
-            collectionId,
-            question,
-            maxDocuments: chatData.maxDocuments,
-            minThreshold: chatData.minThreshold,
-            maxCharOut: chatData.maxCharOut,
-            extendDown: chatData.extendDown,
-            extendUp: chatData.extendUp,
-        },
+        { ...{ collectionId, question }, ...chatData },
         {
             headers: {
                 Authorization: token,

@@ -6,7 +6,7 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
-import { API_BASE_URL, chatData } from "utils";
+import { API_BASE_URL, STORAGE_CHUNK_SIZE } from "utils";
 import { IProduct } from "types";
 
 export class Process {
@@ -38,7 +38,7 @@ export class Process {
                 CHUNK_BUCKET: chunkBucket.bucketName,
                 API_URL: API_BASE_URL,
                 STORAGE_PER_CHAR_PRODUCT_ID: storagePerChar,
-                CHUNK_CHARACTERS: chatData.chunkCharacters.toString(),
+                CHUNK_CHARACTERS: STORAGE_CHUNK_SIZE.toString(),
             },
             timeout: cdk.Duration.minutes(15),
         });

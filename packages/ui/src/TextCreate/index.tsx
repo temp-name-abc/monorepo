@@ -5,10 +5,9 @@ interface IProps {
     placeholder: string;
     onClick: (text: string) => any;
     disabled?: boolean;
-    maxCharacters?: number;
 }
 
-export function TextCreate({ cta, placeholder, onClick, disabled, maxCharacters }: IProps) {
+export function TextCreate({ cta, placeholder, onClick, disabled }: IProps) {
     const [value, setValue] = useState<string>("");
 
     return (
@@ -30,7 +29,6 @@ export function TextCreate({ cta, placeholder, onClick, disabled, maxCharacters 
                 disabled={disabled}
                 placeholder={placeholder}
                 className="w-full px-4 py-2 text-gray-400 bg-gray-100 focus:bg-gray-200 focus:text-gray-800 outline-none"
-                maxLength={maxCharacters}
             />
             <input
                 disabled={disabled}

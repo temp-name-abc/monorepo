@@ -5,7 +5,7 @@ import { useNotification } from "providers";
 import { useEffect, useState } from "react";
 import { IChats } from "types";
 import { TextCreate } from "ui";
-import { chatData, KEY_CONVERSATION } from "utils";
+import { KEY_CONVERSATION } from "utils";
 import { SelectCollection } from "./SelectCollection";
 
 interface IProps {
@@ -25,7 +25,7 @@ export function ChatInput({ conversationId, chatsData, setIsTyping, setQuestion 
     const token: string | undefined = session.data?.idToken;
 
     const { mutate: chatMutation, isLoading: isTyping } = useMutation({
-        mutationFn: (args: { token: string; conversationId: string; question: string; collectionId?: string }) =>
+        mutationFn: (args: { token: string; conversationId: string; question: string; collectionId: string }) =>
             createChat(args.token, args.conversationId, args.question, args.collectionId),
         onSuccess: (_, { conversationId }) => queryClient.invalidateQueries([KEY_CONVERSATION, conversationId]),
         onError: (err) => {
@@ -40,7 +40,7 @@ export function ChatInput({ conversationId, chatsData, setIsTyping, setQuestion 
 
     useEffect(() => {
         setIsTyping(isTyping);
-    }, [isTyping]);
+    }, [isTyping, setIsTyping]);
 
     if (!chatsData) return null;
 
@@ -49,12 +49,11 @@ export function ChatInput({ conversationId, chatsData, setIsTyping, setQuestion 
             <TextCreate
                 onClick={(question) => {
                     setQuestion(question);
-                    token && conversationId && chatMutation({ token, conversationId, question, collectionId });
+                    token && conversationId && collectionId && chatMutation({ token, conversationId, question, collectionId });
                 }}
                 cta="Send"
                 placeholder="Send a chat"
                 disabled={isTyping || !collectionId}
-                maxCharacters={chatData.maxCharacters}
             />
             <SelectCollection chatsData={chatsData} setCollectionId={setCollectionId} />
         </div>

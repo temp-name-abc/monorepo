@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getPortal } from "helpers";
 import { useSession } from "next-auth/react";
 import { CreditCard } from "tabler-icons-react";
-import { KEY_PORTAL, products } from "utils";
+import { KEY_PORTAL } from "utils";
 import { Button } from "../Button";
 
 interface IProps {}
@@ -13,7 +13,7 @@ export function Subscription({}: IProps) {
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
 
-    const { data } = useQuery([KEY_PORTAL], () => getPortal(token as string, products), {
+    const { data } = useQuery([KEY_PORTAL], () => getPortal(token as string), {
         enabled: !!token,
     });
 

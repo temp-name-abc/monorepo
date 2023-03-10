@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const chatData = z.object({
-    chunkCharacters: z.number(),
     maxDocuments: z.number(),
     minThreshold: z.number(),
     extendDown: z.number(),

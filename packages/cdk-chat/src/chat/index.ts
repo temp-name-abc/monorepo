@@ -5,7 +5,7 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as path from "path";
-import { API_BASE_URL, chatData } from "utils";
+import { API_BASE_URL } from "utils";
 import { IProduct } from "types";
 
 export class Chat {
