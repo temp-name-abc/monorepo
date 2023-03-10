@@ -14,7 +14,7 @@ export function Card({ title, description, url, icon }: IProps) {
     const titleSecond = title.slice(halfTitle);
 
     return (
-        <Link href={url}>
+        <Link className="block" href={url}>
             <div className="p-8 bg-gray-100 hover:bg-gray-200 space-y-4">
                 <h3 className="flex items-center space-x-8 font-bold text-lg">
                     <span>

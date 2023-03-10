@@ -4,9 +4,8 @@ import { useTutorial } from "hooks";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { Database, Messages } from "tabler-icons-react";
-import { Card, CardLayout, SubAppShell } from "ui";
 import { KEY_PORTAL } from "utils";
+import LandingPage from "./LandingPage";
 
 interface IProps {}
 
@@ -41,30 +40,7 @@ export function IndexPage({}: IProps) {
         }
     }, [router, completeTutorial, portalData]);
 
-    return (
-        <SubAppShell
-            title="MonoStack / Home"
-            description="Welcome to MonoStack, the number one platform powering natural language conversations with your data."
-            links={[]}
-        >
-            <CardLayout
-                elements={[
-                    <Card
-                        title="Storage"
-                        description="Create a collection. Upload your documents. Use the collection as a knowledgebase for chatting."
-                        icon={<Database />}
-                        url="/storage/collections"
-                    />,
-                    <Card
-                        title="Chat"
-                        description="Select a collection. Ask a question. Receive the respone. Verify the sources used."
-                        icon={<Messages />}
-                        url="/chat/conversations"
-                    />,
-                ]}
-            />
-        </SubAppShell>
-    );
+    return <LandingPage />;
 }
 
 export default IndexPage;
