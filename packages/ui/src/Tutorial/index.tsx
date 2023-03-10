@@ -3,8 +3,8 @@ import { ArrowBack, ArrowForward, X } from "tabler-icons-react";
 import { useTutorial } from "hooks";
 import { TutorialSlide } from "./TutorialSlide";
 import { Button } from "../Button";
-import { SignIn } from "../SignIn";
 import { Modal } from "../Modal";
+import StartTrial from "../StartTrial";
 
 interface IProps {}
 
@@ -61,7 +61,7 @@ export function Tutorial({}: IProps) {
                 Back
             </Button>
         );
-    if (isLastSlide) buttons.push(<SignIn />);
+    if (isLastSlide) buttons.push(<StartTrial />);
     else
         buttons.push(
             <Button type="button" variant="accent" onClick={() => setPosition((pos) => pos + 1)} icon={<ArrowForward />}>

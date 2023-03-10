@@ -1,4 +1,4 @@
-import { SignIn } from "ui";
+import { StartTrial } from "ui";
 
 interface IProps {}
 
@@ -15,7 +15,7 @@ export function Header({}: IProps) {
                     <span className="font-medium">search</span> for information, let them <span className="font-medium">ask</span> for it.
                 </p>
             </div>
-            <SignIn title="Get Started" thick={true} />
+            <StartTrial />
         </header>
     );
 }

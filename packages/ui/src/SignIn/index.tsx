@@ -2,18 +2,15 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { Login, Logout } from "tabler-icons-react";
 import { Button } from "../Button";
 
-interface IProps {
-    title?: string;
-    thick?: boolean;
-}
+interface IProps {}
 
-export function SignIn({ title, thick }: IProps) {
+export function SignIn({}: IProps) {
     const session = useSession();
 
     if (!session.data)
         return (
-            <Button thick={thick} type="button" variant="accent" icon={<Login />} onClick={() => signIn(undefined, { callbackUrl: `/?status=LOGGED_IN` })}>
-                {title ? title : "Sign In"}
+            <Button type="button" variant="accent" icon={<Login />} onClick={() => signIn(undefined, { callbackUrl: `/?status=LOGGED_IN` })}>
+                Sign In
             </Button>
         );
 
