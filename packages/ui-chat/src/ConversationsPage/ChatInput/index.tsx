@@ -64,6 +64,7 @@ export function ChatInput({ conversationId, chatsData, setIsTyping, setQuestion 
                 cta="Send"
                 placeholder="Send a chat"
                 disabled={isTyping || !collectionId}
+                textArea={true}
             />
             <div className="flex space-x-4">
                 <Button type="button" variant="dull" onClick={() => setShowChatSettings((prev) => !prev)} icon={<Adjustments />} />

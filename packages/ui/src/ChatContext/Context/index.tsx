@@ -4,6 +4,7 @@ import { getCollection, getDocument } from "helpers";
 import { KEY_COLLECTION, KEY_DOCUMENT } from "utils";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
+import { TextChunk } from "../../TextChunk";
 
 interface IProps {
     context: IContext;
@@ -26,9 +27,7 @@ export function Context({ context }: IProps) {
     return (
         <div className="w-full flex flex-col space-y-4 bg-gray-100 px-8 py-4">
             <div className="italic text-gray-600 text-sm">
-                {context.body.split(/\n|\\n/).map((elem, i) => (
-                    <p key={i}>{elem}</p>
-                ))}
+                <TextChunk text={context.body} />
             </div>
             <div className="flex space-x-2">
                 <Link className="cursor-pointer font-bold text-gray-600 hover:text-gray-700" href={`/storage/collections/${context.collectionId}`}>

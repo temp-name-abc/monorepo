@@ -13,3 +13,4 @@ export * from "./src/SignIn";
 export * from "./src/Modal";
 export * from "./src/StartTrial";
 export * from "./src/Slider";
+export * from "./src/TextChunk";

@@ -1,5 +1,7 @@
+import { TextChunk } from "ui";
+
 interface IProps {
-    children: any;
+    children: string;
     style: "accent" | "dull";
     onClick?: () => void;
 }
@@ -9,9 +11,9 @@ export function ChatBubble({ children, style, onClick }: IProps) {
     const styleDull = "px-8 py-4 text-gray-600 bg-white font-medium text-sm cursor-pointer";
 
     return (
-        <p onClick={onClick} className={style === "accent" ? styleAccent : styleDull}>
-            {children}
-        </p>
+        <div onClick={onClick} className={style === "accent" ? styleAccent : styleDull}>
+            <TextChunk text={children} />
+        </div>
     );
 }
 
