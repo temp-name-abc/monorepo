@@ -7,8 +7,9 @@ import { Adjustments } from "tabler-icons-react";
 import { IChatData, IChats } from "types";
 import { Button, TextCreate } from "ui";
 import { KEY_CONVERSATION } from "utils";
-import ChatSettings from "./ChatSettings";
+import { ChatSettings } from "./ChatSettings";
 import { SelectCollection } from "./SelectCollection";
+import { KEY_STORAGE_CHAT_SETTINGS } from "utils";
 
 interface IProps {
     conversationId: string;
@@ -23,20 +24,14 @@ export function ChatInput({ conversationId, chatsData, setIsTyping, setQuestion 
     const [collectionId, setCollectionId] = useState<string>("");
     const { addNotification } = useNotification();
     const [showChatSettings, setShowChatSettings] = useState<boolean>(false);
-    const [chatData, setChatData] = useState<IChatData>({
-        maxDocuments: 2,
-        minThreshold: 0.7,
-        maxCharOut: 2000,
-        extendDown: 1,
-        extendUp: 0,
-    });
+    const [chatData, setChatData] = useState<IChatData | null>(null);
 
     // @ts-expect-error
     const token: string | undefined = session.data?.idToken;
 
     const { mutate: chatMutation, isLoading: isTyping } = useMutation({
-        mutationFn: (args: { token: string; conversationId: string; question: string; collectionId: string }) =>
-            createChat(args.token, args.conversationId, args.question, args.collectionId, chatData),
+        mutationFn: (args: { token: string; conversationId: string; question: string; collectionId: string; chatData: IChatData }) =>
+            createChat(args.token, args.conversationId, args.question, args.collectionId, args.chatData),
         onSuccess: (_, { conversationId }) => queryClient.invalidateQueries([KEY_CONVERSATION, conversationId]),
         onError: (err) => {
             addNotification({
@@ -52,6 +47,26 @@ export function ChatInput({ conversationId, chatsData, setIsTyping, setQuestion 
         setIsTyping(isTyping);
     }, [isTyping, setIsTyping]);
 
+    useEffect(() => {
+        // Load the default chat settings
+        const settingsString = localStorage.getItem(KEY_STORAGE_CHAT_SETTINGS);
+
+        if (settingsString) setChatData(JSON.parse(settingsString));
+        else
+            setChatData({
+                maxDocuments: 2,
+                minThreshold: 0.7,
+                maxCharOut: 2000,
+                extendDown: 1,
+                extendUp: 0,
+            });
+    }, []);
+
+    useEffect(() => {
+        // Save the current chat settings
+        if (chatData) localStorage.setItem(KEY_STORAGE_CHAT_SETTINGS, JSON.stringify(chatData));
+    }, [chatData]);
+
     if (!chatsData) return null;
 
     return (
@@ -59,7 +74,7 @@ export function ChatInput({ conversationId, chatsData, setIsTyping, setQuestion 
             <TextCreate
                 onClick={(question) => {
                     setQuestion(question);
-                    token && conversationId && collectionId && chatMutation({ token, conversationId, question, collectionId });
+                    token && conversationId && collectionId && chatData && chatMutation({ token, conversationId, question, collectionId, chatData });
                 }}
                 cta="Send"
                 placeholder="Send a chat"
@@ -70,7 +85,7 @@ export function ChatInput({ conversationId, chatsData, setIsTyping, setQuestion 
                 <Button type="button" variant="dull" onClick={() => setShowChatSettings((prev) => !prev)} icon={<Adjustments />} />
                 <SelectCollection chatsData={chatsData} setCollectionId={setCollectionId} />
             </div>
-            {showChatSettings && <ChatSettings chatData={chatData} setChatData={setChatData} />}
+            {showChatSettings && chatData && <ChatSettings chatData={chatData} setChatData={setChatData as any} />}
         </div>
     );
 }

@@ -10,3 +10,4 @@ export const KEY_CONVERSATION = "conversation";
 export const KEY_PORTAL = "portal";
 
 export const KEY_STORAGE_TUTORIAL = "completedTutorial";
+export const KEY_STORAGE_CHAT_SETTINGS = "chatSettings";
