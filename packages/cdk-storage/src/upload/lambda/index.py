@@ -63,6 +63,22 @@ def lambda_handler(event, context):
             "body": msg
         }
 
+    # Check the filetype is accepted
+    accepted_file_types = ["application/pdf", "text/plain", "video/mp4", "audio/mpeg"]
+
+    if file_type not in accepted_file_types:
+        msg = f"Invalid file type '{file_type}'. Accepted file types are '{accepted_file_types}'"
+
+        logger.error(msg)
+
+        return {
+            "statusCode": 400,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+            },
+            "body": msg
+        }
+
     # Check the collection is valid
     response = dynamodb_client.get_item(
         TableName=collection_table,
