@@ -114,6 +114,14 @@ def lambda_handler(event, context):
                 body += text + " "
 
             logger.info("Processed pdf")
+
+        elif file_type == "video/mp4" or file_type == "audio/mpeg":
+            # Extract audio from the video
+            if file_type == "video/mp4":
+                pass
+            
+            # Transcribe audio and store it
+            pass
             
         else:
             logger.error(f"Document '{document_id}' has unsupported file type '{file_type}'")
