@@ -120,8 +120,7 @@ def lambda_handler(event, context):
             if file_type == "video/mp4":
                 pass
             
-            # Transcribe audio and store it
-            pass
+            body = openai.Audio.transcribe("whisper-1", io.BytesIO(raw_body))["text"]
             
         else:
             logger.error(f"Document '{document_id}' has unsupported file type '{file_type}'")
